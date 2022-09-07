@@ -1,8 +1,9 @@
 require 'math'
 require 'gnuplot'
-require './kmeans-clusterer.rb'
+#require './kmeans-clusterer.rb'
+require './k_means_pp.rb'
 
-class Point
+class Node
   attr_accessor :x
   attr_accessor :y
   attr_accessor :visited
@@ -14,7 +15,7 @@ class Point
   end
 
   def inspect
-    "#<Point: @x=#{x}, @y=#{y}, # of edges=#{edges.size}>"
+    "#<Node: @x=#{x}, @y=#{y}, # of edges=#{edges.size}>"
   end
 
   def other_nodes_connected_to_not(except)
@@ -24,8 +25,37 @@ class Point
     end.sum + 1
   end
 
-  def dist(p_2)
+  def euclidean_distance(p_2)
     Math.sqrt((self.x - p_2.x) ** 2 + (self.y - p_2.y) ** 2)
+  end
+
+  # No guarantee that path is shortest
+  # Actually, we *are* guaranteed that because we're using a MST
+  def edge_distance(p_2, prev=nil)
+    edges.each do |edge|
+      # Don't go back the way we came
+      next if edge == prev
+
+      if edge.not(self) == p_2
+        return [edge]
+      else
+        path = edge.not(self).edge_distance p_2, edge
+        return (path << edge) unless path.empty?
+      end
+    end
+
+    []
+  end
+
+  def dist(p_2, style=:euclidean)
+    case style
+    when :edges
+      edge_distance p_2
+    when :euclidean
+      euclidean_distance p_2
+    else
+      raise "No style provided for distance calculation"
+    end
   end
 
   def to_a
@@ -46,6 +76,11 @@ class Edge
   def mark_nodes!
     nodes.each {|n| n.edges << self }
   end
+
+  def other_node(node)
+    (nodes - [node])[0]
+  end
+  alias_method :not, :other_node
 end
 
 # Kruskal's algorithm for an MST
@@ -73,17 +108,18 @@ end
 # TODO add a graph class and add dijkstra's algorithm to it
 
 # Generate a bunch of random points
-points = 10.times.map { Point.new(10 * rand, 10 * rand) }
-edges  = points.combination(2).map {|p_1, p_2| Edge.new p_1,
-                                                        p_2,
-                                                        p_1.dist(p_2) }
+nodes = 40.times.map { Node.new(10 * rand, 10 * rand) }
+edges = nodes.combination(2).map {|p_1, p_2| Edge.new p_1,
+                                                      p_2,
+                                                      p_1.euclidean_distance(p_2) }
 
 @minimum_spanning_tree = []
 edges.sort_by {|e| e.weight }.each do |edge|
   @minimum_spanning_tree << edge && edge.mark_nodes! unless has_cycles edge
 end
 
-kmeans = KMeansClusterer.run 3, points.map(&:to_a)
+#kmeans = KMeansClusterer.run 3, nodes.map(&:to_a), :labels => nodes
+clusters = KMeansPP.clusters(nodes, 3) {|n| n.to_a }
 
 # IDEA
 #
@@ -119,10 +155,10 @@ end
 Gnuplot.open do |gp|
   Gnuplot::Plot.new gp do |plot|
 
-    plot.xrange buffered_range(points.map {|p| p.x }, 0.2)
-    plot.yrange buffered_range(points.map {|p| p.y }, 0.2)
+    plot.xrange buffered_range(nodes.map {|p| p.x }, 0.2)
+    plot.yrange buffered_range(nodes.map {|p| p.y }, 0.2)
 
-    xs, ys = points.map {|p| p.x }, points.map {|p| p.y }
+    xs, ys = nodes.map {|p| p.x }, nodes.map {|p| p.y }
     plot.data << Gnuplot::DataSet.new([xs, ys])
 
     plot.data += @minimum_spanning_tree.map do |edge|
@@ -136,11 +172,12 @@ Gnuplot.open do |gp|
       end
     end
 
-    colors = kmeans.clusters.zip(["red", "blue", "yellow", "magenta"]).to_h
+    colors = clusters.zip(["red", "blue", "yellow", "magenta"]).to_h
 
-    plot.data += kmeans.clusters.map do |cluster|
-      xs = cluster.points.map {|p| p[0] }
-      ys = cluster.points.map {|p| p[1] }
+    # Plotting cluster constituents
+    plot.data += clusters.map do |cluster|
+      xs = cluster.points.map {|p| p.x }
+      ys = cluster.points.map {|p| p.y }
 
       Gnuplot::DataSet.new([xs, ys]) do |ds|
         ds.with = 'points pointtype 6'
@@ -149,9 +186,10 @@ Gnuplot.open do |gp|
       end
     end
 
-    plot.data += kmeans.clusters.map do |cluster|
-      xs = [cluster.centroid[0]]
-      ys = [cluster.centroid[1]]
+    # Plotting cluster centroids
+    plot.data += clusters.map do |cluster|
+      xs = [cluster.centroid.x]
+      ys = [cluster.centroid.y]
 
       Gnuplot::DataSet.new([xs, ys]) do |ds|
         ds.with = 'points pointtype 6 pointsize 3'
@@ -163,6 +201,6 @@ Gnuplot.open do |gp|
   end
 end
 
-#require 'pry'
-#binding.pry
+require 'pry'
+binding.pry
 

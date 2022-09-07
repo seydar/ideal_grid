@@ -62,6 +62,18 @@ class KMeansClusterer
         NMath.sqrt ((x - y)**2).sum(0)
       end
     end
+
+    # TODO FIXME finish building this out and see if a point is ever passed to
+    # this method or if it's always scalars
+    def self.edgewise x, y, yy = nil
+      if x.is_a?(NMatrix) && y.is_a?(NMatrix)
+        euclidean x, y, yy
+      elsif x.is_a?(Point) && y.is_a?(Point)
+        p "basdf"
+      else
+        raise "hell"
+      end
+    end
   end
 
 

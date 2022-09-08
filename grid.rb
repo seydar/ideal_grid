@@ -1,6 +1,5 @@
 require 'math'
 require 'gnuplot'
-#require './kmeans-clusterer.rb'
 require './k_means_pp.rb'
 
 class Node
@@ -118,7 +117,6 @@ edges.sort_by {|e| e.weight }.each do |edge|
   @minimum_spanning_tree << edge && edge.mark_nodes! unless has_cycles edge
 end
 
-#kmeans = KMeansClusterer.run 3, nodes.map(&:to_a), :labels => nodes
 clusters = KMeansPP.clusters(nodes, 3) {|n| n.to_a }
 
 # IDEA

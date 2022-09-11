@@ -34,7 +34,7 @@ class KMeansPP
     instance = new(points, clusters_count, &block)
     instance.group_points
     instance.centroids.map do |centroid|
-      cluster_for_centroid(centroid, instance.points, &block)
+      cluster_for_centroid(centroid, instance.points, block)
     end
   end
 
@@ -44,7 +44,7 @@ class KMeansPP
   # @param centroid [Centroid] Centroid of the cluster.
   #
   # @return [Cluster]
-  def self.cluster_for_centroid(centroid, points, &block)
+  def self.cluster_for_centroid(centroid, points, block)
     cluster_points = points.select { |p| p.group == centroid }
 
     if block
@@ -89,7 +89,7 @@ class KMeansPP
 
     centroids.each do |centroid|
       #distance = centroid.squared_distance_to(point)
-      distance = centroid.edgewise_distance_to(point)
+      distance = centroid.edge_distance(point)
 
       next if distance >= nearest_distance
 
@@ -148,7 +148,8 @@ class KMeansPP
   # forming cells.
   def define_initial_clusters
     # Randomly choose a point as the first centroid.
-    centroids[0] = Centroid.new(points.sample)
+    #centroids[0] = Centroid.new(points.sample)
+    centroids[0] = Centroid.new points.sample
 
     # Initialize an array of distances of every point.
     distances = points.size.times.map { 0.0 }
@@ -177,7 +178,8 @@ class KMeansPP
       distances.each_with_index do |distance, point_i|
         distances_sum -= distance
         next if distances_sum > 0
-        centroids[centroid_i] = Centroid.new(points[point_i])
+        #centroids[centroid_i] = Centroid.new(points[point_i])
+        centroids[centroid_i] = Centroid.new points[point_i]
         break
       end
     end
@@ -204,25 +206,36 @@ class KMeansPP
       calculate_new_centroids
       changed = reassign_points
 
+      clusters = centroids.map do |centroid|
+        self.class.cluster_for_centroid(centroid, points, true)
+      end
+
       # Stop when 99.9% of points are good
       break if changed <= changed_threshold
     end
   end
 
-  # For each cell calculate its center.
-  # This is done by averaging X and Y coordinates.
+  # Get point pair that has longest path
+  # Select median node
   def calculate_new_centroids
-    # Clear centroids.
-    centroids.each(&:reset)
+    centroids.each do |centroid|
+      # block here is just a filler. it's not used for anything other than a
+      # boolean
+      cluster = self.class.cluster_for_centroid(centroid, points, true)
 
-    # Sum all X and Y coords into each point's centroid.
-    points.each do |point|
-      centroid = point.group
-      centroid.add(point)
+      # borked. FIXME. this is just the number of edges, not accounting for
+      # their weights
+      paths = cluster.points.combination(2).map {|p1, p2| p1.path_to p2 }
+      max   = paths.max_by {|path| path.size }
+      max   = Path.build max
+
+      begin
+        centroid.set max.median # median
+      rescue => e
+        require 'pry'
+        binding.pry
+      end
     end
-
-    # And then average it to find a center.
-    centroids.each(&:average)
   end
 
   # Loop through all the points and find their nearest centroid.

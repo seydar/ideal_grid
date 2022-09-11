@@ -11,6 +11,11 @@ class KMeansPP
     # @return [Float]
     attr_accessor :y
 
+    # The original object (could be anything from Hash to an Object).
+    #
+    # @return [Object]
+    attr_accessor :original
+
     # Measure a 2D squared distance between two points.
     #
     # @param point [BasePoint]
@@ -21,6 +26,12 @@ class KMeansPP
       distance_y       = y - point.y
       squared_distance = distance_x**2 + distance_y**2
       squared_distance
+    end
+
+    def edge_distance(point)
+      # We don't need to square this because everything is one dimensional:
+      # the distance is simply the distance along the connecting edge.
+      original.edge_distance point.original
     end
 
     # A string representation of the point.
@@ -36,11 +47,6 @@ class KMeansPP
     # @return [Centroid]
     attr_accessor :group
 
-    # The original object (could be anything from Hash to an Object).
-    #
-    # @return [Object]
-    attr_accessor :original
-
     # Create a new point (data set point or a centroid).
     #
     # @param x     [Float]    X coordinate of the point.
@@ -50,12 +56,6 @@ class KMeansPP
       self.x     = x
       self.y     = y
       self.group = group
-    end
-
-    def edgewise_distance_to(point)
-      # We don't need to square this because everything is one dimensional:
-      # the distance is simply the distance along the connecting edge.
-      original.edge_distance point
     end
   end
 
@@ -72,6 +72,16 @@ class KMeansPP
     def initialize(point)
       self.x = point.x
       self.y = point.y
+
+      self.original = point.original
+    end
+
+    # Set the x and y to a specific point
+    def set(point)
+      self.x        = point.x
+      self.y        = point.y
+      self.original = point
+      self.counter  = 0
     end
 
     # Prepare centroid for a new iteration, zero-ing everything.

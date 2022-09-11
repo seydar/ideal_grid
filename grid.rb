@@ -1,6 +1,100 @@
 require 'math'
 require 'gnuplot'
 require './k_means_pp.rb'
+require './plotting.rb'
+
+class Graph
+  attr_accessor :edges
+  attr_accessor :nodes
+  attr_accessor :adjacencies
+
+  def initialize(edges)
+    @edges = edges
+    @nodes = edges.map {|e| e.nodes }.flatten
+
+    @adjacencies   = {}
+    fill_adjacencies!
+  end
+
+  def fill_adjacencies!
+    nodes.each do |node|
+      adjacencies[node] = []
+      node.edges.each do |edge|
+        adjacencies[node] << edge.not_node(node)
+      end
+    end
+  end
+
+  def bfs(source=nil)
+    visited  = Set.new
+    distance = Hash.new {|h, k| h[k] = -1 }
+
+    distance[source] = 0
+
+    # Probably should replace this with a deque
+    queue = []
+    queue   << source
+    visited << source
+
+    until queue.empty?
+      front = queue.shift
+
+      adjacencies[front].each do |node|
+        unless visited.include? node
+          distance[node] = distance[front] + 1
+          queue   << node
+          visited << node
+        end
+      end
+    end
+
+    distances.max_by {|k, v| v }
+  end
+end
+
+class Path
+  attr_accessor :edges
+  attr_accessor :nodes
+
+  def self.build(edges)
+    path = new edges
+    path.sort_points!
+
+    path
+  end
+
+  def initialize(edges)
+    @edges = edges
+    @nodes = []
+  end
+
+  def sort_points!
+    sorted = []
+
+    edges.each.with_index do |edge, i|
+      if edges[i + 1]
+        unique = edge.nodes - edges[i + 1].nodes # unique node to `edge`
+        sorted << unique[0]
+      else # we're at the last one
+        unique = edge.nodes - edges[i - 1].nodes
+        sorted << (edge.nodes - unique)[0]
+        sorted << unique[0]
+      end
+    end
+
+    @nodes = sorted
+  end
+
+  def median
+    nodes[nodes.size / 2]
+  end
+
+  # Damn this is confusing. `#size` is the number of edges, but median is from
+  # the sorted points? Wack.
+  def size
+    edges.size
+  end
+end
 
 class Node
   attr_accessor :x
@@ -30,7 +124,7 @@ class Node
 
   # No guarantee that path is shortest
   # Actually, we *are* guaranteed that because we're using a MST
-  def edge_distance(p_2, prev=nil)
+  def path_to(p_2, prev=nil)
     edges.each do |edge|
       # Don't go back the way we came
       next if edge == prev
@@ -38,12 +132,16 @@ class Node
       if edge.not(self) == p_2
         return [edge]
       else
-        path = edge.not(self).edge_distance p_2, edge
+        path = edge.not_node(self).path_to p_2, edge
         return (path << edge) unless path.empty?
       end
     end
 
     []
+  end
+
+  def edge_distance(other)
+    path_to(other).size
   end
 
   def dist(p_2, style=:euclidean)
@@ -79,7 +177,13 @@ class Edge
   def other_node(node)
     (nodes - [node])[0]
   end
-  alias_method :not, :other_node
+  alias_method :not_node, :other_node
+
+  def inspect
+    n1 = nodes[0].to_a.map {|v| v.round 3 }
+    n2 = nodes[1].to_a.map {|v| v.round 3 }
+    "#<Edge: #{n1} <=> #{n2}>"
+  end
 end
 
 # Kruskal's algorithm for an MST
@@ -138,66 +242,15 @@ clusters = KMeansPP.clusters(nodes, 3) {|n| n.to_a }
 #
 # Questions:
 #   How do I get clusters that overlap, so that each node has some kind of backup source?
+#
+# Assign generators based on an MST
+# Assign redundancy by making a maximally connected graph, and then remove
+#   edges according to some algorithm
 
 
 ############################
 
-def buffered_range(points, buffer=0.1)
-  max = points.max
-  min = points.min
-  range = max - min
-  buffer = range * buffer
-  "[#{min - buffer}:#{max + buffer}]"
-end
-
-Gnuplot.open do |gp|
-  Gnuplot::Plot.new gp do |plot|
-
-    plot.xrange buffered_range(nodes.map {|p| p.x }, 0.2)
-    plot.yrange buffered_range(nodes.map {|p| p.y }, 0.2)
-
-    xs, ys = nodes.map {|p| p.x }, nodes.map {|p| p.y }
-    plot.data << Gnuplot::DataSet.new([xs, ys])
-
-    plot.data += @minimum_spanning_tree.map do |edge|
-      xs = edge.nodes.map(&:x)
-      ys = edge.nodes.map(&:y)
-
-      Gnuplot::DataSet.new([xs, ys]) do |ds|
-        ds.with = 'lines'
-        ds.notitle
-        ds.linecolor = "-1"
-      end
-    end
-
-    colors = clusters.zip(["red", "blue", "yellow", "magenta"]).to_h
-
-    # Plotting cluster constituents
-    plot.data += clusters.map do |cluster|
-      xs = cluster.points.map {|p| p.x }
-      ys = cluster.points.map {|p| p.y }
-
-      Gnuplot::DataSet.new([xs, ys]) do |ds|
-        ds.with = 'points pointtype 6'
-        ds.notitle
-        ds.linecolor = "rgb \"#{colors[cluster]}\""
-      end
-    end
-
-    # Plotting cluster centroids
-    plot.data += clusters.map do |cluster|
-      xs = [cluster.centroid.x]
-      ys = [cluster.centroid.y]
-
-      Gnuplot::DataSet.new([xs, ys]) do |ds|
-        ds.with = 'points pointtype 6 pointsize 3'
-        ds.notitle
-        ds.linecolor = 'rgb "orange"'
-      end
-    end
-
-  end
-end
+plot clusters
 
 require 'pry'
 binding.pry

@@ -4,9 +4,6 @@ class Node
   attr_accessor :visited
   attr_accessor :edges
 
-  # Needed to judge node equality after serialization
-  attr_accessor :id # for multiprocess synchronization
-
   def initialize(x, y)
     @x, @y = x, y
     @edges = []

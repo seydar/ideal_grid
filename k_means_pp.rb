@@ -148,14 +148,13 @@ class KMeansPP
   # forming cells.
   def define_initial_clusters
     # Randomly choose a point as the first centroid.
-    #centroids[0] = Centroid.new(points.sample)
     centroids[0] = Centroid.new points.sample
 
     # Initialize an array of distances of every point.
     distances = points.size.times.map { 0.0 }
 
     centroids.each_with_index do |_, centroid_i|
-      # Skip the first centroid as it's already picked but keep the index.
+      # Skip the first centroid as it's already picked but keep the index
       next if centroid_i == 0
 
       # Sum points' distances to their nearest centroid
@@ -178,7 +177,6 @@ class KMeansPP
       distances.each_with_index do |distance, point_i|
         distances_sum -= distance
         next if distances_sum > 0
-        #centroids[centroid_i] = Centroid.new(points[point_i])
         centroids[centroid_i] = Centroid.new points[point_i]
         break
       end
@@ -223,14 +221,11 @@ class KMeansPP
       # boolean
       cluster = self.class.cluster_for_centroid(centroid, points, true)
 
-      # borked. FIXME. this is just the number of edges, not accounting for
-      # their weights
-      paths = cluster.points.combination(2).map {|p1, p2| p1.path_to p2 }
-      max   = paths.max_by {|path| path.size }
-      max   = Path.build max
+      graph = Graph.new cluster.points
+      path  = graph.longest_path
 
       begin
-        centroid.set max.median # median
+        centroid.set path.median # median
       rescue => e
         require 'pry'
         binding.pry

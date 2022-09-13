@@ -1,31 +1,45 @@
 require 'math'
+require 'set'
 require 'gnuplot'
 require './k_means_pp.rb'
 require './plotting.rb'
 
 class Graph
-  attr_accessor :edges
   attr_accessor :nodes
   attr_accessor :adjacencies
 
-  def initialize(edges)
-    @edges = edges
-    @nodes = edges.map {|e| e.nodes }.flatten
+  # Need to specify the nodes, and then restrict the edges to only those
+  # that connect to these nodes
+  def initialize(nodes)
+    raise "nodes cannot be empty" if nodes.empty?
+    @nodes = nodes
+    @adjacencies = {}
 
-    @adjacencies   = {}
     fill_adjacencies!
   end
 
+  # god damn this is ugly
   def fill_adjacencies!
     nodes.each do |node|
-      adjacencies[node] = []
+
+      adjacencies[node]  = []
       node.edges.each do |edge|
-        adjacencies[node] << edge.not_node(node)
+        other = edge.not_node node
+
+        # We use the weight later one, so we might as well store it here
+        # The `if` statement here is because these nodes are otherwise
+        # completely connected, so we want to make sure that this graph is
+        # restricted to the subset of nodes that we pass in.
+        #
+        # You are correct in thinking that I did not myself remember this
+        # for many hours.
+        adjacencies[node] << [other, edge.weight] if nodes.include? other
       end
     end
   end
 
-  def bfs(source=nil)
+  # Should these paths be remembered?
+  def longest_path_from(source)
     visited  = Set.new
     distance = Hash.new {|h, k| h[k] = -1 }
 
@@ -39,16 +53,29 @@ class Graph
     until queue.empty?
       front = queue.shift
 
-      adjacencies[front].each do |node|
+      adjacencies[front].each do |node, weight|
         unless visited.include? node
-          distance[node] = distance[front] + 1
+          distance[node] = distance[front] + weight
           queue   << node
           visited << node
         end
       end
     end
 
-    distances.max_by {|k, v| v }
+    distance.max_by {|k, v| v }
+  end
+
+  def longest_path
+    node,  dist = longest_path_from nodes[0]
+    start, dist = longest_path_from node
+
+    Path.build start.path_to(node)
+  end
+
+  def longest_path2
+    paths = nodes.combination(2).map {|n1, n2| n1.path_to n2 }
+    max   = paths.max_by {|p| p.size }
+    Path.build max
   end
 end
 
@@ -63,6 +90,10 @@ class Path
     path
   end
 
+  def weight
+    edges.map {|e| e.weight }.sum
+  end
+
   def initialize(edges)
     @edges = edges
     @nodes = []
@@ -70,6 +101,11 @@ class Path
 
   def sort_points!
     sorted = []
+
+    if edges.size == 1
+      @nodes = edges[0].nodes
+      return
+    end
 
     edges.each.with_index do |edge, i|
       if edges[i + 1]
@@ -85,15 +121,23 @@ class Path
     @nodes = sorted
   end
 
+  # Median by the number of edges, but not by weight
+  # n edges, n + 1 nodes
   def median
-    nodes[nodes.size / 2]
+    #nodes[nodes.size / 2]
+    total = 0
+    edges.each.with_index do |edge, i|
+      total += edge.weight
+      return nodes[i + 1] if total > weight / 2.0
+    end
+
+    raise "something went wrong in calculating the median"
   end
 
-  # Damn this is confusing. `#size` is the number of edges, but median is from
-  # the sorted points? Wack.
   def size
-    edges.size
+    edges.inject(0) {|s, e| s + e.weight }
   end
+  alias_method :length, :size
 end
 
 class Node
@@ -108,7 +152,7 @@ class Node
   end
 
   def inspect
-    "#<Node: @x=#{x}, @y=#{y}, # of edges=#{edges.size}>"
+    "#<Node: @x=#{x.round 3}, @y=#{y.round 3}, # of edges=#{edges.size}>"
   end
 
   def other_nodes_connected_to_not(except)
@@ -129,7 +173,7 @@ class Node
       # Don't go back the way we came
       next if edge == prev
 
-      if edge.not(self) == p_2
+      if edge.not_node(self) == p_2
         return [edge]
       else
         path = edge.not_node(self).path_to p_2, edge
@@ -141,7 +185,7 @@ class Node
   end
 
   def edge_distance(other)
-    path_to(other).size
+    Path.build(path_to(other)).weight
   end
 
   def dist(p_2, style=:euclidean)
@@ -252,6 +296,6 @@ clusters = KMeansPP.clusters(nodes, 3) {|n| n.to_a }
 
 plot clusters
 
-require 'pry'
-binding.pry
+#require 'pry'
+#binding.pry
 

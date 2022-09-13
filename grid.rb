@@ -6,6 +6,8 @@ require './plotting.rb'
 require './monkey_patch.rb'
 Dir['./lib/graph/*.rb'].each {|f| require f }
 
+require 'parallel'
+
 # Kruskal's algorithm for an MST
 # https://github.com/mneedham/algorithms2/blob/master/kruskals.rb
 def has_cycles(edge, mst)
@@ -28,46 +30,20 @@ def cycle_between(one, two, edges)
   false
 end
 
-def euclidean_distance(p1, p2)
-  Math.sqrt((p1[1] - p2[1]) ** 2 + (p1[2] - p2[2]) ** 2)
-end
-
 # Generate a bunch of random points
 prng = Random.new 54
 start = Time.now
 num   = ARGV[0] ? ARGV[0].to_i : 40
-nodes = num.times.map {|i| [i, 10 * prng.rand, 10 * prng.rand] }
-node_map = nodes.map {|i, x, y| [i, Node.new(x, y, :id => i)] }.to_h # for multiprocess work
+nodes = num.times.map { Node.new(10 * prng.rand, 10 * prng.rand) }
 
 pairs = nodes.combination 2
+edges = pairs.map {|p_1, p_2| Edge.new p_1,
+                                       p_2,
+                                       p_1.euclidean_distance(p_2) }
+puts "Edges produced (#{Time.now - start} sec)"
 
-# The same point gets copied, so visiting it from one edge
-# won't be reflected when you visit it from another
-edges = pairs.parallel_map :cores => 4 do |p_1, p_2|
-  [p_1, p_2, euclidean_distance(p_1, p_2)]
-end
-
-puts "Distances calculated (#{Time.now - start})"
 
 start = Time.now
-
-# replace the points with the base ones from this process
-# (only have to do this since they were generated separately in different
-# processes and thus are different objects)
-# Don't love this
-edges = edges.map do |p1, p2, dist|
-  Edge.new node_map[p1[0]], node_map[p2[0]], dist
-end
-nodes = node_map.values
-
-puts "Edges created (#{Time.now - start})"
-
-#edges = pairs.map {|p_1, p_2| Edge.new p_1,
-#                                       p_2,
-#                                       p_1.euclidean_distance(p_2) }
-
-start = Time.now
-
 mst = []
 edges = edges.to_a.sort_by {|e| e.weight }
 edges.each.with_index do |edge, i|

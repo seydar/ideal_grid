@@ -3,10 +3,12 @@ class Node
   attr_accessor :y
   attr_accessor :visited
   attr_accessor :edges
+  attr_accessor :id
 
-  def initialize(x, y)
+  def initialize(x, y, id: nil)
     @x, @y = x, y
     @edges = []
+    @id = id
   end
 
   def inspect

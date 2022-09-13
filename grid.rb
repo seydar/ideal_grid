@@ -30,11 +30,10 @@ def cycle_between(one, two, edges)
   false
 end
 
-
 # Generate a bunch of random points
 prng = Random.new 54
 start = Time.now
-num   = ARGV[0].to_i || 40
+num   = ARGV[0] ? ARGV[0].to_i : 40
 nodes = num.times.map { Node.new(10 * prng.rand, 10 * prng.rand) }
 
 # Don't love this

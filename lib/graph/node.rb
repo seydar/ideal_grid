@@ -27,6 +27,8 @@ class Node
   # No guarantee that path is shortest
   # Actually, we *are* guaranteed that because we're using a MST
   def path_to(p_2, prev=nil)
+    return [] if p_2 == self
+
     edges.each do |edge|
       # Don't go back the way we came
       next if edge == prev

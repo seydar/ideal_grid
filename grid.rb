@@ -18,9 +18,6 @@ end
 
 def cycle_between(one, two, edges)
   adjacent_edges = edges.filter {|e| e.nodes.include? one }
-  p [one, two]
-  print "\t"
-  p adjacent_edges
   return false if adjacent_edges.empty?
 
   adjacent_edges.select {|e| not e.explored }.each do |edge|
@@ -44,7 +41,6 @@ nodes = num.times.map { Node.new(10 * prng.rand, 10 * prng.rand) }
 node_map = nodes.map {|n| [n.to_a, n.dup] }.to_h # for multiprocess work
 pairs = nodes.combination(2)
 
-# FIXME the problem lies in the multiple cores.
 # The same point gets copied, so visiting it from one edge
 # won't be reflected when you visit it from another
 edges = pairs.parallel_map :cores => 4 do |p_1, p_2|
@@ -57,33 +53,17 @@ end
 edges.each do |edge|
   edge.nodes.map! {|n| node_map[n.to_a] }
 end
+nodes = node_map.values
 
-edges2 = nodes.combination(2).map {|p_1, p_2| Edge.new p_1,
-                                                      p_2,
-                                                      p_1.euclidean_distance(p_2) }
+#edges = pairs.map {|p_1, p_2| Edge.new p_1,
+#                                       p_2,
+#                                       p_1.euclidean_distance(p_2) }
 
 mst = []
-mst2 = []
-edges = edges.sort_by {|e| e.weight }
-edges2 = edges2.sort_by {|e| e.weight }
+edges = edges.to_a.sort_by {|e| e.weight }
 edges.each.with_index do |edge, i|
-  e2 = edges2[i]
   mst << edge && edge.mark_nodes! unless has_cycles edge, mst
-  puts "-----"
-  #mst2 << e2 && e2.mark_nodes! unless has_cycles e2, mst2
-  puts
-  puts
 end
-
-#mst2 = @minimum_spanning_tree = []
-#edges2.sort_by {|e| e.weight }.each do |edge|
-#  @minimum_spanning_tree << edge && edge.mark_nodes! unless has_cycles edge
-#end
-
-
-require 'pry'
-binding.pry
-
 
 puts "Tree produced (#{Time.now - start} sec)"
 

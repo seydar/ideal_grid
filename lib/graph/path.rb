@@ -58,8 +58,6 @@ class Path
       end
     end
 
-    p total
-    p edges
     raise "something went wrong in calculating the median"
   end
 

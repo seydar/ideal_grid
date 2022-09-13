@@ -6,6 +6,10 @@ def buffered_range(points, buffer=0.1)
   "[#{min - buffer}:#{max + buffer}]"
 end
 
+def cplot(points)
+  plot [KMeansPP::Cluster.new(points.first, points)]
+end
+
 def plot(clusters)
   nodes = clusters.map {|c| c.points }.flatten
   edges = nodes.map {|n| n.edges }.flatten

@@ -165,6 +165,7 @@ class KMeansPP
           point,
           centroids[0...centroid_i]
         )
+
         distances[point_i] = distance
         distances_sum += distance
       end
@@ -180,6 +181,7 @@ class KMeansPP
         centroids[centroid_i] = Centroid.new points[point_i]
         break
       end
+
     end
 
     # Assign each point its nearest centroid.
@@ -224,8 +226,11 @@ class KMeansPP
       graph = Graph.new cluster.points
       path  = graph.longest_path
 
+      # Path will be empty if there is only one point in the cluster
+      median = path.size == 0 ? cluster.points[0] : path.median
+
       begin
-        centroid.set path.median # median
+        centroid.set median
       rescue => e
         require 'pry'
         binding.pry

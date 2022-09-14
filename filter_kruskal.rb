@@ -42,6 +42,7 @@ end
 #   https://github.com/allenchou/CMU-15618-Final-Project/blob/master/src/mst/kruskal_filter.cpp
 #   http://algo2.iti.kit.edu/documents/algo1-2014/alenex09filterkruskal.pdf
 #   http://algo2.iti.kit.edu/documents/fkruskal.pdf
+#   https://en.wikipedia.org/wiki/Kruskal%27s_algorithm#Parallel_algorithm
 
 SEQ_THRESHOLD = 8192 # stolen from the CMU students (Allen Chou)
 

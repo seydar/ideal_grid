@@ -10,6 +10,14 @@ def cplot(points)
   plot [KMeansPP::Cluster.new(points.first, points)]
 end
 
+def pplot(path)
+  cplot path.nodes
+end
+
+def gplot(graph)
+  plot [KMeansPP::Cluster.new(graph.longest_path.median, graph.nodes)]
+end
+
 def plot(clusters)
   nodes = clusters.map {|c| c.points }.flatten
   edges = nodes.map {|n| n.edges }.flatten

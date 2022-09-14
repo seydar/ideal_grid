@@ -30,31 +30,48 @@ def cycle_between(one, two, edges)
   false
 end
 
-# Generate a bunch of random points
-prng = Random.new 54
-start = Time.now
-num   = ARGV[0] ? ARGV[0].to_i : 40
-nodes = num.times.map { Node.new(10 * prng.rand, 10 * prng.rand) }
+nodes, edges, clusters, mst = nil
+PRNG = Random.new 54
+time "Edge production" do
 
-pairs = nodes.combination 2
-edges = pairs.map {|p_1, p_2| Edge.new p_1,
-                                       p_2,
-                                       p_1.euclidean_distance(p_2) }
-puts "Edges produced (#{Time.now - start} sec)"
-
-
-start = Time.now
-mst = []
-edges = edges.to_a.sort_by {|e| e.weight }
-edges.each.with_index do |edge, i|
-  mst << edge && edge.mark_nodes! unless has_cycles edge, mst
+  # Generate a bunch of random points
+  num   = ARGV[0] ? ARGV[0].to_i : 40
+  nodes = num.times.map { Node.new(10 * PRNG.rand, 10 * PRNG.rand) }
+  
+  pairs = nodes.combination 2
+  edges = pairs.map {|p_1, p_2| Edge.new p_1,
+                                         p_2,
+                                         p_1.euclidean_distance(p_2) }
 end
 
-puts "Tree produced (#{Time.now - start} sec)"
+time "Tree production" do
 
-start = Time.now
-clusters = KMeansPP.clusters(nodes, 3) {|n| n.to_a }
-puts "Nodes clustered (#{Time.now - start} sec)"
+  #mst = []
+  #edges = edges.to_a.sort_by {|e| e.weight }
+  #edges.each do |edge|
+  #  mst << edge && edge.mark_nodes! unless has_cycles edge, mst
+  #end
+
+  # Procedure kruskal(E , T : Sequence of Edge, P : UnionFind)
+  mst = []
+  # sort E by increasing edge weight
+  edges = edges.sort_by {|e| e.weight }
+  # foreach {u,v} ∈ E do
+  edges.each do |edge|
+    # if u and v are in different components of P then
+    unless has_cycles edge, mst
+      # add edge {u,v} to T
+      mst << edge
+      # join the partitions of u and v in P
+      edge.mark_nodes!
+    end
+  end
+end
+
+time "Node clustering" do
+
+  clusters = KMeansPP.clusters(nodes, 3) {|n| n.to_a }
+end
 
 # IDEA
 #
@@ -85,6 +102,6 @@ puts "Nodes clustered (#{Time.now - start} sec)"
 
 plot clusters
 
-#require 'pry'
-#binding.pry
+require 'pry'
+binding.pry
 

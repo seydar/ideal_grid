@@ -171,7 +171,7 @@ class KMeansPP
       end
 
       # Randomly cut it.
-      distances_sum *= rand
+      distances_sum *= PRNG.rand
 
       # Keep subtracting those distances until we hit a zero (or lower)
       # in which case we found a new centroid.

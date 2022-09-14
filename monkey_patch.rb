@@ -9,3 +9,10 @@ module Enumerable
   end
 end
 
+# unfortunate variable shadowing
+def time(phrase, &block)
+  start = Time.now
+  block.call
+  puts "#{phrase} (#{Time.now - start})"
+end
+

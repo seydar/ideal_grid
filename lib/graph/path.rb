@@ -42,15 +42,17 @@ class Path
 
   # Median by the number of edges, but not by weight
   # n edges, n + 1 nodes
-  def median
-    #nodes[nodes.size / 2]
-    total = 0
+  def partition(n=1.0, of: 2.0)
+    threshold = n / of
+    total     = 0
+
     edges.each.with_index do |edge, i|
       total += edge.weight
 
-      if total > weight / 2.0
+      # if total > weight / 2.0
+      if total > weight * threshold
         # return whichever one is closer: this node or the next
-        if total - weight < edge.weight / 2.0
+        if total - weight < edge.weight * threshold
           return nodes[i + 1]
         else
           return nodes[i]
@@ -59,6 +61,10 @@ class Path
     end
 
     raise "something went wrong in calculating the median"
+  end
+
+  def median
+    partition 1, :of => 2.0
   end
 
   def size

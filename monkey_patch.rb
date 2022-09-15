@@ -32,3 +32,9 @@ def time(phrase, &block)
   puts "#{phrase} (#{Time.now - start})"
 end
 
+def track(var, &block)
+  start = Time.now
+  block.call
+  eval "#{var} ||= 0; #{var} += Time.now - start"
+end
+

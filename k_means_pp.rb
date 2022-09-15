@@ -136,6 +136,7 @@ class KMeansPP
 
   # Group points into clusters.
   def group_points
+
     define_initial_clusters
     fine_tune_clusters
   end
@@ -148,7 +149,7 @@ class KMeansPP
   # forming cells.
   def define_initial_clusters
     # Randomly choose a point as the first centroid.
-    centroids[0] = Centroid.new points.sample
+    centroids[0] = Centroid.new points.sample, 0
 
     # Initialize an array of distances of every point.
     distances = points.size.times.map { 0.0 }
@@ -178,13 +179,14 @@ class KMeansPP
       distances.each_with_index do |distance, point_i|
         distances_sum -= distance
         next if distances_sum > 0
-        centroids[centroid_i] = Centroid.new points[point_i]
+        centroids[centroid_i] = Centroid.new points[point_i], centroid_i
         break
       end
 
     end
 
     # Assign each point its nearest centroid.
+    # TODO hotspot
     points.each do |point|
       point.group = self.class.find_nearest_centroid(point, centroids)
     end
@@ -204,6 +206,9 @@ class KMeansPP
 
     loop do
       calculate_new_centroids
+
+      # TODO `reassign_points` is a hotspot
+      changed = nil
       changed = reassign_points
 
       clusters = centroids.map do |centroid|
@@ -245,8 +250,26 @@ class KMeansPP
   def reassign_points
     changed = 0
 
-    points.each do |point|
-      centroid = self.class.find_nearest_centroid(point, centroids)
+    # Sequential
+    #points.each do |point|
+    #  centroid = self.class.find_nearest_centroid(point, centroids)
+    #  next if centroid == point.group
+    #  changed += 1
+    #  point.group = centroid
+    #end
+
+    # Parallel
+    cs = points.parallel_map do |point|
+      self.class.find_nearest_centroid point, centroids
+    end
+
+    # Convert from the mashalled Centroids in `cs` to the actual ones 
+    # we want.
+    self.centroids = centroids.map do |centroid|
+      cs.find {|c| c.id == centroid.id }
+    end
+
+    points.zip(cs).each do |point, centroid|
       next if centroid == point.group
       changed += 1
       point.group = centroid

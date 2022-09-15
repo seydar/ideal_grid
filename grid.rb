@@ -65,6 +65,7 @@ end
 time "Node clustering" do
 
   clusters = KMeansPP.clusters(nodes, 3) {|n| n.to_a }
+  puts "#{$parallel} seconds in parallel part of reassign"
 end
 
 # IDEA

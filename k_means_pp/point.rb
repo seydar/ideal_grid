@@ -66,14 +66,17 @@ class KMeansPP
     # @return [Fixnum]
     attr_accessor :counter
 
+    attr_accessor :id
+
     # Create a new centroid point.
     #
     # @param point [Point] Copy point's X and Y coords.
-    def initialize(point)
+    def initialize(point, id=nil)
       self.x = point.x
       self.y = point.y
 
       self.original = point.original
+      self.id       = id
     end
 
     # Set the x and y to a specific point
@@ -106,6 +109,11 @@ class KMeansPP
     def average
       self.x /= counter
       self.y /= counter
+    end
+
+    def ==(other)
+      return false unless other.is_a? Centroid
+      id == other.id
     end
   end
 end

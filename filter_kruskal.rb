@@ -48,7 +48,7 @@ def qKruskal(edges, uf, mst=[])
   # else
   else
     # pick a pivot p ∈ E
-    pivot = edges.sample.weight
+    pivot = edges[edges.size / 2].weight
     # E≤ := ⟨e ∈ E :e ≤ p); E> := ⟨e ∈ E :e > p⟩
     es_l, es_g = edges.partition {|e| e.weight <= pivot }
     # qKruskal(E≤ , T , P )
@@ -73,7 +73,7 @@ def filterKruskal(edges, uf, mst=[])
   # else
   else
     # pick a pivot p ∈ E
-    pivot = edges.sample.weight
+    pivot = edges[edges.size / 2].weight
     # E≤ := ⟨e ∈ E :e ≤ p); E> := ⟨e ∈ E :e > p⟩
     es_l, es_g = edges.partition {|e| e.weight <= pivot }
     # filterKruskal(E≤, T, P)
@@ -100,9 +100,9 @@ def parallel_filter_kruskal(edges, uf, mst=[])
   # else
   else
     # pick a pivot p ∈ E
-    pivot = edges.sample.weight
+    pivot = edges[edges.size / 2].weight
     # E≤ := ⟨e ∈ E :e ≤ p⟩; E> := ⟨e ∈ E :e > p⟩ -- parallel
-    es_l, es_g = edges.parallel_partition {|e| e.weight <= pivot }
+    es_l, es_g = edges.partition {|e| e.weight <= pivot }
     # filterKruskal(E≤, T, P)
     parallel_filter_kruskal es_l, uf, mst
     # E> := filter(E>, P) -- parallel (remove_if)

@@ -12,6 +12,9 @@ PRNG = Random.new 54
 
 time "Edge production" do
 
+  $parallel = !!ARGV[1]
+  puts "parallel: #{$parallel}"
+
   # Generate a bunch of random points
   # We track IDs here so that equality can be asserted more easily after
   # objects have been copied due to parallelization (moving in and out of
@@ -42,7 +45,12 @@ time "Tree production" do
   #kruskal edges, UnionF.new(nodes)
   #qKruskal edges, UnionF.new(nodes), mst
   #filterKruskal edges, UnionF.new(nodes), mst
-  parallel_filter_kruskal edges, UnionF.new(nodes), mst
+  if $parallel
+    #parallel_filter_kruskal edges, UnionF.new(nodes), mst
+    kruskal edges, UnionF.new(nodes), mst
+  else
+    kruskal edges, UnionF.new(nodes), mst
+  end
 
   puts "Using #{$algorithm}"
   puts "\t#{mst.size} edges in MST"
@@ -65,7 +73,6 @@ end
 time "Node clustering" do
 
   clusters = KMeansPP.clusters(nodes, 3) {|n| n.to_a }
-  puts "#{$parallel} seconds in parallel part of reassign"
 end
 
 # IDEA

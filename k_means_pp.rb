@@ -149,7 +149,7 @@ class KMeansPP
   # forming cells.
   def define_initial_clusters
     # Randomly choose a point as the first centroid.
-    centroids[0] = Centroid.new points.sample, 0
+    centroids[0] = Centroid.new points.sample(:random => PRNG), 0
 
     # Initialize an array of distances of every point.
     distances = points.size.times.map { 0.0 }
@@ -186,9 +186,25 @@ class KMeansPP
     end
 
     # Assign each point its nearest centroid.
-    # TODO hotspot
-    points.each do |point|
-      point.group = self.class.find_nearest_centroid(point, centroids)
+    if $parallel
+      # Parallel
+      cs = points.parallel_map do |point|
+        self.class.find_nearest_centroid point, centroids
+      end
+
+      # Convert from the mashalled Centroids in `cs` to the actual ones 
+      # we want.
+      self.centroids = centroids.map do |centroid|
+        cs.find {|c| c.id == centroid.id }
+      end
+
+      points.zip(cs).each do |point, centroid|
+        point.group = centroid
+      end
+    else
+      points.each do |point|
+        point.group = self.class.find_nearest_centroid(point, centroids)
+      end
     end
   end
 
@@ -208,7 +224,6 @@ class KMeansPP
       calculate_new_centroids
 
       # TODO `reassign_points` is a hotspot
-      changed = nil
       changed = reassign_points
 
       clusters = centroids.map do |centroid|
@@ -250,31 +265,35 @@ class KMeansPP
   def reassign_points
     changed = 0
 
-    # Sequential
-    #points.each do |point|
-    #  centroid = self.class.find_nearest_centroid(point, centroids)
-    #  next if centroid == point.group
-    #  changed += 1
-    #  point.group = centroid
-    #end
+    if $parallel
+      # Parallel
+      cs = points.parallel_map do |point|
+        self.class.find_nearest_centroid point, centroids
+      end
 
-    # Parallel
-    cs = points.parallel_map do |point|
-      self.class.find_nearest_centroid point, centroids
+      # Convert from the mashalled Centroids in `cs` to the actual ones 
+      # we want.
+      self.centroids = centroids.map do |centroid|
+        cs.find {|c| c.id == centroid.id }
+      end
+
+      points.zip(cs).each do |point, centroid|
+        next if centroid == point.group
+        changed += 1
+        point.group = centroid
+      end
+
+      changed
+    else
+      # Sequential
+      points.each do |point|
+        centroid = self.class.find_nearest_centroid(point, centroids)
+        next if centroid == point.group
+        changed += 1
+        point.group = centroid
+      end
+
+      changed
     end
-
-    # Convert from the mashalled Centroids in `cs` to the actual ones 
-    # we want.
-    self.centroids = centroids.map do |centroid|
-      cs.find {|c| c.id == centroid.id }
-    end
-
-    points.zip(cs).each do |point, centroid|
-      next if centroid == point.group
-      changed += 1
-      point.group = centroid
-    end
-
-    changed
   end
 end

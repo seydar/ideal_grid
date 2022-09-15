@@ -47,8 +47,9 @@ time "Tree production" do
 
   p edges.size
 
-  qKruskal edges, UnionF.new(nodes)
   #kruskal edges
+  #qKruskal edges, UnionF.new(nodes)
+  filterKruskal edges, UnionF.new(nodes)
 end
 
 time "Node clustering" do

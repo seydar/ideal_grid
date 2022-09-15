@@ -77,7 +77,7 @@ end
 # Parallelizable
 #
 # Procedure filterKruskal(E, T : Sequence of Edge, P : UnionFind)
-def filterKruskal(edges, mst=[], uf)
+def filterKruskal(edges, uf, mst=[])
   # if m ≤ kruskalThreshold(n, |E|, |T|)
   if edges.size <= SEQ_THRESHOLD
     # then kruskal(E, T, P) -- parallel (within sorting)
@@ -87,15 +87,15 @@ def filterKruskal(edges, mst=[], uf)
     # pick a pivot p ∈ E
     pivot = edges[edges.size / 2].weight
     # E≤ := ⟨e ∈ E :e ≤ p⟩ -- parallel (partition)
-    es_1 = edges.filter {|e| e.weight <= pivot }
+    es_l = edges.filter {|e| e.weight <= pivot }
     # E> := ⟨e ∈ E :e > p⟩ -- parallel (partition)
     es_g = edges.filter {|e| e.weight >  pivot }
     # filterKruskal(E≤, T, P)
-    filterKruskal es_l, mst, uf
+    filterKruskal es_l, uf, mst
     # E> := filter(E>, P) -- parallel (remove_if)
     es_g = filter es_g, uf
     # filterKruskal(E>, T, P)
-    filterKruskal es_g, mst, uf
+    filterKruskal es_g, uf, mst
   end
 
   mst

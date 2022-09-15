@@ -1,4 +1,3 @@
-require 'set'
 require 'gnuplot'
 require './k_means_pp.rb'
 require './plotting.rb'
@@ -6,8 +5,7 @@ require './monkey_patch.rb'
 Dir['./lib/graph/*.rb'].each {|f| require f }
 require './filter_kruskal.rb'
 
-nodes, edges, clusters, mst = nil
-edge_map, node_map = nil
+nodes, edges, clusters = nil
 PRNG = Random.new 54
 
 time "Edge production" do
@@ -23,8 +21,7 @@ time "Edge production" do
   nodes = num.times.map do |i|
     Node.new(10 * PRNG.rand, 10 * PRNG.rand, :id => i)
   end
-  node_map = nodes.map {|n| [n.id, n] }.to_h
-  
+
   pairs = nodes.combination 2
   edges = pairs.map.with_index do |(p_1, p_2), i|
     Edge.new p_1,
@@ -32,7 +29,6 @@ time "Edge production" do
              p_1.euclidean_distance(p_2),
              :id => i
   end
-  edge_map = edges.map {|e| [e.id, e] }.to_h
 
   puts "#{num} nodes"
   puts "\t#{edges.size} edges in complete graph"
@@ -55,20 +51,6 @@ time "Tree production" do
   puts "Using #{$algorithm}"
   puts "\t#{mst.size} edges in MST"
 end
-
-#time "Node normalization" do
-#
-#  # Node clustering is slightly slower when there are many different objects,
-#  # so we have to return everything to be the base set
-#  edges = edges.map {|e| edge_map[e.id] }
-#  edges.each do |edge|
-#    edge.nodes = edge.nodes.map do |node|
-#      node = node_map[node.id]
-#      node.edges = node.edges.map {|e| edge_map[e.id] }
-#      node
-#    end
-#  end
-#end
 
 time "Node clustering" do
 

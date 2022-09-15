@@ -1,3 +1,5 @@
+require 'set'
+
 class Graph
   attr_accessor :nodes
   attr_accessor :adjacencies

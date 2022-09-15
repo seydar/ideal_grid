@@ -1,4 +1,3 @@
-require 'math'
 require 'set'
 require 'gnuplot'
 require './k_means_pp.rb'

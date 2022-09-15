@@ -4,7 +4,7 @@ module Enumerable
   def parallel_map(cores: 4, &block)
     n = size / cores
     Parallel.map each_slice(n).to_a, :in_processes => cores do |group|
-      group.map &block
+      group.map(&block)
     end.flatten 1
   end
 

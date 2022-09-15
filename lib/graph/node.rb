@@ -64,5 +64,10 @@ class Node
   def to_a
     [x, y]
   end
+
+  def ==(other)
+    return false unless other.is_a? Node
+    id == other.id
+  end
 end
 

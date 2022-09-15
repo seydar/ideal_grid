@@ -7,50 +7,62 @@ require './monkey_patch.rb'
 Dir['./lib/graph/*.rb'].each {|f| require f }
 require './filter_kruskal.rb'
 
-# Kruskal's algorithm for an MST
-# https://github.com/mneedham/algorithms2/blob/master/kruskals.rb
-def has_cycles(edge, mst)
-  node_1, node_2 = *edge.nodes
-  mst.each {|x| x.explored = false }
-  cycle_between node_1, node_2, mst
-end
-
-def cycle_between(one, two, edges)
-  adjacent_edges = edges.filter {|e| e.nodes.include? one }
-  return false if adjacent_edges.empty?
-
-  adjacent_edges.select {|e| not e.explored }.each do |edge|
-    edge.explored = true
-    other = edge.nodes.find {|n| n != one } # `edge.nodes.size == 2`
-
-    return true if other == two || cycle_between(other, two, edges)
-  end
-
-  false
-end
-
 nodes, edges, clusters, mst = nil
+edge_map, node_map = nil
 PRNG = Random.new 54
+
 time "Edge production" do
 
   # Generate a bunch of random points
+  # We track IDs here so that equality can be asserted more easily after
+  # objects have been copied due to parallelization (moving in and out of
+  # processes -- they get marshalled and sent down a pipe)
   num   = ARGV[0] ? ARGV[0].to_i : 40
-  nodes = num.times.map { Node.new(10 * PRNG.rand, 10 * PRNG.rand) }
+  nodes = num.times.map do |i|
+    Node.new(10 * PRNG.rand, 10 * PRNG.rand, :id => i)
+  end
+  node_map = nodes.map {|n| [n.id, n] }.to_h
   
   pairs = nodes.combination 2
-  edges = pairs.map {|p_1, p_2| Edge.new p_1,
-                                         p_2,
-                                         p_1.euclidean_distance(p_2) }
+  edges = pairs.map.with_index do |(p_1, p_2), i|
+    Edge.new p_1,
+             p_2,
+             p_1.euclidean_distance(p_2),
+             :id => i
+  end
+  edge_map = edges.map {|e| [e.id, e] }.to_h
+
+  puts "#{num} nodes"
+  puts "\t#{edges.size} edges in complete graph"
 end
 
 time "Tree production" do
 
-  p edges.size
+  mst = []
 
-  #kruskal edges
-  #qKruskal edges, UnionF.new(nodes)
-  filterKruskal edges, UnionF.new(nodes)
+  #kruskal edges, UnionF.new(nodes)
+  #qKruskal edges, UnionF.new(nodes), mst
+  #filterKruskal edges, UnionF.new(nodes), mst
+  parallel_filter_kruskal edges, UnionF.new(nodes), mst
+
+  puts "Using #{$algorithm}"
+  puts "\t#{mst.size} edges in MST"
+  puts "\t#{$calls} calls"
 end
+
+#time "Node normalization" do
+#
+#  # Node clustering is slightly slower when there are many different objects,
+#  # so we have to return everything to be the base set
+#  edges = edges.map {|e| edge_map[e.id] }
+#  edges.each do |edge|
+#    edge.nodes = edge.nodes.map do |node|
+#      node = node_map[node.id]
+#      node.edges = node.edges.map {|e| edge_map[e.id] }
+#      node
+#    end
+#  end
+#end
 
 time "Node clustering" do
 

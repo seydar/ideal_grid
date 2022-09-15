@@ -5,8 +5,7 @@ require './k_means_pp.rb'
 require './plotting.rb'
 require './monkey_patch.rb'
 Dir['./lib/graph/*.rb'].each {|f| require f }
-
-require 'parallel'
+require './filter_kruskal.rb'
 
 # Kruskal's algorithm for an MST
 # https://github.com/mneedham/algorithms2/blob/master/kruskals.rb
@@ -46,26 +45,10 @@ end
 
 time "Tree production" do
 
-  #mst = []
-  #edges = edges.to_a.sort_by {|e| e.weight }
-  #edges.each do |edge|
-  #  mst << edge && edge.mark_nodes! unless has_cycles edge, mst
-  #end
+  p edges.size
 
-  # Procedure kruskal(E , T : Sequence of Edge, P : UnionFind)
-  mst = []
-  # sort E by increasing edge weight
-  edges = edges.sort_by {|e| e.weight }
-  # foreach {u,v} ∈ E do
-  edges.each do |edge|
-    # if u and v are in different components of P then
-    unless has_cycles edge, mst
-      # add edge {u,v} to T
-      mst << edge
-      # join the partitions of u and v in P
-      edge.mark_nodes!
-    end
-  end
+  qKruskal edges, UnionF.new(nodes)
+  #kruskal edges
 end
 
 time "Node clustering" do
@@ -102,6 +85,6 @@ end
 
 plot clusters
 
-require 'pry'
-binding.pry
+#require 'pry'
+#binding.pry
 

@@ -1,3 +1,4 @@
+require './lib/unionf.rb'
 
 def has_cycles(edge, mst)
   node_1, node_2 = *edge.nodes
@@ -34,6 +35,8 @@ def kruskal(edges, mst=[])
       edge.mark_nodes!
     end
   end
+
+  mst
 end
 
 ####################################################33
@@ -49,30 +52,32 @@ SEQ_THRESHOLD = 8192 # stolen from the CMU students (Allen Chou)
 # Sequential (but sets the tone for making it parallelizable)
 #
 # Procedure qKruskal(E, T : Sequence of Edge, P : UnionFind)
-def qKruskal(edges, mst, uf)
+def qKruskal(edges, uf, mst=[])
   # if m ≤ kruskalThreshold(n, |E|, |T|)
   if edges.size <= SEQ_THRESHOLD
     # then kruskal(E, T, P)
-    kruskal(edges, mst)
+    kruskal edges, mst
   # else
   else
     # pick a pivot p ∈ E
-    pivot = edges.sample
+    pivot = edges.sample.weight
     # E≤:= ⟨e ∈ E : e ≤ p⟩
     es_l = edges.filter {|e| e.weight <= pivot }
     # E>:= ⟨e ∈ E : e > p⟩
     es_g = edges.filter {|e| e.weight >  pivot }
     # qKruskal(E≤ , T , P )
-    qKruskal es_l, mst, uf
+    qKruskal es_l, uf, mst
     # qKruskal(E> , T , P )
-    qKruskal es_g, mst, uf
+    qKruskal es_g, uf, mst
   end
+
+  mst
 end
 
 # Parallelizable
 #
 # Procedure filterKruskal(E, T : Sequence of Edge, P : UnionFind)
-def filterKruskal(edges, mst=[], uf=UnionF.new)
+def filterKruskal(edges, mst=[], uf)
   # if m ≤ kruskalThreshold(n, |E|, |T|)
   if edges.size <= SEQ_THRESHOLD
     # then kruskal(E, T, P) -- parallel (within sorting)
@@ -97,8 +102,8 @@ def filterKruskal(edges, mst=[], uf=UnionF.new)
 end
 
 # Function filter(E)
-def filter(edges)
+def filter(edges, uf)
   # return ⟨{u, v} ∈ E : u, v are in different components of P⟩
-  edges.filter {|e| not connected?(e.nodes[0], e.nodes[1]) }
+  edges.filter {|e| not uf.connected?(e.nodes[0], e.nodes[1]) }
 end
 

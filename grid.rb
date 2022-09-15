@@ -47,7 +47,6 @@ time "Tree production" do
 
   puts "Using #{$algorithm}"
   puts "\t#{mst.size} edges in MST"
-  puts "\t#{$calls} calls"
 end
 
 #time "Node normalization" do

@@ -2,7 +2,7 @@ require './lib/unionf.rb'
 
 # Procedure kruskal(E , T : Sequence of Edge, P : UnionFind)
 def kruskal(edges, uf, mst=[])
-  $algorithm ||= "parallel filter Kruskal"
+  $algorithm ||= "Kruskal"
 
   # sort E by increasing edge weight
   edges = edges.sort_by {|e| e.weight }
@@ -91,7 +91,7 @@ end
 #
 # Procedure filterKruskal(E, T : Sequence of Edge, P : UnionFind)
 def parallel_filter_kruskal(edges, uf, mst=[])
-  $algorithm = "Parallel filter Kruskal"
+  $algorithm = "parallel filter Kruskal"
 
   # if m ≤ kruskalThreshold(n, |E|, |T|)
   if edges.size <= SEQ_THRESHOLD

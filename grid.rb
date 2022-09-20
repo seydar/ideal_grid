@@ -7,7 +7,7 @@ require './filter_kruskal.rb'
 
 nodes, edges, clusters = nil
 PRNG = Random.new 1337
-
+:x
 time "Edge production" do
 
   $parallel = !!ARGV[1]

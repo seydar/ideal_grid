@@ -6,7 +6,7 @@ Dir['./lib/graph/*.rb'].each {|f| require f }
 require './filter_kruskal.rb'
 
 nodes, edges, clusters = nil
-PRNG = Random.new 54
+PRNG = Random.new 1337
 
 time "Edge production" do
 
@@ -57,13 +57,22 @@ time "Node clustering" do
   clusters = KMeansPP.clusters(nodes, 3) {|n| n.to_a }
 end
 
+#time "Effective currents" do
+#
+#  generators = clusters.map do |cluster|
+#    Generator.new cluster.centroid.original
+#  end
+#  
+#  graph = Graph.new nodes
+#  graph.calculate_effective_currents!
+#end
+
 # IDEA
 #
 # Minimum spanning tree to construct the grid
 # Then:
 #   pick the median node (same # of edges on all branches)
-#     BFS until n/2 is reached?
-#     then backtrack to latest edge with greatest number of nodes
+#     find longest edge, pick median node
 #   pick the n/3 nodes (???) such that each root has roughly the same number of nodes closest to it
 #   k-means
 #     cluster by geographic distance
@@ -73,9 +82,11 @@ end
 #   Put generators at geographic centroids of clusters
 #     then build new edges
 #   Put generators at nodal centroids of clusters
+#   Put generators at *intersections* between clusters
 #
 # Questions:
 #   How do I get clusters that overlap, so that each node has some kind of backup source?
+#     Deal with resiliency later. Although overlapping clusters is a good question
 #
 # Assign generators based on an MST
 # Assign redundancy by making a maximally connected graph, and then remove

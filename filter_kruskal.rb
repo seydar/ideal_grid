@@ -91,7 +91,7 @@ end
 #
 # Procedure filterKruskal(E, T : Sequence of Edge, P : UnionFind)
 def parallel_filter_kruskal(edges, uf, mst=[])
-  $algorithm = "parallel filter Kruskal"
+  $algorithm = "parallelized filter Kruskal"
 
   # if m ≤ kruskalThreshold(n, |E|, |T|)
   if edges.size <= SEQ_THRESHOLD

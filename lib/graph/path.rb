@@ -18,6 +18,9 @@ class Path
     @nodes = []
   end
 
+  # Edges are in order, but their points are not necessarily. In addition,
+  # they'll repeat points (edge X is from A - B, edge Y is B - C, so you can't
+  # just map all the points together)
   def sort_points!
     sorted = []
 
@@ -27,7 +30,7 @@ class Path
     end
 
     edges.each.with_index do |edge, i|
-      if edges[i + 1]
+      if edges[i + 1] # if we're not the last node
         unique = edge.nodes - edges[i + 1].nodes # unique node to `edge`
         sorted << unique[0]
       else # we're at the last one
@@ -42,9 +45,8 @@ class Path
 
   # Median by the number of edges, but not by weight
   # n edges, n + 1 nodes
-  def partition(n=1.0, of: 2.0)
-    threshold = n / of
-    total     = 0
+  def partition(threshold)
+    total = 0
 
     edges.each.with_index do |edge, i|
       total += edge.weight
@@ -64,7 +66,7 @@ class Path
   end
 
   def median
-    partition 1, :of => 2.0
+    partition 0.5
   end
 
   def size

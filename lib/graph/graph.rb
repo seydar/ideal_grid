@@ -29,17 +29,14 @@ class Graph
         #
         # You are correct in thinking that I did not myself remember this
         # for many hours.
-        adjacencies[node] << [other, edge.length] if nodes.include? other
+        adjacencies[node] << [other, edge] if nodes.include? other
       end
     end
   end
 
-  # Should these paths be remembered?
-  def longest_path_from(source)
+  # BFS
+  def traverse_edges(source, &block)
     visited  = Set.new
-    distance = Hash.new {|h, k| h[k] = -1 }
-
-    distance[source] = 0
 
     # Probably should replace this with a deque
     queue = []
@@ -47,18 +44,18 @@ class Graph
     visited << source
 
     until queue.empty?
-      front = queue.shift
+      from = queue.shift
 
-      adjacencies[front].each do |node, length|
-        unless visited.include? node
-          distance[node] = distance[front] + length
-          queue   << node
-          visited << node
+      adjacencies[from].each do |to, edge|
+        unless visited.include? to
+          block.call edge, from, to
+          queue   << to
+          visited << to
         end
       end
     end
 
-    distance.max_by {|k, v| v }
+    visited
   end
 
   def longest_path
@@ -69,10 +66,18 @@ class Graph
   end
   
   def total_edge_length
-    adjacencies.values.flatten(1).uniq.map {|e, w| w }.sum
+    adjacencies.values.flatten(1).uniq.map {|n, e| e.length }.sum
   end
-  
-  def traverse_edges
+
+  def longest_path_from(source)
+    distance = Hash.new {|h, k| h[k] = -1 }
+    distance[source] = 0
+
+    traverse_edges source do |edge, from, to|
+      distance[to] = distance[from] + edge.length
+    end
+
+    distance.max_by {|k, v| v }
   end
 end
 

@@ -29,7 +29,7 @@ class Graph
         #
         # You are correct in thinking that I did not myself remember this
         # for many hours.
-        adjacencies[node] << [other, edge.weight] if nodes.include? other
+        adjacencies[node] << [other, edge.length] if nodes.include? other
       end
     end
   end
@@ -49,9 +49,9 @@ class Graph
     until queue.empty?
       front = queue.shift
 
-      adjacencies[front].each do |node, weight|
+      adjacencies[front].each do |node, length|
         unless visited.include? node
-          distance[node] = distance[front] + weight
+          distance[node] = distance[front] + length
           queue   << node
           visited << node
         end
@@ -66,6 +66,13 @@ class Graph
     start, dist = longest_path_from node
 
     Path.build start.path_to(node)
+  end
+  
+  def total_edge_length
+    adjacencies.values.flatten(1).uniq.map {|e, w| w }.sum
+  end
+  
+  def traverse_edges
   end
 end
 

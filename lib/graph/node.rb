@@ -3,23 +3,43 @@ class Node
   attr_accessor :y
   attr_accessor :visited
   attr_accessor :edges
+  attr_accessor :load
   attr_accessor :id
 
   def initialize(x, y, id: nil)
     @x, @y = x, y
     @edges = []
-    @id = id
+    @load  = nil
+    @id    = id
   end
 
   def inspect
     "#<Node:#{object_id} @x=#{x.round 3}, @y=#{y.round 3}, # of edges=#{edges.size}>"
   end
 
-  def other_nodes_connected_to_not(except)
-    branches = edges - [except]
+  def count_accessible_branches(except=nil, &blk)
+    branches = edges - (except ? [except] : [])
     branches.map do |b|
-      (b.nodes - [self])[0].other_nodes_connected_to_not b
-    end.sum + 1
+      (b.nodes - [self])[0].count_accessible_branches(b, &blk)
+    end.sum + blk.call(except, self)
+  end
+  
+  def total_nodes
+    count_accessible_branches do |_, _|
+      1
+    end
+  end
+  
+  def total_edge_length
+    count_accessible_branches do |edge, _|
+      edge.length
+    end
+  end
+  
+  def total_node_loads
+    count_accessible_branches do |_, node|
+      node.load
+    end
   end
 
   def euclidean_distance(p_2)
@@ -47,7 +67,7 @@ class Node
   end
 
   def edge_distance(other)
-    Path.build(path_to(other)).weight
+    Path.build(path_to(other)).length
   end
 
   def dist(p_2, style=:euclidean)

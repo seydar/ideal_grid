@@ -2,4 +2,5 @@ TODO
 -----------------------------
 * move filter_kruskal.rb into graph.rb
 * also integrate k_means_pp.rb et al into graph.rb
+* make edge/node more specific to line/load
 

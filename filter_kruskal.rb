@@ -4,8 +4,8 @@ require './lib/unionf.rb'
 def kruskal(edges, uf, mst=[])
   $algorithm ||= "Kruskal"
 
-  # sort E by increasing edge weight
-  edges = edges.sort_by {|e| e.weight }
+  # sort E by increasing edge length
+  edges = edges.sort_by {|e| e.length }
   # foreach {u,v} ∈ E do
   edges.each do |edge|
     # if u and v are in different components of P then
@@ -48,9 +48,9 @@ def qKruskal(edges, uf, mst=[])
   # else
   else
     # pick a pivot p ∈ E
-    pivot = edges[edges.size / 2].weight
+    pivot = edges[edges.size / 2].length
     # E≤ := ⟨e ∈ E :e ≤ p); E> := ⟨e ∈ E :e > p⟩
-    es_l, es_g = edges.partition {|e| e.weight <= pivot }
+    es_l, es_g = edges.partition {|e| e.length <= pivot }
     # qKruskal(E≤ , T , P )
     qKruskal es_l, uf, mst
     # qKruskal(E> , T , P )
@@ -73,9 +73,9 @@ def filterKruskal(edges, uf, mst=[])
   # else
   else
     # pick a pivot p ∈ E
-    pivot = edges[edges.size / 2].weight
+    pivot = edges[edges.size / 2].length
     # E≤ := ⟨e ∈ E :e ≤ p); E> := ⟨e ∈ E :e > p⟩
-    es_l, es_g = edges.partition {|e| e.weight <= pivot }
+    es_l, es_g = edges.partition {|e| e.length <= pivot }
     # filterKruskal(E≤, T, P)
     filterKruskal es_l, uf, mst
     # E> := filter(E>, P) -- parallel (remove_if)
@@ -100,9 +100,9 @@ def parallel_filter_kruskal(edges, uf, mst=[])
   # else
   else
     # pick a pivot p ∈ E
-    pivot = edges[edges.size / 2].weight
+    pivot = edges[edges.size / 2].length
     # E≤ := ⟨e ∈ E :e ≤ p⟩; E> := ⟨e ∈ E :e > p⟩ -- parallel
-    es_l, es_g = edges.partition {|e| e.weight <= pivot }
+    es_l, es_g = edges.partition {|e| e.length <= pivot }
     # filterKruskal(E≤, T, P)
     parallel_filter_kruskal es_l, uf, mst
     # E> := filter(E>, P) -- parallel (remove_if)

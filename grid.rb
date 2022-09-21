@@ -19,7 +19,9 @@ time "Edge production" do
   # processes -- they get marshalled and sent down a pipe)
   num   = ARGV[0] ? ARGV[0].to_i : 40
   nodes = num.times.map do |i|
-    Node.new(10 * PRNG.rand, 10 * PRNG.rand, :id => i)
+    n = Node.new(10 * PRNG.rand, 10 * PRNG.rand, :id => i)
+    n.load = 1
+    n
   end
 
   pairs = nodes.combination 2
@@ -57,15 +59,19 @@ time "Node clustering" do
   clusters = KMeansPP.clusters(nodes, 3) {|n| n.to_a }
 end
 
-#time "Effective currents" do
-#
-#  generators = clusters.map do |cluster|
-#    Generator.new cluster.centroid.original
-#  end
-#  
-#  graph = Graph.new nodes
-#  graph.calculate_effective_currents!
-#end
+time "Effective currents" do
+
+  generators = clusters.map do |cluster|
+    Generator.new cluster
+  end
+  
+  generators.each do |generator|
+    puts "\tCluster #{generator.cluster.centroid.original.inspect}"
+    puts "\t\tCalculated flow: #{generator.flow}"
+    puts "\t\tTotal line length: #{generator.demand}"
+    puts "\t\tTotal nodes: #{generator.cluster.points.size}"
+  end
+end
 
 # IDEA
 #

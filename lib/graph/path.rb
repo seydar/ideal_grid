@@ -9,8 +9,8 @@ class Path
     path
   end
 
-  def weight
-    edges.map {|e| e.weight }.sum
+  def length
+    @length ||= edges.map {|e| e.length }.sum
   end
 
   def initialize(edges)
@@ -43,18 +43,17 @@ class Path
     @nodes = sorted
   end
 
-  # Median by the number of edges, but not by weight
   # n edges, n + 1 nodes
   def partition(threshold)
     total = 0
 
     edges.each.with_index do |edge, i|
-      total += edge.weight
+      total += edge.length
 
       # if total > weight / 2.0
-      if total > weight * threshold
+      if total > length * threshold
         # return whichever one is closer: this node or the next
-        if total - weight < edge.weight * threshold
+        if total - length < edge.length * threshold
           return nodes[i + 1]
         else
           return nodes[i]
@@ -70,7 +69,7 @@ class Path
   end
 
   def size
-    edges.inject(0) {|s, e| s + e.weight }
+    edges.inject(0) {|s, e| s + e.length }
   end
   alias_method :length, :size
 end

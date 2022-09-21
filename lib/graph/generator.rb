@@ -16,10 +16,9 @@ class Generator
   end
   
   def flow
-    p cluster.points[0]
     node.edges.map do |edge|
       edge.flow :from => node, :restrict => cluster.points
-    end.sum
+    end.sum + node.load
   end
 end
 

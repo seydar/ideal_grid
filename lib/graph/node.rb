@@ -9,7 +9,7 @@ class Node
   def initialize(x, y, id: nil)
     @x, @y = x, y
     @edges = []
-    @load  = nil
+    @load  = 1
     @id    = id
   end
 

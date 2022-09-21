@@ -30,8 +30,8 @@ class Edge
       @flow[from] = other_node.load
     else
       @flow[from] = other_edges.map do |edge|
-        edge.flow(:from => other_node, :restrict => restrict) + other
-      end.sum
+        edge.flow(:from => other_node, :restrict => restrict)
+      end.sum + other_node.load
     end
   end
 

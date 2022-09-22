@@ -21,8 +21,7 @@ class Generator
     end.sum + node.load
   end
 
-  # FIXME fails under parallelization. `@node` need to be exchanged
-  # FIXME weirdly adds an extra value
+  # >10x as fast as the recursive version
   def flow_loop
     queue = []
 
@@ -35,7 +34,7 @@ class Generator
       flows[from] += flows[to]
     end
 
-    flows[node] += node.load
+    flows[node]
   end
 
 end

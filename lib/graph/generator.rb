@@ -6,23 +6,17 @@ class Generator
   def initialize(cluster)
     @cluster = cluster
     @node    = cluster.centroid.original
-    @graph   = Graph.new(cluster.points)
+    @graph   = Graph.new cluster.points
   end
   
   # requires an MST
   # demand == node.edges.map {|e| e.demand }.sum
-  def demand
+  def total_line_length
     graph.total_edge_length
-  end
-  
-  def flow
-    node.edges.map do |edge|
-      edge.flow :from => node, :restrict => cluster.points
-    end.sum + node.load
   end
 
   # >10x as fast as the recursive version
-  def flow_loop
+  def demand
     queue = []
 
     graph.traverse_edges node do |edge, from, to|

@@ -85,9 +85,8 @@ time "Effective currents" do
   
   generators.each do |generator|
     puts "\tCluster #{generator.cluster.centroid.original.inspect}"
-    time("\t\tCalculated flow") { print "\t\t\t"; p generator.flow }
-    time("\t\tLoop flow") { print "\t\t\t"; p generator.flow_loop }
-    puts "\t\tTotal line length: #{generator.demand}"
+    puts "\t\tCalculated demand: #{generator.demand}"
+    puts "\t\tTotal line length: #{generator.total_line_length}"
     puts "\t\tTotal nodes: #{generator.cluster.points.size}"
   end
 end

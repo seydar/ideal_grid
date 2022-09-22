@@ -194,13 +194,18 @@ class KMeansPP
 
       # Convert from the mashalled Centroids in `cs` to the actual ones 
       # we want.
-      self.centroids = centroids.map do |centroid|
-        cs.find {|c| c.id == centroid.id }
+      #self.centroids = centroids.map do |centroid|
+      #  cs.find {|c| c.id == centroid.id }
+      #end
+      
+      cs = cs.map do |centroid|
+        centroids.find {|c| c.id == centroid.id }
       end
 
       points.zip(cs).each do |point, centroid|
         point.group = centroid
       end
+
     else
       points.each do |point|
         point.group = self.class.find_nearest_centroid(point, centroids)
@@ -273,8 +278,8 @@ class KMeansPP
 
       # Convert from the mashalled Centroids in `cs` to the actual ones 
       # we want.
-      self.centroids = centroids.map do |centroid|
-        cs.find {|c| c.id == centroid.id }
+      cs = cs.map do |centroid|
+        centroids.find {|c| c.id == centroid.id }
       end
 
       points.zip(cs).each do |point, centroid|

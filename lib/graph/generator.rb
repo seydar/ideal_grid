@@ -6,12 +6,12 @@ class Generator
   def initialize(cluster)
     @cluster = cluster
     @node    = cluster.centroid.original
+    @graph   = Graph.new(cluster.points)
   end
   
   # requires an MST
   # demand == node.edges.map {|e| e.demand }.sum
   def demand
-    @graph = Graph.new(cluster.points)
     graph.total_edge_length
   end
   
@@ -20,5 +20,23 @@ class Generator
       edge.flow :from => node, :restrict => cluster.points
     end.sum + node.load
   end
+
+  # FIXME fails under parallelization. `@node` need to be exchanged
+  # FIXME weirdly adds an extra value
+  def flow_loop
+    queue = []
+
+    graph.traverse_edges node do |edge, from, to|
+      queue << [edge, from, to]
+    end
+
+    flows = Hash.new {|h, k| h[k] = k.load }
+    queue.reverse.each do |edge, from, to|
+      flows[from] += flows[to]
+    end
+
+    flows[node] += node.load
+  end
+
 end
 

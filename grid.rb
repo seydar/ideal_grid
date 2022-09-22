@@ -1,24 +1,42 @@
 require 'gnuplot'
+require 'optimist'
 require './k_means_pp.rb'
 require './plotting.rb'
 require './monkey_patch.rb'
 Dir['./lib/graph/*.rb'].each {|f| require f }
 require './filter_kruskal.rb'
 
+opts = Optimist::options do
+  banner <<-EOS
+Pretend a minimal electric grid is a minimum spanning tree across a bunch of nodes.
+Now cluster them to determine where to put your generators.
+Now add in extra edges to add resiliency.
+Now calculate the capacity of each of the lines.
+
+Usage:
+  grid.rb [options]
+where [options] are:
+
+EOS
+
+  opt :parallel, "Parallelize the clustering algorithm"
+  opt :nodes, "Number of nodes in the grid", :type => :integer, :default => 100
+  opt :clusters, "Cluster the nodes into k clusters", :type => :integer, :default => 3
+end
+
 nodes, edges, clusters = nil
-PRNG = Random.new 1337
-:x
+PRNG = Random.new
+$parallel = opts[:parallel]
+
 time "Edge production" do
 
-  $parallel = !!ARGV[1]
   puts "parallel: #{$parallel}"
 
   # Generate a bunch of random points
   # We track IDs here so that equality can be asserted more easily after
   # objects have been copied due to parallelization (moving in and out of
   # processes -- they get marshalled and sent down a pipe)
-  num   = ARGV[0] ? ARGV[0].to_i : 40
-  nodes = num.times.map do |i|
+  nodes = opts[:nodes].times.map do |i|
     n = Node.new(10 * PRNG.rand, 10 * PRNG.rand, :id => i)
     n.load = 1
     n
@@ -32,7 +50,7 @@ time "Edge production" do
              :id => i
   end
 
-  puts "#{num} nodes"
+  puts "#{opts[:nodes]} nodes"
   puts "\t#{edges.size} edges in complete graph"
 end
 
@@ -54,9 +72,9 @@ time "Tree production" do
   puts "\t#{mst.size} edges in MST"
 end
 
-time "Node clustering" do
+time "Node clustering [#{opts[:clusters]} clusters]" do
 
-  clusters = KMeansPP.clusters(nodes, 3) {|n| n.to_a }
+  clusters = KMeansPP.clusters(nodes, opts[:clusters]) {|n| n.to_a }
 end
 
 time "Effective currents" do
@@ -68,6 +86,7 @@ time "Effective currents" do
   generators.each do |generator|
     puts "\tCluster #{generator.cluster.centroid.original.inspect}"
     puts "\t\tCalculated flow: #{generator.flow}"
+    puts "\t\tLoop flow: #{generator.flow_loop}"
     puts "\t\tTotal line length: #{generator.demand}"
     puts "\t\tTotal nodes: #{generator.cluster.points.size}"
   end

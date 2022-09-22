@@ -22,7 +22,7 @@ class Graph
       node.edges.each do |edge|
         other = edge.not_node node
 
-        # We use the weight later one, so we might as well store it here
+        # We use the edge length later on, so we might as well store it here
         # The `if` statement here is because these nodes are otherwise
         # completely connected, so we want to make sure that this graph is
         # restricted to the subset of nodes that we pass in.

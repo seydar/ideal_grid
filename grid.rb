@@ -87,6 +87,8 @@ time "Effective currents" do
     puts "\tCluster #{generator.cluster.centroid.original.inspect}"
     puts "\t\tCalculated demand: #{generator.demand}"
     puts "\t\tTotal line length: #{generator.total_line_length}"
+    puts "\t\tLongest path: #{generator.graph.longest_path.length}"
+    puts "\t\t\t      #{generator.graph.longest_path.edges.size} edges"
     puts "\t\tTotal nodes: #{generator.cluster.points.size}"
   end
 end

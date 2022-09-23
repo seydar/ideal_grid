@@ -9,10 +9,6 @@ class Path
     path
   end
 
-  def length
-    @length ||= edges.map {|e| e.length }.sum
-  end
-
   def initialize(edges)
     @edges = edges
     @nodes = []
@@ -69,7 +65,7 @@ class Path
   end
 
   def size
-    edges.inject(0) {|s, e| s + e.length }
+    @size ||= edges.inject(0) {|s, e| s + e.length }
   end
   alias_method :length, :size
 end

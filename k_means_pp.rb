@@ -88,7 +88,8 @@ class KMeansPP
     nearest_distance = Float::INFINITY
 
     centroids.each do |centroid|
-      #distance = centroid.squared_distance_to(point)
+      # TODO change this to no longer count the NUMBER of edges
+      # but instead count the total LENGTH of the edges
       distance = centroid.edge_distance(point)
 
       next if distance >= nearest_distance

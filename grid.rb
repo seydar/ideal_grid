@@ -24,8 +24,8 @@ EOS
   opt :clusters, "Cluster the nodes into k clusters", :type => :integer, :default => 3
 end
 
-nodes, edges, clusters = nil
-PRNG = Random.new
+nodes, edges, clusters, generators = nil
+PRNG = Random.new 1337
 $parallel = opts[:parallel]
 
 time "Edge production" do
@@ -80,7 +80,7 @@ end
 time "Effective currents" do
 
   generators = clusters.map do |cluster|
-    Generator.new cluster
+    Generator.new cluster, 10
   end
   
   generators.each do |generator|
@@ -122,6 +122,8 @@ end
 ############################
 
 plot clusters
+generators.each {|g| cplot g.reach[0] }
+show_plot
 
 #require 'pry'
 #binding.pry

@@ -88,8 +88,6 @@ class KMeansPP
     nearest_distance = Float::INFINITY
 
     centroids.each do |centroid|
-      # TODO change this to no longer count the NUMBER of edges
-      # but instead count the total LENGTH of the edges
       distance = centroid.edge_distance(point)
 
       next if distance >= nearest_distance
@@ -229,10 +227,9 @@ class KMeansPP
     loop do
       calculate_new_centroids
 
-      # TODO `reassign_points` is a hotspot
       changed = reassign_points
 
-      clusters = centroids.map do |centroid|
+      centroids.map do |centroid|
         self.class.cluster_for_centroid(centroid, points, true)
       end
 

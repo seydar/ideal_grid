@@ -2,11 +2,13 @@ class Generator
   attr_accessor :cluster
   attr_accessor :node
   attr_accessor :graph
+  attr_accessor :power
   
-  def initialize(cluster)
+  def initialize(cluster, power=0)
     @cluster = cluster
     @node    = cluster.centroid.original
     @graph   = Graph.new cluster.points
+    @power   = power
   end
   
   # requires an MST
@@ -31,5 +33,19 @@ class Generator
     flows[node]
   end
 
+  # TODO How far will the generator's power go before it's lost? 
+  def reach
+    reachable = []
+    remainder = power
+
+    graph.traverse_edges node do |edge, from, to|
+      if remainder - from.load > 0
+        reachable << from
+        remainder -= from.load
+      end
+    end
+
+    [reachable, remainder]
+  end
 end
 

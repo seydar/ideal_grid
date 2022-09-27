@@ -28,10 +28,10 @@ class KMeansPP
       squared_distance
     end
 
-    def edge_distance(point)
+    def manhattan_distance(point)
       # We don't need to square this because everything is one dimensional:
       # the distance is simply the distance along the connecting edge.
-      original.edge_distance point.original
+      original.manhattan_distance point.original
     end
 
     # A string representation of the point.

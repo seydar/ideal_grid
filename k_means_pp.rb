@@ -88,7 +88,7 @@ class KMeansPP
     nearest_distance = Float::INFINITY
 
     centroids.each do |centroid|
-      distance = centroid.edge_distance(point)
+      distance = centroid.manhattan_distance(point)
 
       next if distance >= nearest_distance
 

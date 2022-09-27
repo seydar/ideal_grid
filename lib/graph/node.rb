@@ -66,14 +66,14 @@ class Node
     []
   end
 
-  def edge_distance(other)
+  def manhattan_distance(other)
     Path.build(path_to(other)).length
   end
 
   def dist(p_2, style=:euclidean)
     case style
     when :edges
-      edge_distance p_2
+      manhattan_distance p_2
     when :euclidean
       euclidean_distance p_2
     else

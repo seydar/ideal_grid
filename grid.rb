@@ -24,7 +24,8 @@ EOS
   opt :clusters, "Cluster the nodes into k clusters", :type => :integer, :default => 3
 end
 
-nodes, edges, clusters, generators = nil
+nodes, edges, clusters, generators, unreached = nil
+unreached_cs = nil
 PRNG = Random.new 1337
 $parallel = opts[:parallel]
 
@@ -58,15 +59,7 @@ time "Tree production" do
 
   mst = []
 
-  #kruskal edges, UnionF.new(nodes)
-  #qKruskal edges, UnionF.new(nodes), mst
-  #filterKruskal edges, UnionF.new(nodes), mst
-  if $parallel
-    #parallel_filter_kruskal edges, UnionF.new(nodes), mst
-    kruskal edges, UnionF.new(nodes), mst
-  else
-    kruskal edges, UnionF.new(nodes), mst
-  end
+  kruskal edges, UnionF.new(nodes), mst
 
   puts "Using #{$algorithm}"
   puts "\t#{mst.size} edges in MST"
@@ -91,6 +84,16 @@ time "Effective currents" do
     puts "\t\t\t      #{generator.graph.longest_path.edges.size} edges"
     puts "\t\tTotal nodes: #{generator.cluster.points.size}"
   end
+
+  unreached = nodes - generators.map {|g| g.reach[0] }.flatten
+end
+
+time "Clustering unreachable" do
+
+  # TODO can't just plot these, because they're no longer in an MST
+  # Have to split into connected components and cluster those individually
+  # FIXME
+  unreached_cs = KMeansPP.clusters(unreached, opts[:clusters]) {|n| n.to_a }
 end
 
 # IDEA
@@ -122,7 +125,12 @@ end
 ############################
 
 plot clusters
-generators.each {|g| cplot g.reach[0] }
+generators.each {|g| cplot g.reach[0], :color => "#00ffff" }
+show_plot
+
+gets
+
+plot unreached_cs
 show_plot
 
 #require 'pry'

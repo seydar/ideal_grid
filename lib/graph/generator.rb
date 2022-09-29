@@ -33,7 +33,7 @@ class Generator
     flows[node]
   end
 
-  # TODO How far will the generator's power go before it's lost? 
+  # How far will the generator's power go before it's lost? 
   def reach
     reachable = []
     remainder = power

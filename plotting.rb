@@ -13,8 +13,8 @@ def buffered_range_int(points, buffer=0.1)
   [min - buffer, max + buffer]
 end
 
-def cplot(points)
-  plot [KMeansPP::Cluster.new(points.first, points)]
+def cplot(points, color: nil)
+  plot [KMeansPP::Cluster.new(points.first, points)], :color => color
 end
 
 def pplot(path)
@@ -25,17 +25,7 @@ def gplot(graph)
   plot [KMeansPP::Cluster.new(graph.longest_path.median, graph.nodes)]
 end
 
-def plot_points(nodes, color: nil)
-
-end
-
-def plot_graph(graph, color: nil)
-end
-
-def plot(clusters)
-  nodes = clusters.map {|c| c.points }.flatten
-  edges = nodes.map {|n| n.edges }.flatten
-
+def update_ranges(nodes)
   xr = buffered_range_int(nodes.map {|p| p.x }, 0.2)
   yr = buffered_range_int(nodes.map {|p| p.y }, 0.2)
 
@@ -43,6 +33,42 @@ def plot(clusters)
   yprev = ($plot.settings.find {|e| e[1] == "yrange" } || [nil, nil, "[0:0]"])[2][1..-2].split(":").map {|p| p.to_f }
   $plot.xrange "[#{[xprev[0], xr[0]].min}:#{[xprev[1], xr[1]].max}]"
   $plot.yrange "[#{[yprev[0], yr[0]].min}:#{[yprev[1], yr[1]].max}]"
+end
+
+def plot_edges(edges, color: nil)
+  $plot.data += edges.map do |edge|
+    xs = edge.nodes.map(&:x)
+    ys = edge.nodes.map(&:y)
+  
+    Gnuplot::DataSet.new([xs, ys]) do |ds|
+      ds.with = 'lines'
+      ds.notitle
+      ds.linecolor = "-1"
+    end
+  end
+end
+
+def plot_points(nodes, color: nil)
+  xs = cluster.points.map {|p| p.x }
+  ys = cluster.points.map {|p| p.y }
+  
+  ds = Gnuplot::DataSet.new([xs, ys]) do |ds|
+    ds.with = 'points pointtype 6'
+    ds.notitle
+    ds.linecolor = "rgb \"#{color || COLORS.sample}\""
+  end
+  $plot.data << ds
+end
+
+def plot_graph(graph, color: nil)
+end
+
+def plot(clusters, color: nil)
+  nodes = clusters.map {|c| c.points }.flatten
+  edges = nodes.map {|n| n.edges }.flatten
+
+  # update x and y axes
+  update_ranges nodes
   
   xs, ys = nodes.map {|p| p.x }, nodes.map {|p| p.y }
   $plot.data << Gnuplot::DataSet.new([xs, ys])
@@ -58,7 +84,9 @@ def plot(clusters)
     end
   end
   
-  colors = clusters.zip(["red", "blue", "yellow", "magenta"]).to_h
+
+  varet = [*(color || ["red", "blue", "yellow", "magenta"])]
+  colors = clusters.zip(varet).to_h
   
   # Plotting cluster constituents
   $plot.data += clusters.map do |cluster|

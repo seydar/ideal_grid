@@ -1,7 +1,8 @@
 $plot = Gnuplot::Plot.new
+COLORS = ["red", "blue", "yellow", "magenta"]
 
 def buffered_range(points, buffer=0.1)
-  range = buffered_range_int
+  range = buffered_range_int points
   "[#{range[0]}:#{range[1]}]"
 end
 
@@ -11,6 +12,11 @@ def buffered_range_int(points, buffer=0.1)
   range = max - min
   buffer = range * buffer
   [min - buffer, max + buffer]
+end
+
+def read_buffered_range(range)
+  range ||= [nil, nil, "[0:0]"]
+  range[2][1..-2].split(":").map {|p| p.to_f }
 end
 
 def cplot(points, color: nil)
@@ -29,8 +35,8 @@ def update_ranges(nodes)
   xr = buffered_range_int(nodes.map {|p| p.x }, 0.2)
   yr = buffered_range_int(nodes.map {|p| p.y }, 0.2)
 
-  xprev = ($plot.settings.find {|e| e[1] == "xrange" } || [nil, nil, "[0:0]"])[2][1..-2].split(":").map {|p| p.to_f }
-  yprev = ($plot.settings.find {|e| e[1] == "yrange" } || [nil, nil, "[0:0]"])[2][1..-2].split(":").map {|p| p.to_f }
+  xprev = read_buffered_range($plot.settings.find {|e| e[1] == "xrange" })
+  yprev = read_buffered_range($plot.settings.find {|e| e[1] == "yrange" })
   $plot.xrange "[#{[xprev[0], xr[0]].min}:#{[xprev[1], xr[1]].max}]"
   $plot.yrange "[#{[yprev[0], yr[0]].min}:#{[yprev[1], yr[1]].max}]"
 end
@@ -49,8 +55,8 @@ def plot_edges(edges, color: nil)
 end
 
 def plot_points(nodes, color: nil)
-  xs = cluster.points.map {|p| p.x }
-  ys = cluster.points.map {|p| p.y }
+  xs = nodes.map {|p| p.x }
+  ys = nodes.map {|p| p.y }
   
   ds = Gnuplot::DataSet.new([xs, ys]) do |ds|
     ds.with = 'points pointtype 6'
@@ -58,6 +64,10 @@ def plot_points(nodes, color: nil)
     ds.linecolor = "rgb \"#{color || COLORS.sample}\""
   end
   $plot.data << ds
+end
+
+def plot_point(point, color: nil)
+  plot_points [point], :color => color
 end
 
 def plot_graph(graph, color: nil)
@@ -70,46 +80,18 @@ def plot(clusters, color: nil)
   # update x and y axes
   update_ranges nodes
   
-  xs, ys = nodes.map {|p| p.x }, nodes.map {|p| p.y }
-  $plot.data << Gnuplot::DataSet.new([xs, ys])
-  
-  $plot.data += edges.map do |edge|
-    xs = edge.nodes.map(&:x)
-    ys = edge.nodes.map(&:y)
-  
-    Gnuplot::DataSet.new([xs, ys]) do |ds|
-      ds.with = 'lines'
-      ds.notitle
-      ds.linecolor = "-1"
-    end
-  end
-  
+  plot_edges edges
 
-  varet = [*(color || ["red", "blue", "yellow", "magenta"])]
-  colors = clusters.zip(varet).to_h
+  varet = [*(color || COLORS)]
   
   # Plotting cluster constituents
-  $plot.data += clusters.map do |cluster|
-    xs = cluster.points.map {|p| p.x }
-    ys = cluster.points.map {|p| p.y }
-  
-    Gnuplot::DataSet.new([xs, ys]) do |ds|
-      ds.with = 'points pointtype 6'
-      ds.notitle
-      ds.linecolor = "rgb \"#{colors[cluster]}\""
-    end
+  clusters.zip(varet).each do |cluster, color|
+    plot_points cluster.points, :color => color
   end
   
   # Plotting cluster centroids
-  $plot.data += clusters.map do |cluster|
-    xs = [cluster.centroid.x]
-    ys = [cluster.centroid.y]
-  
-    Gnuplot::DataSet.new([xs, ys]) do |ds|
-      ds.with = 'points pointtype 6 pointsize 3'
-      ds.notitle
-      ds.linecolor = 'rgb "orange"'
-    end
+  clusters.each do |cluster|
+    plot_point cluster.centroid, :color => "orange"
   end
 end
 

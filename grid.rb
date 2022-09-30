@@ -1,3 +1,4 @@
+#!/usr/bin/env ruby
 require 'gnuplot'
 require 'optimist'
 require './k_means_pp.rb'

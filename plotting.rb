@@ -54,26 +54,28 @@ def plot_edges(edges, color: nil)
   end
 end
 
-def plot_points(nodes, color: nil)
+def plot_points(nodes, color: nil, point_type: 6)
+  return if nodes.empty?
+
   xs = nodes.map {|p| p.x }
   ys = nodes.map {|p| p.y }
   
   ds = Gnuplot::DataSet.new([xs, ys]) do |ds|
-    ds.with = 'points pointtype 6'
+    ds.with = "points pointtype #{point_type}"
     ds.notitle
     ds.linecolor = "rgb \"#{color || COLORS.sample}\""
   end
   $plot.data << ds
 end
 
-def plot_point(point, color: nil)
+def plot_point(point, color: nil, point_type: 6)
   plot_points [point], :color => color
 end
 
-def plot_graph(graph, color: nil)
+def plot_graph(graph, color: nil, point_type: 6)
 end
 
-def plot(clusters, color: nil)
+def plot_clusters(clusters, color: nil)
   nodes = clusters.map {|c| c.points }.flatten
   edges = nodes.map {|n| n.edges }.flatten
 
@@ -86,12 +88,12 @@ def plot(clusters, color: nil)
   
   # Plotting cluster constituents
   clusters.zip(varet).each do |cluster, color|
-    plot_points cluster.points, :color => color
+    plot_points cluster.points, :color => color, :point_type => 7
   end
   
   # Plotting cluster centroids
   clusters.each do |cluster|
-    plot_point cluster.centroid, :color => "orange"
+    plot_point cluster.centroid, :color => "orange", :point_type => 6
   end
 end
 

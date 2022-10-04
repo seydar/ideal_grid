@@ -14,7 +14,6 @@ class Graph
     fill_adjacencies!
   end
 
-  # god damn this is ugly
   def fill_adjacencies!
     nodes.each do |node|
 

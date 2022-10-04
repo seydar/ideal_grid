@@ -60,7 +60,7 @@ time "Tree production" do
 
   mst = []
 
-  kruskal edges, UnionF.new(nodes), mst
+  parallel_filter_kruskal edges, UnionF.new(nodes), mst
 
   puts "Using #{$algorithm}"
   puts "\t#{mst.size} edges in MST"
@@ -69,9 +69,6 @@ end
 time "Node clustering [#{opts[:clusters]} clusters]" do
 
   clusters = KMeansPP.clusters(nodes, opts[:clusters]) {|n| n.to_a }
-end
-
-time "Effective currents" do
 
   generators = clusters.map do |cluster|
     Generator.new cluster, 10
@@ -87,14 +84,24 @@ time "Effective currents" do
   end
 
   unreached = nodes - generators.map {|g| g.reach[0] }.flatten
-end
 
-time "Clustering unreachable" do
+  # Split the graph into its connected subgraphs
+  connected_graphs = connected_subgraphs unreached
+  puts "\tConnected graphs: #{connected_graphs.size}"
 
-  # TODO can't just plot these, because they're no longer in an MST
   # Have to split into connected components and cluster those individually
-  # FIXME
-  unreached_cs = KMeansPP.clusters(unreached, opts[:clusters]) {|n| n.to_a }
+  # Because otherwise we're trying to cluster an unconnected graph using a
+  # distance formula that requires them to be connected
+  unreached_cs = connected_graphs.map do |cg|
+    KMeansPP.clusters(cg, [opts[:clusters], cg.size].min) {|n| n.to_a }
+  end.flatten 1
+
+  generators += unreached_cs.map do |cluster|
+    Generator.new cluster, 10
+  end
+
+  # TODO Which generators have leftover power to supply?
+  # Which nodes are unsupplied (unreached)?
 end
 
 # IDEA
@@ -125,14 +132,14 @@ end
 
 ############################
 
-plot clusters
-generators.each {|g| cplot g.reach[0], :color => "#00ffff" }
+plot_clusters clusters
+generators.each {|g| plot_points g.reach[0], :color => "#00ffff" }
 show_plot
 
-gets
+#gets
 
-plot unreached_cs
-show_plot
+#plot_clusters unreached_cs
+#show_plot
 
 #require 'pry'
 #binding.pry

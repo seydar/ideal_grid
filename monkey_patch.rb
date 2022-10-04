@@ -2,7 +2,8 @@ require 'parallel'
 
 module Enumerable
   def parallel_map(cores: 3, &block)
-    n = size / cores
+    n = (size.to_f / cores).ceil
+
     Parallel.map each_slice(n).to_a, :in_processes => cores do |group|
       group.map(&block)
     end.flatten 1

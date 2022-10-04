@@ -1,5 +1,19 @@
 require './lib/unionf.rb'
 
+def connected_subgraphs(nodes)
+  uf    = UnionF.new nodes
+  edges = nodes.map {|n| n.edges }.flatten
+               .reject {|e| not e.nodes.all? {|n| nodes.include? n } }
+
+  edges.each do |edge|
+    unless uf.connected? edge.nodes[0], edge.nodes[1]
+      uf.union edge.nodes[0], edge.nodes[1]
+    end
+  end
+
+  uf.disjoint_sets
+end
+
 # Procedure kruskal(E , T : Sequence of Edge, P : UnionFind)
 def kruskal(edges, uf, mst=[])
   $algorithm ||= "Kruskal"
@@ -25,7 +39,7 @@ def kruskal(edges, uf, mst=[])
   uf
 end
 
-####################################################33
+####################################################
 # Edges m, Nodes n
 # Resources:
 #   https://github.com/allenchou/CMU-15618-Final-Project/blob/master/src/mst/kruskal_filter.cpp
@@ -33,7 +47,8 @@ end
 #   http://algo2.iti.kit.edu/documents/fkruskal.pdf
 #   https://en.wikipedia.org/wiki/Kruskal%27s_algorithm#Parallel_algorithm
 
-SEQ_THRESHOLD = 8192 # stolen from the CMU students (Allen Chou)
+# Determined via a lil bit of trial and error
+SEQ_THRESHOLD = 150_000
 
 # Sequential (but sets the tone for making it parallelizable)
 #
@@ -111,7 +126,7 @@ def parallel_filter_kruskal(edges, uf, mst=[])
     parallel_filter_kruskal es_g, uf, mst
   end
 
-  mst
+  uf
 end
 
 # Function filter(E)

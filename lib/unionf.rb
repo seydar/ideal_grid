@@ -10,6 +10,15 @@ class UnionF
     elements.each {|n| @id[n] = n; @sz[n] = 1; @el << n}
   end
 
+  def roots
+    @id.values.uniq
+  end
+
+  def disjoint_sets
+    @id.keys.group_by {|a| @id[a] }.values
+  end
+  alias_method :connected_subgraphs, :disjoint_sets
+
   def connected? a, b
     a, b = pair_search a, b
     a == b

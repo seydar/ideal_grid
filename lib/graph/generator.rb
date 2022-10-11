@@ -35,6 +35,8 @@ class Generator
 
   # How far will the generator's power go before it's lost? 
   def reach
+    return @reach if @reach
+
     reachable = []
     remainder = power
 
@@ -45,17 +47,17 @@ class Generator
       end
     end
 
-    [reachable, remainder]
+    @reach = {:nodes => reachable, :remainder => remainder}
   end
 
   def info
     str = ""
-    str << "\tCluster #{generator.node.inspect}"
-    str << "\t\tCalculated demand: #{generator.demand}"
-    str << "\t\tTotal line length: #{generator.total_line_length}"
-    str << "\t\tLongest path: #{generator.graph.longest_path.length}"
-    str << "\t\t\t      #{generator.graph.longest_path.edges.size} edges"
-    str << "\t\tTotal nodes: #{generator.graph.nodes.size}"
+    str << "\tCluster #{node.inspect}\n"
+    str << "\t\tCalculated demand: #{demand}\n"
+    str << "\t\tTotal line length: #{total_line_length}\n"
+    str << "\t\tLongest path: #{graph.longest_path.length}\n"
+    str << "\t\t\t      #{graph.longest_path.edges.size} edges\n"
+    str << "\t\tTotal nodes: #{graph.nodes.size}"
     str
   end
 end

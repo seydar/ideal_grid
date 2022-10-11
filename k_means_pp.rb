@@ -4,6 +4,8 @@ require './k_means_pp/cluster'
 
 # Cluster data with the k-means++, k-means and Lloyd algorithm.
 class KMeansPP
+  PARALLELIZE_CLUSTER = proc {|pts| $parallel && pts.size > 100 }
+
   # Source data set of points.
   #
   # @return [Array<Point>]
@@ -185,7 +187,7 @@ class KMeansPP
     end
 
     # Assign each point its nearest centroid.
-    if $parallel
+    if PARALLELIZE_CLUSTER[points]
       # Parallel
       cs = points.parallel_map do |point|
         self.class.find_nearest_centroid point, centroids
@@ -268,7 +270,7 @@ class KMeansPP
   def reassign_points
     changed = 0
 
-    if $parallel
+    if PARALLELIZE_CLUSTER[points]
       # Parallel
       cs = points.parallel_map do |point|
         self.class.find_nearest_centroid point, centroids

@@ -32,6 +32,10 @@ class Graph
       end
     end
   end
+
+  def inspect
+    "#<#{self.class.name}:#{object_id} @nodes=[#{nodes.size} nodes]>"
+  end
 end
 
 class DisjointGraph < Graph
@@ -48,7 +52,7 @@ class DisjointGraph < Graph
       end
     end
   
-    uf.disjoint_sets
+    uf.disjoint_sets.map {|djs| ConnectedGraph.new djs }
   end
 end
 
@@ -100,7 +104,12 @@ class ConnectedGraph < Graph
     distance.max_by {|k, v| v }
   end
 
-  def cluster(clusters: 3)
+  # TODO integrate KMeansPP into the graph class. Maybe?
+  def cluster(clusters=3)
+    # Final part of this line is a little tailored to the node class, but
+    # I guess that's okay? The proc is to provide pertinent serialization
+    # across processes during parallelization. A graph and its nodes have
+    # to be made with each other in mind.
     KMeansPP.clusters(nodes, [clusters, nodes.size].min) {|n| n.to_a }
   end
 end

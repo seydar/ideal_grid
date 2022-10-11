@@ -68,7 +68,8 @@ end
 
 time "Node clustering [#{opts[:clusters]} clusters]" do
 
-  clusters = KMeansPP.clusters(nodes, opts[:clusters]) {|n| n.to_a }
+  conn_graph = ConnectedGraph.new nodes
+  clusters = conn_graph.cluster opts[:clusters]
 
   generators = clusters.map do |cluster|
     Generator.new cluster, 10
@@ -78,22 +79,25 @@ time "Node clustering [#{opts[:clusters]} clusters]" do
     puts generator.info
   end
 
-  unreached = nodes - generators.map {|g| g.reach[0] }.flatten
+  unreached = DisjointGraph.new(nodes - generators.map {|g| g.reach[:nodes] }.flatten)
 
   # Split the graph into its connected subgraphs
-  connected_graphs = connected_subgraphs unreached
+  connected_graphs = unreached.connected_subgraphs
   puts "\tConnected graphs: #{connected_graphs.size}"
 
   # Have to split into connected components and cluster those individually
   # Because otherwise we're trying to cluster an unconnected graph using a
   # distance formula that requires them to be connected
   unreached_cs = connected_graphs.map do |cg|
-    KMeansPP.clusters(cg, [opts[:clusters], cg.size].min) {|n| n.to_a }
+    puts "producing clusters (#{cg.inspect})"
+    cg.cluster opts[:clusters]
   end.flatten 1
 
   generators += unreached_cs.map do |cluster|
     Generator.new cluster, 10
   end
+
+  puts "\tGenerators: #{generators.size}"
 
   # TODO Which generators have leftover power to supply?
   # Which nodes are unsupplied (unreached)?
@@ -128,8 +132,8 @@ end
 ############################
 
 plot_clusters clusters
-generators.each {|g| plot_points g.reach[0], :color => "#00ffff" }
-generators.each {|g| plot_point g.node, :color => "#ff00ff" }
+generators.each {|g| plot_points g.reach[:nodes], :color => "black" }
+generators.each {|g| plot_point g.node, :color => "red" }
 show_plot
 
 #gets

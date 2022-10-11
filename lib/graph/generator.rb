@@ -57,7 +57,7 @@ class Generator
     str << "\t\tTotal line length: #{total_line_length}\n"
     str << "\t\tLongest path: #{graph.longest_path.length}\n"
     str << "\t\t\t      #{graph.longest_path.edges.size} edges\n"
-    str << "\t\tTotal nodes: #{graph.nodes.size}"
+    str << "\t\tTotal nodes: #{graph.size}"
     str
   end
 end

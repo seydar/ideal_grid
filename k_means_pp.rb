@@ -118,6 +118,10 @@ class KMeansPP
     # Do not mutate original structure
     points = points.dup
 
+    if points.size == 280 
+      $debug = true
+    end
+
     if block_given?
       points.map! do |point_obj|
         point_ary      = yield(point_obj)
@@ -138,7 +142,9 @@ class KMeansPP
   # Group points into clusters.
   def group_points
 
+    puts "defining"
     define_initial_clusters
+    puts "fine tuning"
     fine_tune_clusters
   end
 
@@ -188,6 +194,7 @@ class KMeansPP
 
     # Assign each point its nearest centroid.
     if PARALLELIZE_CLUSTER[points]
+      puts "parallel witchcraft"
       # Parallel
       cs = points.parallel_map do |point|
         self.class.find_nearest_centroid point, centroids
@@ -230,6 +237,8 @@ class KMeansPP
       calculate_new_centroids
 
       changed = reassign_points
+
+      puts [points.size, changed] if $debug
 
       centroids.map do |centroid|
         self.class.cluster_for_centroid(centroid, points, true)
@@ -286,16 +295,40 @@ class KMeansPP
         next if centroid == point.group
         changed += 1
         point.group = centroid
+
+        puts "\t#{point.inspect}" if $debug
       end
 
       changed
     else
       # Sequential
+      chngd = []
       points.each do |point|
         centroid = self.class.find_nearest_centroid(point, centroids)
         next if centroid == point.group
+
+        if $debug
+          p [point.group.original, centroid.original]
+          p [point.original.manhattan_distance(centroid.original),
+             point.original.manhattan_distance(point.group.original)]
+        end
+
         changed += 1
         point.group = centroid
+        chngd << point
+      end
+
+      if $debug
+        puts changed
+        edges = points.map {|n| n.original.edges }.flatten
+        ctrs = points.map {|n| n.group }.uniq
+
+        plot_edges edges
+        plot_points points, :color => "cyan"
+        plot_points ctrs, :color => "green"
+        plot_points chngd, :color => "magenta"
+        show_plot
+        gets
       end
 
       changed

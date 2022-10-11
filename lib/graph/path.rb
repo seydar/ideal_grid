@@ -10,7 +10,16 @@ class Path
   end
 
   def initialize(edges)
-    @edges = edges
+    # Arbitrary but consistent ordering for edges and thus nodes
+    if edges.empty?
+      @edges = []
+    else
+      if (edges[0].nodes[0].to_a <=> edges[-1].nodes[0].to_a) == 1
+        @edges = edges
+      else
+        @edges = edges.reverse
+      end
+    end
     @nodes = []
   end
 
@@ -39,12 +48,14 @@ class Path
     # Finally, sort it so that given the same path (A <=> B), we will always
     # look at it from the same way (and not B <=> A) so that the median
     # will always be the same and we don't end up flopping around back and forth
-    sorted = (sorted[0].to_a <=> sorted[-1].to_a) == 1 ? sorted : sorted.reverse
+    #sorted = (sorted[0].to_a <=> sorted[-1].to_a) == 1 ? sorted : sorted.reverse
 
     @nodes = sorted
   end
 
   # n edges, n + 1 nodes
+  # Right now, this tracks distance. A future version will tally
+  # the node weight instead of edge length (or some function of the two)
   def partition(threshold)
     total = 0
 

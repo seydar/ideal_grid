@@ -33,6 +33,10 @@ class Graph
     end
   end
 
+  def size
+    nodes.size
+  end
+
   def inspect
     "#<#{self.class.name}:#{object_id} @nodes=[#{nodes.size} nodes]>"
   end

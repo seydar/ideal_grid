@@ -66,6 +66,8 @@ class Node
     []
   end
 
+  # TODO perhaps a good optimization would be to turn the adjacencies into
+  # a matrix somehow
   def manhattan_distance(other)
     Path.build(path_to(other)).length
   end

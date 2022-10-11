@@ -89,8 +89,9 @@ time "Node clustering [#{opts[:clusters]} clusters]" do
   # Because otherwise we're trying to cluster an unconnected graph using a
   # distance formula that requires them to be connected
   unreached_cs = connected_graphs.map do |cg|
-    puts "producing clusters (#{cg.inspect})"
-    cg.cluster opts[:clusters]
+    klusters = (cg.size / 10.0).ceil
+    puts "producing clusters (#{cg.size} nodes, #{klusters} clusters)"
+    cg.cluster klusters
   end.flatten 1
 
   generators += unreached_cs.map do |cluster|
@@ -132,7 +133,7 @@ end
 ############################
 
 plot_clusters clusters
-generators.each {|g| plot_points g.reach[:nodes], :color => "black" }
+generators.each {|g| plot_points g.reach[:nodes], :color => "#6e6e6e" }
 generators.each {|g| plot_point g.node, :color => "red" }
 show_plot
 

@@ -32,6 +32,27 @@ class Graph
       end
     end
   end
+end
+
+class DisjointGraph < Graph
+
+  # There's an optimization in here, I'm sure, but I don't care to find it
+  def connected_subgraphs
+    uf    = UnionF.new nodes
+    edges = nodes.map {|n| n.edges }.flatten
+                 .reject {|e| not e.nodes.all? {|n| nodes.include? n } }
+  
+    edges.each do |edge|
+      unless uf.connected? edge.nodes[0], edge.nodes[1]
+        uf.union edge.nodes[0], edge.nodes[1]
+      end
+    end
+  
+    uf.disjoint_sets
+  end
+end
+
+class ConnectedGraph < Graph
 
   # BFS
   def traverse_edges(source, &block)
@@ -77,6 +98,10 @@ class Graph
     end
 
     distance.max_by {|k, v| v }
+  end
+
+  def cluster(clusters: 3)
+    KMeansPP.clusters(nodes, [clusters, nodes.size].min) {|n| n.to_a }
   end
 end
 

@@ -1,5 +1,5 @@
 $plot = Gnuplot::Plot.new
-COLORS = ["red", "blue", "yellow", "magenta"]
+COLORS = ["pink", "blue", "yellow", "magenta", "red"]
 
 def buffered_range(points, buffer=0.1)
   range = buffered_range_int points

@@ -246,7 +246,7 @@ class KMeansPP
       # boolean
       cluster = self.class.cluster_for_centroid(centroid, points, true)
 
-      graph = Graph.new cluster.points
+      graph = ConnectedGraph.new cluster.points
       path  = graph.longest_path
 
       # Path will be empty if there is only one point in the cluster

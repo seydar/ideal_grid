@@ -75,12 +75,7 @@ time "Node clustering [#{opts[:clusters]} clusters]" do
   end
   
   generators.each do |generator|
-    puts "\tCluster #{generator.cluster.centroid.original.inspect}"
-    puts "\t\tCalculated demand: #{generator.demand}"
-    puts "\t\tTotal line length: #{generator.total_line_length}"
-    puts "\t\tLongest path: #{generator.graph.longest_path.length}"
-    puts "\t\t\t      #{generator.graph.longest_path.edges.size} edges"
-    puts "\t\tTotal nodes: #{generator.cluster.points.size}"
+    puts generator.info
   end
 
   unreached = nodes - generators.map {|g| g.reach[0] }.flatten
@@ -134,6 +129,7 @@ end
 
 plot_clusters clusters
 generators.each {|g| plot_points g.reach[0], :color => "#00ffff" }
+generators.each {|g| plot_point g.node, :color => "#ff00ff" }
 show_plot
 
 #gets

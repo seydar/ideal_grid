@@ -7,7 +7,7 @@ class Generator
   def initialize(cluster, power=0)
     @cluster = cluster
     @node    = cluster.centroid.original
-    @graph   = Graph.new cluster.points
+    @graph   = ConnectedGraph.new cluster.points
     @power   = power
   end
   
@@ -46,6 +46,17 @@ class Generator
     end
 
     [reachable, remainder]
+  end
+
+  def info
+    str = ""
+    str << "\tCluster #{generator.node.inspect}"
+    str << "\t\tCalculated demand: #{generator.demand}"
+    str << "\t\tTotal line length: #{generator.total_line_length}"
+    str << "\t\tLongest path: #{generator.graph.longest_path.length}"
+    str << "\t\t\t      #{generator.graph.longest_path.edges.size} edges"
+    str << "\t\tTotal nodes: #{generator.graph.nodes.size}"
+    str
   end
 end
 

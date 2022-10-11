@@ -1,19 +1,5 @@
 require './lib/unionf.rb'
 
-def connected_subgraphs(nodes)
-  uf    = UnionF.new nodes
-  edges = nodes.map {|n| n.edges }.flatten
-               .reject {|e| not e.nodes.all? {|n| nodes.include? n } }
-
-  edges.each do |edge|
-    unless uf.connected? edge.nodes[0], edge.nodes[1]
-      uf.union edge.nodes[0], edge.nodes[1]
-    end
-  end
-
-  uf.disjoint_sets
-end
-
 # Procedure kruskal(E , T : Sequence of Edge, P : UnionFind)
 def kruskal(edges, uf, mst=[])
   $algorithm ||= "Kruskal"

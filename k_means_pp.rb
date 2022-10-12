@@ -241,12 +241,6 @@ class KMeansPP
 
       # Stop when 99.9% of points are good
       break if changed <= changed_threshold
-
-      # Stop when we are in a cycle
-      # (Assumed cycle)
-      #break if history[-3..-1].uniq.size == 1
-
-      #break if history.size > 70
     end
   end
 

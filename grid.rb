@@ -26,9 +26,10 @@ EOS
 end
 
 nodes, edges, clusters, generators, unreached = nil
-unreached_cs = nil
+unreached_cs, new_generators = nil
 PRNG = Random.new 1337
 $parallel = opts[:parallel]
+opts[:clusters] = (opts[:nodes].to_f / 10).ceil
 
 time "Edge production" do
 
@@ -94,14 +95,29 @@ time "Node clustering [#{opts[:clusters]} clusters]" do
     cg.cluster klusters
   end.flatten 1
 
-  generators += unreached_cs.map do |cluster|
+  new_generators = unreached_cs.map do |cluster|
     Generator.new cluster, 10
   end
 
   puts "\tGenerators: #{generators.size}"
 
   # TODO Which generators have leftover power to supply?
-  # Which nodes are unsupplied (unreached)?
+  # Which generators need more power to get small nearby clusters?
+
+  # Find out which clusters are attached to other clusters.
+  # Get their sizes.
+  associations = unreached_cs.map do |cluster|
+    assocs = clusters.filter do |kl|
+      edge_nodes = cluster.points.map {|n| n.edges.map {|e| e.nodes } }.flatten
+      kl.points & edge_nodes != []
+    end
+    [cluster.points.size, assocs.size]
+  end
+
+  pp associations
+
+  # Is it worth increasing the power output of a generator? Or do we need to
+  # build a new one entirely?
 end
 
 # IDEA
@@ -133,8 +149,12 @@ end
 ############################
 
 plot_clusters clusters
-generators.each {|g| plot_points g.reach[:nodes], :color => "#6e6e6e" }
-generators.each {|g| plot_point g.node, :color => "red" }
+show_plot
+
+plot_generators generators, nodes
+show_plot
+
+plot_generators new_generators, nodes
 show_plot
 
 #gets

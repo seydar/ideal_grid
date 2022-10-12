@@ -93,7 +93,7 @@ class KMeansPP
     $debug_more << "Given #{point.original.inspect}:\n"
     centroids.each do |centroid|
       distance = centroid.manhattan_distance(point)
-      $debug_more << "\tcentroid: #{centroid.original.inspect} @ #{distance}\n"
+      $debug_more << "\tcentroid: #{centroid.object_id} @ #{distance}\n"
 
       next if distance >= nearest_distance
 
@@ -101,7 +101,7 @@ class KMeansPP
       nearest_centroid = centroid
     end
 
-    $debug_more << "\tnearest is #{nearest_centroid.original.inspect} @ #{nearest_distance}\n"
+    $debug_more << "\tnearest is #{nearest_centroid.object_id} @ #{nearest_distance}\n"
 
     [nearest_centroid, nearest_distance]
   end
@@ -239,7 +239,9 @@ class KMeansPP
 
       changed = reassign_points
 
-      $debug = true if changed < 10
+      $debug = false if changed > 5
+      $times = 0 if changed > 5
+      $debug = true if changed < 5
 
       puts [points.size, changed] if $debug
 
@@ -311,8 +313,8 @@ class KMeansPP
 
         if $debug
           puts "Looking at the node that has changed (#{point.original.inspect})"
-          puts "\told cluster: #{point.group.original.inspect} (#{point.original.manhattan_distance(point.group.original)})"
-          puts "\tnew cluster: #{centroid.original.inspect} (#{point.original.manhattan_distance(centroid.original)})"
+          puts "\told cluster: #{point.group.object_id} (#{point.original.manhattan_distance(point.group.original)})"
+          puts "\tnew cluster: #{centroid.object_id} (#{point.original.manhattan_distance(centroid.original)})"
           puts "\treport:"
           puts $debug_more
           $debug_more = ""
@@ -322,6 +324,7 @@ class KMeansPP
         point.group = centroid
         chngd << point
       end
+
 
       if $debug && changed < 5
         $times ||= 0
@@ -341,6 +344,7 @@ class KMeansPP
         #show_plot
       end
 
+      p chngd if $debug
       changed
     end
   end

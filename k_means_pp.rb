@@ -326,7 +326,10 @@ class KMeansPP
       if $debug && changed < 5
         $times ||= 0
         $times += 1
-        puts "je quitte" && exit if $times > 3
+        if $times > 3
+          puts "je quitte"
+          exit
+        end
         puts changed
         edges = points.map {|n| n.original.edges }.flatten
         ctrs = points.map {|n| n.group }.uniq

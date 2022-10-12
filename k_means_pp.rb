@@ -89,19 +89,14 @@ class KMeansPP
     nearest_centroid = point.group
     nearest_distance = Float::INFINITY
 
-    $debug_more ||= ""
-    $debug_more << "Given #{point.original.inspect}:\n"
     centroids.each do |centroid|
       distance = centroid.manhattan_distance(point)
-      $debug_more << "\tcentroid: #{centroid.object_id} @ #{distance}\n"
 
       next if distance >= nearest_distance
 
       nearest_distance = distance
       nearest_centroid = centroid
     end
-
-    $debug_more << "\tnearest is #{nearest_centroid.object_id} @ #{nearest_distance}\n"
 
     [nearest_centroid, nearest_distance]
   end
@@ -142,10 +137,7 @@ class KMeansPP
 
   # Group points into clusters.
   def group_points
-
-    puts "defining"
     define_initial_clusters
-    puts "fine tuning"
     fine_tune_clusters
   end
 
@@ -234,16 +226,14 @@ class KMeansPP
     # When a number of changed points reaches this number, we are done.
     changed_threshold = points.size >> 10
 
+    history = [-3, -2, -1]
+
     loop do
       calculate_new_centroids
 
       changed = reassign_points
-
-      $debug = false if changed > 5
-      $times = 0 if changed > 5
-      $debug = true if changed < 5
-
-      puts [points.size, changed] if $debug
+      history << changed
+      puts "\t#{changed} changed"
 
       centroids.map do |centroid|
         self.class.cluster_for_centroid(centroid, points, true)
@@ -251,6 +241,12 @@ class KMeansPP
 
       # Stop when 99.9% of points are good
       break if changed <= changed_threshold
+
+      # Stop when we are in a cycle
+      # (Assumed cycle)
+      break if history[-3..-1].uniq.size == 1
+
+      break if history.size > 7
     end
   end
 
@@ -298,53 +294,18 @@ class KMeansPP
         next if centroid == point.group
         changed += 1
         point.group = centroid
-
-        puts "\t#{point.inspect}" if $debug
       end
 
       changed
     else
       # Sequential
-      chngd = []
       points.each do |point|
-        $debug_more = ""
         centroid = self.class.find_nearest_centroid(point, centroids)
         next if centroid == point.group
-
-        if $debug
-          puts "Looking at the node that has changed (#{point.original.inspect})"
-          puts "\told cluster: #{point.group.object_id} (#{point.original.manhattan_distance(point.group.original)})"
-          puts "\tnew cluster: #{centroid.object_id} (#{point.original.manhattan_distance(centroid.original)})"
-          puts "\treport:"
-          puts $debug_more
-          $debug_more = ""
-        end
-
         changed += 1
         point.group = centroid
-        chngd << point
       end
 
-
-      if $debug && changed < 5
-        $times ||= 0
-        $times += 1
-        if $times > 5
-          puts "je quitte"
-          exit
-        end
-        puts changed
-        edges = points.map {|n| n.original.edges }.flatten
-        ctrs = points.map {|n| n.group }.uniq
-
-        #plot_edges edges
-        #plot_points points, :color => "cyan"
-        #plot_points ctrs, :color => "green"
-        #plot_points chngd, :color => "magenta"
-        #show_plot
-      end
-
-      p chngd if $debug
       changed
     end
   end

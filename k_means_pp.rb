@@ -326,7 +326,7 @@ class KMeansPP
       if $debug && changed < 5
         $times ||= 0
         $times += 1
-        if $times > 3
+        if $times > 5
           puts "je quitte"
           exit
         end

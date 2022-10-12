@@ -10,20 +10,23 @@ class Path
   end
 
   def initialize(edges)
+    # Sorta not sure why this caused a bug but fuck it.
+    #
     # Arbitrary but consistent ordering for edges and thus nodes
     #
     # Sort it so that given the same path (A <=> B), we will always
     # look at it from the same way (and not B <=> A) so that the median
     # will always be the same and we don't end up flopping around back and forth
-    if edges.empty?
-      @edges = []
-    else
-      if (edges[0].nodes[0].to_a <=> edges[-1].nodes[0].to_a) == 1
-        @edges = edges
-      else
-        @edges = edges.reverse
-      end
-    end
+    #if edges.empty?
+    #  @edges = []
+    #else
+    #  if (edges[0].nodes[0].to_a <=> edges[-1].nodes[0].to_a) == 1
+    #    @edges = edges
+    #  else
+    #    @edges = edges.reverse
+    #  end
+    #end
+    @edges = edges
     @nodes = []
   end
 

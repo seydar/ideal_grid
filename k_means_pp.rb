@@ -89,14 +89,19 @@ class KMeansPP
     nearest_centroid = point.group
     nearest_distance = Float::INFINITY
 
+    $debug_more ||= ""
+    $debug_more << "Given #{point.original.inspect}:\n"
     centroids.each do |centroid|
       distance = centroid.manhattan_distance(point)
+      $debug_more << "\tcentroid: #{centroid.original.inspect} @ #{distance}\n"
 
       next if distance >= nearest_distance
 
       nearest_distance = distance
       nearest_centroid = centroid
     end
+
+    $debug_more << "\tnearest is #{nearest_centroid.original.inspect} @ #{nearest_distance}\n"
 
     [nearest_centroid, nearest_distance]
   end
@@ -117,10 +122,6 @@ class KMeansPP
   def initialize(points, clusters_count)
     # Do not mutate original structure
     points = points.dup
-
-    if points.size == 280 
-      $debug = true
-    end
 
     if block_given?
       points.map! do |point_obj|
@@ -238,6 +239,8 @@ class KMeansPP
 
       changed = reassign_points
 
+      $debug = true if changed < 10
+
       puts [points.size, changed] if $debug
 
       centroids.map do |centroid|
@@ -253,8 +256,6 @@ class KMeansPP
   # Select median node
   def calculate_new_centroids
     centroids.each do |centroid|
-      # block here is just a filler. it's not used for anything other than a
-      # boolean
       cluster = self.class.cluster_for_centroid(centroid, points, true)
 
       graph = ConnectedGraph.new cluster.points
@@ -304,13 +305,17 @@ class KMeansPP
       # Sequential
       chngd = []
       points.each do |point|
+        $debug_more = ""
         centroid = self.class.find_nearest_centroid(point, centroids)
         next if centroid == point.group
 
         if $debug
-          p [point.group.original, centroid.original]
-          p [point.original.manhattan_distance(centroid.original),
-             point.original.manhattan_distance(point.group.original)]
+          puts "Looking at the node that has changed (#{point.original.inspect})"
+          puts "\told cluster: #{point.group.original.inspect} (#{point.original.manhattan_distance(point.group.original)})"
+          puts "\tnew cluster: #{centroid.original.inspect} (#{point.original.manhattan_distance(centroid.original)})"
+          puts "\treport:"
+          puts $debug_more
+          $debug_more = ""
         end
 
         changed += 1
@@ -318,17 +323,19 @@ class KMeansPP
         chngd << point
       end
 
-      if $debug
+      if $debug && changed < 5
+        $times ||= 0
+        $times += 1
+        puts "je quitte" && exit if $times > 3
         puts changed
         edges = points.map {|n| n.original.edges }.flatten
         ctrs = points.map {|n| n.group }.uniq
 
-        plot_edges edges
-        plot_points points, :color => "cyan"
-        plot_points ctrs, :color => "green"
-        plot_points chngd, :color => "magenta"
-        show_plot
-        gets
+        #plot_edges edges
+        #plot_points points, :color => "cyan"
+        #plot_points ctrs, :color => "green"
+        #plot_points chngd, :color => "magenta"
+        #show_plot
       end
 
       changed

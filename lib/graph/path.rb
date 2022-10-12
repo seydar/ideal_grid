@@ -11,6 +11,10 @@ class Path
 
   def initialize(edges)
     # Arbitrary but consistent ordering for edges and thus nodes
+    #
+    # Sort it so that given the same path (A <=> B), we will always
+    # look at it from the same way (and not B <=> A) so that the median
+    # will always be the same and we don't end up flopping around back and forth
     if edges.empty?
       @edges = []
     else
@@ -44,11 +48,6 @@ class Path
         sorted << unique[0]
       end
     end
-
-    # Finally, sort it so that given the same path (A <=> B), we will always
-    # look at it from the same way (and not B <=> A) so that the median
-    # will always be the same and we don't end up flopping around back and forth
-    #sorted = (sorted[0].to_a <=> sorted[-1].to_a) == 1 ? sorted : sorted.reverse
 
     @nodes = sorted
   end

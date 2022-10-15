@@ -100,24 +100,35 @@ time "Node clustering [#{opts[:clusters]} clusters]" do
   end
 
   puts "\tGenerators: #{generators.size}"
+end
 
-  # TODO Which generators have leftover power to supply?
+time "Adding new generators" do
+
   # Which generators need more power to get small nearby clusters?
 
   # Find out which clusters are attached to other clusters.
-  # Get their sizes.
-  associations = unreached_cs.map do |cluster|
-    assocs = clusters.filter do |kl|
-      edge_nodes = cluster.points.map {|n| n.edges.map {|e| e.nodes } }.flatten
+  associations = unreached_cs.map do |unreached_cluster|
+    neighbors = clusters.filter do |kl|
+      edge_nodes = unreached_cluster.points.map do |node|
+        node.edges.map {|e| e.nodes }
+      end.flatten
+
       kl.points & edge_nodes != []
     end
-    [cluster.points.size, assocs.size]
+    [unreached_cluster, neighbors]
   end
-
-  pp associations
 
   # Is it worth increasing the power output of a generator? Or do we need to
   # build a new one entirely?
+  #   o  check each neighbor
+  #   o  if neighbor is enlargeable, enlarge it
+  #   o  if no neighbor is enlargeable, built new generator
+  associations.each do |unreached_cluster, neighbors|
+    # find the largest neighbor (or should it be the neighbor with the most
+    # excess energy?). 
+    neighbors.max_by {|cluster| cluster.points.size }
+  end
+
 end
 
 # IDEA

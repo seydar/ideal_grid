@@ -2,6 +2,7 @@
 # from schweigert (Marlon Henry Schweigert)
 
 class UnionF
+  attr_accessor :id
 
   def initialize elements
     @id = {}
@@ -15,7 +16,10 @@ class UnionF
   end
 
   def disjoint_sets
-    @id.keys.group_by {|a| @id[a] }.values
+    #@id.keys.group_by {|a| @id[a] }.values
+    hash = {}
+    @id.keys.each {|k| (hash[find k] ||= []) << k }
+    hash.values
   end
   alias_method :connected_subgraphs, :disjoint_sets
 
@@ -29,13 +33,16 @@ class UnionF
 
     return if a == b or a.nil? or b.nil?
 
-    a, b = b, a if @sz[a] > @sz[b]
+    a, b = b, a if @sz[a] >= @sz[b]
 
     @id[a] = b
     @sz[a] += @sz[b]
     @sz[b] = @sz[a]
   end
 
+  # I think the path compression is not great here. I have to look up
+  # every element again in order to do full path compression in order to get
+  # the disjoint sets
   def find a
     return a if @id[a] == a
     @id[a] = find @id[a]
@@ -54,13 +61,10 @@ class UnionF
     @el
   end
 
-  private
-
   def pair_search a, b
     a = find a
     b = find b
-    [a,b]
+    [a, b]
   end
-
 end
 

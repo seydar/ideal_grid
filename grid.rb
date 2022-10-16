@@ -4,7 +4,7 @@ require 'optimist'
 require './k_means_pp.rb'
 require './plotting.rb'
 require './monkey_patch.rb'
-Dir['./lib/graph/*.rb'].each {|f| require f }
+Dir['./lib/**/*.rb'].each {|f| require f }
 require './filter_kruskal.rb'
 
 opts = Optimist::options do
@@ -22,14 +22,12 @@ EOS
 
   opt :parallel, "Parallelize the clustering algorithm"
   opt :nodes, "Number of nodes in the grid", :type => :integer, :default => 100
-  opt :clusters, "Cluster the nodes into k clusters", :type => :integer, :default => 3
+  opt :clusters, "Cluster the nodes into k clusters", :type => :integer, :default => 10
 end
 
-nodes, edges, clusters, generators, unreached = nil
-unreached_cs, new_generators = nil
+grid, nodes, edges = nil
 PRNG = Random.new 1337
 $parallel = opts[:parallel]
-opts[:clusters] = (opts[:nodes].to_f / 10).ceil
 
 time "Edge production" do
 
@@ -57,78 +55,95 @@ time "Edge production" do
   puts "\t#{edges.size} edges in complete graph"
 end
 
+$nodes = nodes
+update_ranges $nodes
+
 time "Tree production" do
 
   mst = []
 
+  # Builds edges between nodes according to the MST
   parallel_filter_kruskal edges, UnionF.new(nodes), mst
 
+  $algorithm = "Kruskal (since edges are too few)" if edges.size <= SEQ_THRESHOLD
   puts "Using #{$algorithm}"
   puts "\t#{mst.size} edges in MST"
 end
 
-time "Node clustering [#{opts[:clusters]} clusters]" do
+time "Add initial generators [#{(nodes.size / opts[:clusters]).ceil} clusters]" do
 
-  conn_graph = ConnectedGraph.new nodes
-  clusters = conn_graph.cluster opts[:clusters]
+  grid = Grid.new nodes, []
 
-  generators = clusters.map do |cluster|
-    Generator.new cluster, 10
-  end
-  
-  generators.each do |generator|
-    puts generator.info
+  # Keep generators an array of arrays so we can track which generators were built
+  # after which iteration
+  graph = ConnectedGraph.new nodes
+  grid.generators = graph.generators_for_clusters do |size|
+    (size / opts[:clusters]).ceil
   end
 
-  unreached = DisjointGraph.new(nodes - generators.map {|g| g.reach[:nodes] }.flatten)
-
-  # Split the graph into its connected subgraphs
-  connected_graphs = unreached.connected_subgraphs
-  puts "\tConnected graphs: #{connected_graphs.size}"
-
-  # Have to split into connected components and cluster those individually
-  # Because otherwise we're trying to cluster an unconnected graph using a
-  # distance formula that requires them to be connected
-  unreached_cs = connected_graphs.map do |cg|
-    klusters = (cg.size / 10.0).ceil
-    puts "producing clusters (#{cg.size} nodes, #{klusters} clusters)"
-    cg.cluster klusters
-  end.flatten 1
-
-  new_generators = unreached_cs.map do |cluster|
-    Generator.new cluster, 10
-  end
-
-  puts "\tGenerators: #{generators.size}"
+  puts "\tGenerators: #{grid.generators.size}"
+  puts "\tUnreachable: #{grid.unreached.size}"
 end
 
 time "Adding new generators" do
+  new_gens = 0
+
+  # This is the process we would iterate
+
+  # Split the graph into its connected subgraphs
+  # Have to split into connected components and cluster those individually
+  # Because otherwise we're trying to cluster an unconnected graph using a
+  # distance formula that requires them to be connected
+  connected_graphs = grid.unreached.connected_subgraphs
 
   # Which generators need more power to get small nearby clusters?
 
   # Find out which clusters are attached to other clusters.
-  associations = unreached_cs.map do |unreached_cluster|
-    neighbors = clusters.filter do |kl|
-      edge_nodes = unreached_cluster.points.map do |node|
+  associations = connected_graphs.map do |cg|
+    neighbors = grid.generators.filter do |gen|
+      edge_nodes = cg.nodes.map do |node|
         node.edges.map {|e| e.nodes }
       end.flatten
 
-      kl.points & edge_nodes != []
+      gen.reach.nodes & edge_nodes != []
     end
-    [unreached_cluster, neighbors]
+    [cg, neighbors]
   end
 
   # Is it worth increasing the power output of a generator? Or do we need to
   # build a new one entirely?
-  #   o  check each neighbor
-  #   o  if neighbor is enlargeable, enlarge it
-  #   o  if no neighbor is enlargeable, built new generator
-  associations.each do |unreached_cluster, neighbors|
-    # find the largest neighbor (or should it be the neighbor with the most
-    # excess energy?). 
-    neighbors.max_by {|cluster| cluster.points.size }
+  #   o  find first suitable neighbor
+  #   o  if neighbor is enlargeable and we're not too big, join neighbor
+  #   o  if no neighbor is enlargeable, build new generator
+  associations.each do |connected_graph, neighbors|
+    added = false
+
+    # Only going to join enlargeable neighbors
+    neighbors.filter {|n| n.enlargeable? }.each do |neighbor|
+      # If we are less than 30% of the size of the neighbor,
+      # let's join them
+      if connected_graph.size.to_f / neighbor.reach.size < 0.3
+        neighbor.power += connected_graph.demand
+        neighbor.calculate_reach!
+
+        added = true
+        break
+      end
+    end
+
+    # If no neighbor is enlargeable, build new generator
+
+    if added == false
+      # We're building a generator, but only for what we need
+      grid.generators << Generator.new(connected_graph,
+                                       connected_graph.longest_path.median,
+                                       connected_graph.demand)
+      new_gens += 1
+    end
   end
 
+  puts "\tNew generators: #{new_gens}"
+  puts "\tUnreachable: #{grid.unreached.size}"
 end
 
 # IDEA
@@ -159,20 +174,6 @@ end
 
 ############################
 
-plot_clusters clusters
+plot_grid grid
 show_plot
-
-plot_generators generators, nodes
-show_plot
-
-plot_generators new_generators, nodes
-show_plot
-
-#gets
-
-#plot_clusters unreached_cs
-#show_plot
-
-#require 'pry'
-#binding.pry
 

@@ -48,12 +48,11 @@ class DisjointGraph < Graph
   def connected_subgraphs
     uf    = UnionF.new nodes
     edges = nodes.map {|n| n.edges }.flatten
-                 .reject {|e| not e.nodes.all? {|n| nodes.include? n } }
+                 .filter {|e| (e.nodes - nodes).empty? }
   
     edges.each do |edge|
-      unless uf.connected? edge.nodes[0], edge.nodes[1]
-        uf.union edge.nodes[0], edge.nodes[1]
-      end
+      # no-op if they're already unioned
+      uf.union edge.nodes[0], edge.nodes[1]
     end
   
     uf.disjoint_sets.map {|djs| ConnectedGraph.new djs }
@@ -62,9 +61,22 @@ end
 
 class ConnectedGraph < Graph
 
+  def generators_for_clusters(power=10, &k)
+    puts "\tproducing #{k[nodes.size]} clusters..."
+
+    cluster(k[nodes.size]).map do |cluster|
+      graph = ConnectedGraph.new cluster.points
+      Generator.new graph, graph.longest_path.median, power
+    end
+  end
+
+  def demand
+    nodes.map {|n| n.load }.sum
+  end
+
   # BFS
   def traverse_edges(source, &block)
-    visited  = Set.new
+    visited = Set.new
 
     # Probably should replace this with a deque
     queue = []
@@ -87,8 +99,8 @@ class ConnectedGraph < Graph
   end
 
   def longest_path
-    node,  dist = longest_path_from nodes[0]
-    start, dist = longest_path_from node
+    node,  _ = longest_path_from nodes[0]
+    start, _ = longest_path_from node
 
     Path.build start.path_to(node)
   end

@@ -73,15 +73,21 @@ def plot_point(point, color: nil, point_type: 6)
 end
 
 def plot_graph(graph, color: nil, point_type: 6)
+  update_ranges graph.nodes
+
+  edges = graph.nodes.map {|n| n.edges }.flatten
+
+  plot_edges edges
+  plot_points graph.nodes, :color => 'red'
 end
 
-def plot_generators(gens, total_nodes)
-  update_ranges total_nodes
-  u_nodes = gens.map {|g| g.reach[:nodes] }.flatten
-  u_edges = u_nodes.map {|n| n.edges }.flatten
-  plot_edges u_edges
-  gens.each {|g| plot_points g.reach[:nodes], :color => "#6e6e6e" }
-  gens.each {|g| plot_point g.node, :color => "red" }
+def plot_grid(grid)
+  plot_graph grid
+
+  grid.generators.each do |gen|
+    plot_points gen.reach.nodes, :color => "#6e6e6e"
+    plot_point gen.node, :color => "red"
+  end
 end
 
 def plot_clusters(clusters, color: nil)
@@ -113,5 +119,7 @@ def show_plot
     gp << plot.to_gplot
     gp << plot.store_datasets
   end
+
+  update_ranges $nodes
 end
 

@@ -187,7 +187,6 @@ class KMeansPP
 
     # Assign each point its nearest centroid.
     if PARALLELIZE_CLUSTER[points]
-      puts "parallel witchcraft"
       # Parallel
       cs = points.parallel_map do |point|
         self.class.find_nearest_centroid point, centroids

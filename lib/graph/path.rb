@@ -52,6 +52,9 @@ class Path
       end
     end
 
+    # arbitrary
+    sorted = (sorted[0].to_a <=> sorted[-1].to_a) == 1 ? sorted : sorted.reverse
+
     @nodes = sorted
   end
 

@@ -108,25 +108,25 @@ class ConnectedGraph < Graph
     visited
   end
 
-  # FIXME somehow still slow
+  # Hell yeah baby, memoization for the motherfucking win
   def path(from: nil, to: nil)
     track "$elapsed" do
-      return [] if from == to
+      @paths ||= {}
 
-      ret  = nil
-      path = {from => []}
+      if from == to
+        []
+      elsif @paths[from]
+        @paths[from][to]
+      else
+        path = {from => []}
 
-      traverse_edges from do |edge, sta, iin|
-        path[iin] = path[sta] + [edge]
-
-        # breaking instead of returning so my profiling in `track` will work
-        if iin == to
-          ret = path[iin]
-          break
+        traverse_edges from do |edge, sta, iin|
+          path[iin] = path[sta] + [edge]
         end
-      end
 
-      ret
+        @paths[from] = path
+        path[to]
+      end
     end
   end
 

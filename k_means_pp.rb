@@ -98,12 +98,9 @@ class KMeansPP
     nearest_distance = Float::INFINITY
 
     centroids.each do |centroid|
-
-      # For some reason, the shitty method is faster than the
-      # adjacency matrix method. Hm. Weird.
-      distance = centroid.manhattan_distance(point)
-      #distance = graph.manhattan_distance from: centroid.original,
-      #                                    to:   point.original
+      #distance = centroid.manhattan_distance(point)
+      distance = graph.manhattan_distance from: centroid.original,
+                                          to:   point.original
 
       next if distance >= nearest_distance
 

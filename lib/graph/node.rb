@@ -43,10 +43,7 @@ class Node
   end
 
   def euclidean_distance(p_2)
-    start = Time.now
-    res = Math.sqrt((self.x - p_2.x) ** 2 + (self.y - p_2.y) ** 2)
-    $elapsed += Time.now - start
-    res
+    Math.sqrt((self.x - p_2.x) ** 2 + (self.y - p_2.y) ** 2)
   end
 
   # No guarantee that path is shortest
@@ -72,28 +69,11 @@ class Node
     []
   end
 
-  # TODO perhaps a good optimization would be to turn the adjacencies into
-  # a matrix somehow
+  # For some reason, the shitty method is faster than the
+  # adjacency matrix method. Hm. Weird.
   def manhattan_distance(other)
     track "$elapsed" do
-      #Path.build(path_to(other)).length
-
-      cur = id
-      visited = []
-      until cur == other.id
-        next_edges = $sm.states[cur]
-      end
-    end
-  end
-
-  def dist(p_2, style=:euclidean)
-    case style
-    when :edges
-      manhattan_distance p_2
-    when :euclidean
-      euclidean_distance p_2
-    else
-      raise "No style provided for distance calculation"
+      Path.build(path_to(other)).edges.size
     end
   end
 

@@ -108,27 +108,43 @@ class ConnectedGraph < Graph
     visited
   end
 
-  def manhattan_distance(from: nil, to: nil)
-    paths = {from => [from]}
+  # FIXME somehow still slow
+  def path(from: nil, to: nil)
+    track "$elapsed" do
+      return [] if from == to
 
-    traverse_edges from do |edge, sta, iin|
-      paths[iin] = paths[sta] + [iin]
-      return paths[iin] if iin == to
+      ret  = nil
+      path = {from => []}
+
+      traverse_edges from do |edge, sta, iin|
+        path[iin] = path[sta] + [edge]
+
+        # breaking instead of returning so my profiling in `track` will work
+        if iin == to
+          ret = path[iin]
+          break
+        end
+      end
+
+      ret
     end
+  end
 
-    raise "path not found"
+  def manhattan_distance(from: nil, to: nil)
+    path(from: from, to: to).size
   end
 
   def longest_path
     node,  _ = farthest_node_from nodes[0]
     start, _ = farthest_node_from node
 
-    Path.build start.path_to(node)
+    Path.build path(from: start, to: node)
   end
 
   def longest_path_from(source)
     node, _ = farthest_node_from source
-    Path.build source.path_to(node)
+
+    Path.build path(from: source, to: node)
   end
   
   def total_edge_length

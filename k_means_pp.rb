@@ -1,10 +1,18 @@
 # Modified from https://github.com/ollie/k_means_pp
-require './k_means_pp/point'
-require './k_means_pp/cluster'
+require_relative 'k_means_pp/point'
+require_relative 'k_means_pp/cluster'
 
 # Cluster data with the k-means++, k-means and Lloyd algorithm.
 class KMeansPP
   PARALLELIZE_CLUSTER = proc {|pts| $parallel && pts.size > 100 }
+
+  def self.graph
+    @@graph
+  end
+
+  def self.graph=(val)
+    @@graph = val
+  end
 
   # Source data set of points.
   #
@@ -90,7 +98,12 @@ class KMeansPP
     nearest_distance = Float::INFINITY
 
     centroids.each do |centroid|
+
+      # For some reason, the shitty method is faster than the
+      # adjacency matrix method. Hm. Weird.
       distance = centroid.manhattan_distance(point)
+      #distance = graph.manhattan_distance from: centroid.original,
+      #                                    to:   point.original
 
       next if distance >= nearest_distance
 

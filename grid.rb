@@ -71,10 +71,6 @@ time "Tree production" do
   puts "\t#{mst.size} edges in MST"
 end
 
-sm = StateMachine.new nodes
-#require 'pry'
-#binding.pry
-
 time "Add initial generators [#{opts[:clusters]} clusters]" do
 
   grid = Grid.new nodes, []
@@ -82,6 +78,11 @@ time "Add initial generators [#{opts[:clusters]} clusters]" do
   # Keep generators an array of arrays so we can track which generators were built
   # after which iteration
   graph = ConnectedGraph.new nodes
+
+  # Needed for the global adjacency matrix for doing faster manhattan distance
+  # calculations
+  KMeansPP.graph = graph
+
   grid.generators = graph.generators_for_clusters do |size|
     opts[:clusters]
   end

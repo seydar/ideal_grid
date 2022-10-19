@@ -73,10 +73,23 @@ class ConnectedGraph < Graph
     nodes.filter {|n| not (n.edges.map {|e| e.nodes }.flatten - nodes).empty? }
   end
 
+  def nodes_just_beyond
+    nodes.map {|n| n.edges.map {|e| e.nodes } }.flatten - nodes
+  end
+
+  def touching(graph)
+    graph.nodes & nodes_just_beyond != []
+  end
+
   def generators_for_clusters(power=10, &k)
     cluster(k[nodes.size]).map do |cluster|
       graph = ConnectedGraph.new cluster.points
-      Generator.new graph, graph.longest_path.median, power
+
+      if cluster.points.size == 1
+        Generator.new graph, cluster.points[0], power
+      else
+        Generator.new graph, graph.longest_path.median, power
+      end
     end
   end
 

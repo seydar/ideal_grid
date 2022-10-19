@@ -91,7 +91,23 @@ time "Add initial generators [#{opts[:clusters]} clusters]" do
   puts "\tUnreachable: #{grid.unreached.size}"
 end
 
-time "Adding new generators" do
+time "Adding new generators via clustering" do
+  connected_graphs = grid.unreached.connected_subgraphs
+
+  biguns = connected_graphs.filter {|cg| cg.size >  15 }
+  liluns = connected_graphs.filter {|cg| cg.size <= 15 }
+
+  biguns.each do |graph|
+    grid.generators += graph.generators_for_clusters(graph.size / opts[:clusters]) do |size|
+      opts[:clusters]
+    end
+  end
+
+  puts "\tGenerators: #{grid.generators.size}"
+  puts "\tUnreachable: #{grid.unreached.size}"
+end
+
+time "Adding new generators via black magic" do
   new_gens = 0
   more_power = 0
 
@@ -108,13 +124,8 @@ time "Adding new generators" do
   # Find out which clusters are attached to other clusters.
   # TODO this really needs to use an `#overlap` method on graphs
   associations = connected_graphs.map do |cg|
-    neighbors = grid.generators.filter do |gen|
-      edge_nodes = cg.nodes.map do |node|
-        node.edges.map {|e| e.nodes }
-      end.flatten
+    neighbors = grid.generators.filter {|g| cg.touching g.reach }
 
-      gen.reach.nodes & edge_nodes != []
-    end
     [cg, neighbors]
   end
 
@@ -197,4 +208,14 @@ end
 
 
 ############################
+
+plot_grid grid
+show_plot
+
+puts
+puts "Grid:"
+puts "\t# of generators: #{grid.generators.size}"
+puts "\tPower of generators: #{grid.generators.sum {|g| g.power }}"
+puts "\tPower required: #{grid.nodes.size}"
+puts "\tEfficiency: #{grid.nodes.size.to_f / grid.generators.sum {|g| g.power }}"
 

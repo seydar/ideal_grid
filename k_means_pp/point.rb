@@ -34,6 +34,10 @@ class KMeansPP
       original.manhattan_distance point.original
     end
 
+    def euclidean_distance(point)
+      original.euclidean_distance point.original
+    end
+
     # A string representation of the point.
     def to_s
       "(#{x}, #{y})"

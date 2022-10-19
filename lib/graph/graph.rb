@@ -1,4 +1,5 @@
 require 'set'
+require_relative "../siting.rb"
 
 class Graph
   attr_accessor :nodes
@@ -40,6 +41,10 @@ class Graph
   def inspect
     "#<#{self.class.name}:#{object_id} @nodes=[#{nodes.size} nodes]>"
   end
+
+  def &(other)
+    nodes & other.nodes
+  end
 end
 
 class DisjointGraph < Graph
@@ -60,10 +65,15 @@ class DisjointGraph < Graph
 end
 
 class ConnectedGraph < Graph
+  include Siting
+
+  # Maybe this could be moved to `Graph`, but I'm not sure this fully
+  # makes sense for a disjoint graph.
+  def border_nodes
+    nodes.filter {|n| not (n.edges.map {|e| e.nodes }.flatten - nodes).empty? }
+  end
 
   def generators_for_clusters(power=10, &k)
-    puts "\tproducing #{k[nodes.size]} clusters..."
-
     cluster(k[nodes.size]).map do |cluster|
       graph = ConnectedGraph.new cluster.points
       Generator.new graph, graph.longest_path.median, power
@@ -98,23 +108,41 @@ class ConnectedGraph < Graph
     visited
   end
 
+  def manhattan_distance(from: nil, to: nil)
+    paths = {from => [from]}
+
+    traverse_edges from do |edge, sta, iin|
+      paths[iin] = paths[sta] + [iin]
+      return paths[iin] if iin == to
+    end
+
+    raise "path not found"
+  end
+
   def longest_path
-    node,  _ = longest_path_from nodes[0]
-    start, _ = longest_path_from node
+    node,  _ = farthest_node_from nodes[0]
+    start, _ = farthest_node_from node
 
     Path.build start.path_to(node)
+  end
+
+  def longest_path_from(source)
+    node, _ = farthest_node_from source
+    Path.build source.path_to(node)
   end
   
   def total_edge_length
     adjacencies.values.flatten(1).uniq.map {|n, e| e.length }.sum
   end
 
-  def longest_path_from(source)
+  def farthest_node_from(source, &blk)
+    blk ||= proc {|e| e.length }
+
     distance = Hash.new {|h, k| h[k] = -1 }
     distance[source] = 0
 
     traverse_edges source do |edge, from, to|
-      distance[to] = distance[from] + edge.length
+      distance[to] = distance[from] + blk[edge]
     end
 
     distance.max_by {|k, v| v }
@@ -124,8 +152,8 @@ class ConnectedGraph < Graph
   def cluster(clusters=3)
     # Final part of this line is a little tailored to the node class, but
     # I guess that's okay? The proc is to provide pertinent serialization
-    # across processes during parallelization. A graph and its nodes have
-    # to be made with each other in mind.
+    # across processes during parallelization. I suppose a graph and its
+    # nodes have to be made with each other in mind.
     KMeansPP.clusters(nodes, [clusters, nodes.size].min) {|n| n.to_a }
   end
 end

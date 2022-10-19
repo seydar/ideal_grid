@@ -19,18 +19,6 @@ def read_buffered_range(range)
   range[2][1..-2].split(":").map {|p| p.to_f }
 end
 
-def cplot(points, color: nil)
-  plot [KMeansPP::Cluster.new(points.first, points)], :color => color
-end
-
-def pplot(path)
-  cplot path.nodes
-end
-
-def gplot(graph)
-  plot [KMeansPP::Cluster.new(graph.longest_path.median, graph.nodes)]
-end
-
 def update_ranges(nodes)
   xr = buffered_range_int(nodes.map {|p| p.x }, 0.2)
   yr = buffered_range_int(nodes.map {|p| p.y }, 0.2)
@@ -72,44 +60,31 @@ def plot_point(point, color: nil, point_type: 6)
   plot_points [point], :color => color
 end
 
-def plot_graph(graph, color: nil, point_type: 6)
+def plot_graph(graph, color: "blue", point_type: 6)
   update_ranges graph.nodes
 
   edges = graph.nodes.map {|n| n.edges }.flatten
 
   plot_edges edges
-  plot_points graph.nodes, :color => 'red'
+  plot_points graph.nodes, :color => color
 end
 
 def plot_grid(grid)
   plot_graph grid
 
   grid.generators.each do |gen|
-    plot_points gen.reach.nodes, :color => "#6e6e6e"
-    plot_point gen.node, :color => "red"
+    plot_generator gen
   end
 end
 
-def plot_clusters(clusters, color: nil)
-  nodes = clusters.map {|c| c.points }.flatten
-  edges = nodes.map {|n| n.edges }.flatten
+def plot_path(path, color: nil)
+  plot_edges path.edges
+  plot_points path.nodes, :color => color
+end
 
-  # update x and y axes
-  update_ranges nodes
-  
-  plot_edges edges
-
-  varet = [*(color || COLORS)]
-  
-  # Plotting cluster constituents
-  clusters.zip(varet).each do |cluster, color|
-    plot_points cluster.points, :color => color, :point_type => 7
-  end
-  
-  # Plotting cluster centroids
-  clusters.each do |cluster|
-    plot_point cluster.centroid, :color => "orange", :point_type => 6
-  end
+def plot_generator(gen)
+  plot_points gen.reach.nodes, :color => "#6e6e6e"
+  plot_point gen.node, :color => "red"
 end
 
 def show_plot

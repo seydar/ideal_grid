@@ -43,11 +43,17 @@ class Node
   end
 
   def euclidean_distance(p_2)
-    Math.sqrt((self.x - p_2.x) ** 2 + (self.y - p_2.y) ** 2)
+    start = Time.now
+    res = Math.sqrt((self.x - p_2.x) ** 2 + (self.y - p_2.y) ** 2)
+    $elapsed += Time.now - start
+    res
   end
 
   # No guarantee that path is shortest
   # Actually, we *are* guaranteed that because we're using a MST
+  #
+  # I wonder how much of a drag this method is. Could using the adjacency
+  # matrix in `Graph` be faster? Yes. Is it worth it? TBD.
   def path_to(p_2, prev=nil)
     return [] if p_2 == self
 
@@ -69,7 +75,15 @@ class Node
   # TODO perhaps a good optimization would be to turn the adjacencies into
   # a matrix somehow
   def manhattan_distance(other)
-    Path.build(path_to(other)).length
+    track "$elapsed" do
+      #Path.build(path_to(other)).length
+
+      cur = id
+      visited = []
+      until cur == other.id
+        next_edges = $sm.states[cur]
+      end
+    end
   end
 
   def dist(p_2, style=:euclidean)

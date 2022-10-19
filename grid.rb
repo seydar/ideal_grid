@@ -1,11 +1,11 @@
 #!/usr/bin/env ruby
 require 'gnuplot'
 require 'optimist'
-require './k_means_pp.rb'
-require './plotting.rb'
-require './monkey_patch.rb'
-Dir['./lib/**/*.rb'].each {|f| require f }
-require './filter_kruskal.rb'
+require_relative 'k_means_pp.rb'
+require_relative 'plotting.rb'
+require_relative 'monkey_patch.rb'
+Dir['./lib/**/*.rb'].each {|f| require_relative f }
+require_relative 'filter_kruskal.rb'
 
 opts = Optimist::options do
   banner <<-EOS
@@ -26,8 +26,9 @@ EOS
 end
 
 grid, nodes, edges = nil
-PRNG = Random.new 1337
+PRNG = Random.new 1138
 $parallel = opts[:parallel]
+$elapsed = 0
 
 time "Edge production" do
 
@@ -70,7 +71,11 @@ time "Tree production" do
   puts "\t#{mst.size} edges in MST"
 end
 
-time "Add initial generators [#{(nodes.size / opts[:clusters]).ceil} clusters]" do
+sm = StateMachine.new nodes
+#require 'pry'
+#binding.pry
+
+time "Add initial generators [#{opts[:clusters]} clusters]" do
 
   grid = Grid.new nodes, []
 
@@ -78,15 +83,17 @@ time "Add initial generators [#{(nodes.size / opts[:clusters]).ceil} clusters]" 
   # after which iteration
   graph = ConnectedGraph.new nodes
   grid.generators = graph.generators_for_clusters do |size|
-    (size / opts[:clusters]).ceil
+    opts[:clusters]
   end
 
   puts "\tGenerators: #{grid.generators.size}"
   puts "\tUnreachable: #{grid.unreached.size}"
+  puts "\tTime calculating distance: #{$elapsed}"
 end
 
 time "Adding new generators" do
   new_gens = 0
+  more_power = 0
 
   # This is the process we would iterate
 
@@ -99,6 +106,7 @@ time "Adding new generators" do
   # Which generators need more power to get small nearby clusters?
 
   # Find out which clusters are attached to other clusters.
+  # TODO this really needs to use an `#overlap` method on graphs
   associations = connected_graphs.map do |cg|
     neighbors = grid.generators.filter do |gen|
       edge_nodes = cg.nodes.map do |node|
@@ -117,6 +125,7 @@ time "Adding new generators" do
   #   o  if no neighbor is enlargeable, build new generator
   associations.each do |connected_graph, neighbors|
     added = false
+    gen = nil
 
     # Only going to join enlargeable neighbors
     neighbors.filter {|n| n.enlargeable? }.each do |neighbor|
@@ -127,22 +136,37 @@ time "Adding new generators" do
         neighbor.calculate_reach!
 
         added = true
+        more_power += 1
+        gen = neighbor
         break
       end
     end
 
     # If no neighbor is enlargeable, build new generator
-
     if added == false
       # We're building a generator, but only for what we need
-      grid.generators << Generator.new(connected_graph,
-                                       connected_graph.longest_path.median,
+      grid.generators << Generator.new(grid.graph,
+                                       #connected_graph.site_median,
+                                       connected_graph.site_on_premises,
                                        connected_graph.demand)
+      gen = grid.generators.last
       new_gens += 1
+
+      #if connected_graph.longest_path.median == new_spot
+      #  color = "cyan"
+      #else
+      #  color = "green"
+      #end
+
+      #plot_graph connected_graph
+      #plot_point connected_graph.longest_path.median, :color => "red"
+      #plot_point new_spot, :color => color
+      #show_plot
     end
   end
 
   puts "\tNew generators: #{new_gens}"
+  puts "\tIncreased power: #{more_power}"
   puts "\tUnreachable: #{grid.unreached.size}"
 end
 
@@ -173,7 +197,4 @@ end
 
 
 ############################
-
-plot_grid grid
-show_plot
 

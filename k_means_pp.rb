@@ -240,6 +240,14 @@ class KMeansPP
 
       # Stop when 99.9% of points are good
       break if changed <= changed_threshold
+
+      # FIXME still got the bug where it fails to converge and gets stuck
+      # swapping two points back and forth
+      # why do i suck
+      if history.size > 4 && history[-4..-3] == history[-2..-1]
+        puts "\t***FAILED TO CONVERGE***"
+        break
+      end
     end
   end
 

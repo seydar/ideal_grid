@@ -29,13 +29,21 @@ end
 # unfortunate variable shadowing
 def time(phrase, &block)
   start = Time.now
-  block.call
+  res = block.call
   puts "#{phrase} (#{Time.now - start})"
+  res
 end
 
 def track(var, &block)
   start = Time.now
-  block.call
+  res = block.call
   eval "#{var} ||= 0; #{var} += Time.now - start"
+  res
+end
+
+class Array
+  def avg
+    sum / size.to_f
+  end
 end
 

@@ -68,6 +68,8 @@ module Siting
 
   # Okay, so for this one, we're going to be adding a new node to the global
   # body of nodes (as well as new edges).
+  #
+  # This means we're going to spoil the cache. Could be worse.
   def site_new_location
     centroid_x = nodes.map {|n| n.x }.avg
     centroid_y = nodes.map {|n| n.y }.avg

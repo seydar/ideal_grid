@@ -89,7 +89,6 @@ time "Add initial generators [#{opts[:clusters]} clusters]" do
 
   puts "\tGenerators: #{grid.generators.size}"
   puts "\tUnreachable: #{grid.unreached.size}"
-  puts "\tTime calculating distance: #{$elapsed}"
 end
 
 time "Adding new generators" do

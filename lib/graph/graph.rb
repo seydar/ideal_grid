@@ -109,25 +109,25 @@ class ConnectedGraph < Graph
   end
 
   # Hell yeah baby, memoization for the motherfucking win
+  # This used to be like 8s on 500 nodes and 10 clusters, and now
+  # it's 0.2s
   def path(from: nil, to: nil)
-    track "$elapsed" do
-      @paths ||= {}
+    @paths ||= {}
 
-      if from == to
-        []
-      elsif @paths[from]
-        @paths[from][to]
-      else
-        path = {from => []}
+    return [] if from == to
+    return @paths[from][to] if @paths[from]
 
-        traverse_edges from do |edge, sta, iin|
-          path[iin] = path[sta] + [edge]
-        end
-
-        @paths[from] = path
-        path[to]
-      end
+    @paths[from] = {from => []}
+    traverse_edges from do |edge, sta, iin|
+      @paths[from][iin] = @paths[from][sta] + [edge]
     end
+
+    @paths[from][to]
+  end
+
+  # Spoil the cache
+  def invalidate_cache!
+    @paths = nil
   end
 
   def manhattan_distance(from: nil, to: nil)

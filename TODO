@@ -5,5 +5,4 @@ TODO
 * make edge/node more specific to line/load
 * **ADD PARALLELIZATION SERIALIZATION METHOD TO EASE PARALLELIZATION**
 * Fix k_means where it doesn't converge sometimes
-* Fix manhattan distance to use a state machine
 

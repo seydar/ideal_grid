@@ -59,6 +59,16 @@ end
 $nodes = nodes
 update_ranges $nodes
 
+def circle(nodes)
+  nodes.size.times do |i|
+    e = Edge.new nodes[i],
+                 nodes[(i + 1) % nodes.size],
+                 nodes[i].euclidean_distance(nodes[(i + 1) % nodes.size])
+    nodes[i].edges << e
+    nodes[(i + 1) % nodes.size].edges << e
+  end
+end
+
 time "Tree production" do
 
   mst = []
@@ -107,7 +117,13 @@ time "Adding new generators via clustering" do
   puts "\tUnreachable: #{grid.unreached.size}"
 end
 
-time "Adding new generators via black magic" do
+# This one is dangerous because it will render the graph as cyclic.
+# Goodbye acyclic graph. I wonder what algorithms will no longer work?
+time "Adding new generators via construction of new lines" do
+
+end
+
+time "Adding new generators via on-premises construction" do
   new_gens = 0
   more_power = 0
 
@@ -162,17 +178,6 @@ time "Adding new generators via black magic" do
                                        connected_graph.demand)
       gen = grid.generators.last
       new_gens += 1
-
-      #if connected_graph.longest_path.median == new_spot
-      #  color = "cyan"
-      #else
-      #  color = "green"
-      #end
-
-      #plot_graph connected_graph
-      #plot_point connected_graph.longest_path.median, :color => "red"
-      #plot_point new_spot, :color => color
-      #show_plot
     end
   end
 
@@ -218,4 +223,8 @@ puts "\t# of generators: #{grid.generators.size}"
 puts "\tPower of generators: #{grid.generators.sum {|g| g.power }}"
 puts "\tPower required: #{grid.nodes.size}"
 puts "\tEfficiency: #{grid.nodes.size.to_f / grid.generators.sum {|g| g.power }}"
+puts "\tUnreached: #{grid.unreached.size}"
+
+require 'pry'
+binding.pry
 

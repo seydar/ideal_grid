@@ -5,4 +5,5 @@ TODO
 * make edge/node more specific to line/load
 * **ADD PARALLELIZATION SERIALIZATION METHOD TO EASE PARALLELIZATION**
 * Fix k_means where it doesn't converge sometimes
-
+* For Generator#reach:
+  - make it so each load is pulling from whichever generator is closest

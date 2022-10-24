@@ -5,7 +5,7 @@ module Siting
     longest_path.median
   end
 
-  # FIXME This isn't getting everyone in the way I'd like it to.
+  # This isn't getting everyone in the way I'd like it to.
   #
   # Issue: because a generator is supplying power to another cluster
   # before fullying supplying its own because it is place in the median
@@ -70,6 +70,9 @@ module Siting
   # body of nodes (as well as new edges).
   #
   # This means we're going to spoil the cache. Could be worse.
+  #
+  # Things to do:
+  #   Combine separate connected graphs if there's nothing else in between them
   def site_new_location
     centroid_x = nodes.map {|n| n.x }.avg
     centroid_y = nodes.map {|n| n.y }.avg

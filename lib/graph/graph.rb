@@ -81,14 +81,14 @@ class ConnectedGraph < Graph
     graph.nodes & nodes_just_beyond != []
   end
 
-  def generators_for_clusters(power=10, &k)
+  def generators_for_clusters(grid, power=10, &k)
     cluster(k[nodes.size]).map do |cluster|
-      graph = ConnectedGraph.new cluster.points
+      cg = ConnectedGraph.new cluster.points
 
       if cluster.points.size == 1
-        Generator.new graph, cluster.points[0], power
+        Generator.new grid.graph, cluster.points[0], power
       else
-        Generator.new graph, graph.longest_path.median, power
+        Generator.new grid.graph, cg.site_on_premises, power
       end
     end
   end
@@ -124,6 +124,9 @@ class ConnectedGraph < Graph
   # Hell yeah baby, memoization for the motherfucking win
   # This used to be like 8s on 500 nodes and 10 clusters, and now
   # it's 0.2s
+  #
+  # Note: this only returns the minimum # of edges to a node. Dijkstra's
+  # algorithm is what is required in order to account for edge weight
   def path(from: nil, to: nil)
     @paths ||= {}
 

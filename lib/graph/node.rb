@@ -51,6 +51,8 @@ class Node
   #
   # I wonder how much of a drag this method is. Could using the adjacency
   # matrix in `Graph` be faster? Yes. Is it worth it? TBD.
+  # 
+  # Edit: turns out it's not that much slower than an adjacency matrix
   def path_to(p_2, prev=nil)
     return [] if p_2 == self
 

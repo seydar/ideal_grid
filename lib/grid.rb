@@ -20,4 +20,8 @@ class Grid
   def inspect
     "#<Grid: @nodes=[#{nodes.size} nodes] @generators=[#{generators.size} generators]>"
   end
+
+  def generator_for_node(node)
+    generators.min_by {|g| graph.manhattan_distance from: g.node, to: node }
+  end
 end

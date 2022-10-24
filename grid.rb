@@ -93,7 +93,7 @@ time "Add initial generators [#{opts[:clusters]} clusters]" do
   # calculations
   KMeansPP.graph = graph
 
-  grid.generators = graph.generators_for_clusters do |size|
+  grid.generators = graph.generators_for_clusters grid do |size|
     opts[:clusters]
   end
 
@@ -105,10 +105,12 @@ time "Adding new generators via clustering" do
   connected_graphs = grid.unreached.connected_subgraphs
 
   biguns = connected_graphs.filter {|cg| cg.size >  15 }
-  liluns = connected_graphs.filter {|cg| cg.size <= 15 }
+  #liluns = connected_graphs.filter {|cg| cg.size <= 15 }
 
+  puts "\tClustering #{biguns.size} unreached subgraphs"
   biguns.each do |graph|
-    grid.generators += graph.generators_for_clusters(graph.size / opts[:clusters]) do |size|
+    cltrs = graph.size / opts[:clusters]
+    grid.generators += graph.generators_for_clusters grid, cltrs do |size|
       opts[:clusters]
     end
   end

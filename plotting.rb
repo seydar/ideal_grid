@@ -87,6 +87,11 @@ def plot_generator(gen)
   plot_point gen.node, :color => "red"
 end
 
+def plot_cluster(cluster, gen)
+  plot_graph cluster
+  plot_generator gen
+end
+
 def show_plot
   $plot, plot = Gnuplot::Plot.new, $plot
 

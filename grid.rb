@@ -103,9 +103,10 @@ end
 
 time "Adding new generators via clustering" do
   connected_graphs = grid.unreached.connected_subgraphs
+  puts "\tUnreached subgraph sizes: #{connected_graphs.map {|cg| cg.size }.inspect}"
 
-  biguns = connected_graphs.filter {|cg| cg.size >  15 }
-  #liluns = connected_graphs.filter {|cg| cg.size <= 15 }
+  biguns = connected_graphs.filter {|cg| cg.size >  50 }
+  #liluns = connected_graphs.filter {|cg| cg.size <= 50 }
 
   puts "\tClustering #{biguns.size} unreached subgraphs"
   biguns.each do |graph|
@@ -140,7 +141,6 @@ time "Adding new generators via on-premises construction" do
   # Which generators need more power to get small nearby clusters?
 
   # Find out which clusters are attached to other clusters.
-  # TODO this really needs to use an `#overlap` method on graphs
   associations = connected_graphs.map do |cg|
     neighbors = grid.generators.filter {|g| cg.touching g.reach }
 
@@ -158,11 +158,13 @@ time "Adding new generators via on-premises construction" do
 
     # Only going to join enlargeable neighbors
     neighbors.filter {|n| n.enlargeable? }.each do |neighbor|
-      # If we are less than 30% of the size of the neighbor,
+      # If we are less than 20% of the size of the neighbor,
       # let's join them
-      if connected_graph.size.to_f / neighbor.reach.size < 0.3
+      if connected_graph.size.to_f / neighbor.reach.size < 0.2
         neighbor.power += connected_graph.demand
         neighbor.calculate_reach!
+
+        puts "\tincreased power by #{connected_graph.demand}"
 
         added = true
         more_power += 1
@@ -173,19 +175,26 @@ time "Adding new generators via on-premises construction" do
 
     # If no neighbor is enlargeable, build new generator
     if added == false
+      max_allowed_power = [connected_graph.demand, 100].min
       # We're building a generator, but only for what we need
       grid.generators << Generator.new(grid.graph,
-                                       #connected_graph.site_median,
                                        connected_graph.site_on_premises,
-                                       connected_graph.demand)
+                                       max_allowed_power)
       gen = grid.generators.last
       new_gens += 1
+
+      plot_graph connected_graph
+      plot_generator gen
+      show_plot
     end
   end
 
   puts "\tNew generators: #{new_gens}"
   puts "\tIncreased power: #{more_power}"
   puts "\tUnreachable: #{grid.unreached.size}"
+
+  connected_graphs = grid.unreached.connected_subgraphs
+  puts "\t\tSubgraph sizes: #{connected_graphs.map {|cg| cg.size }.inspect}"
 end
 
 # IDEA
@@ -218,6 +227,8 @@ end
 
 plot_grid grid
 show_plot
+
+p grid.generators.map {|g| g.power }
 
 puts
 puts "Grid:"

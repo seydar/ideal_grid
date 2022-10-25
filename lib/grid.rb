@@ -22,6 +22,20 @@ class Grid
   end
 
   def generator_for_node(node)
-    generators.min_by {|g| graph.manhattan_distance from: g.node, to: node }
+    generators.min_by do |gen|
+      graph.manhattan_distance(from: gen.node, to: node)
+    end
+  end
+
+  def calculate_reaches
+    reaches = Hash.new {|h, k| h[k] = [] }
+    nodes.each do |node|
+      g = generator_for_node node
+      reaches[g] << node
+    end
+
+    reaches.each do |gen, reach|
+      gen.reach = ConnectedGraph.new reach
+    end
   end
 end

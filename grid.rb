@@ -225,10 +225,12 @@ end
 
 ############################
 
+grid.calculate_reaches
+
 plot_grid grid
 show_plot
 
-p grid.generators.map {|g| g.power }
+p grid.generators.map {|g| [g.power, g.demand] }
 
 puts
 puts "Grid:"

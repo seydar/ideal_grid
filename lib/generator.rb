@@ -1,10 +1,10 @@
 class Generator
   attr_reader :node
   attr_reader :graph
-  attr_reader :reach
   attr_reader :demand
 
   attr_accessor :power
+  attr_accessor :reach
   
   def initialize(graph, node, power=0)
     @graph = graph

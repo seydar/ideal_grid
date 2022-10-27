@@ -5,6 +5,7 @@ class Generator
 
   attr_accessor :power
   attr_accessor :reach
+  attr_accessor :remainder
   
   def initialize(graph, node, power=0)
     @graph = graph

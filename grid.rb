@@ -183,9 +183,9 @@ time "Adding new generators via on-premises construction" do
       gen = grid.generators.last
       new_gens += 1
 
-      plot_graph connected_graph
-      plot_generator gen
-      show_plot
+      #plot_graph connected_graph
+      #plot_generator gen
+      #show_plot
     end
   end
 
@@ -228,7 +228,7 @@ end
 grid.calculate_reaches
 
 plot_grid grid
-show_plot
+#show_plot
 
 p grid.generators.map {|g| [g.power, g.demand] }
 
@@ -237,9 +237,11 @@ puts "Grid:"
 puts "\t# of generators: #{grid.generators.size}"
 puts "\tPower of generators: #{grid.generators.sum {|g| g.power }}"
 puts "\tPower required: #{grid.nodes.size}"
-puts "\tEfficiency: #{grid.nodes.size.to_f / grid.generators.sum {|g| g.power }}"
+efficiency = (grid.nodes.size.to_f - grid.unreached.size) /
+             grid.generators.sum {|g| g.power }
+puts "\tEfficiency: #{efficiency}"
 puts "\tUnreached: #{grid.unreached.size}"
 
-require 'pry'
-binding.pry
+#require 'pry'
+#binding.pry
 

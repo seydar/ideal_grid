@@ -6,4 +6,6 @@ TODO
 * **ADD PARALLELIZATION SERIALIZATION METHOD TO EASE PARALLELIZATION**
 * Fix k_means where it doesn't converge sometimes
 * For Generator#reach:
-  - make it so each load is pulling from whichever generator is closest
+  - need to identify traffic through edges
+  - from image 496 to 497, there is a TON of switching.
+    - weird. wrong. shouldn't happen.

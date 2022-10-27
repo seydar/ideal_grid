@@ -8,7 +8,6 @@ class Graph
   # Need to specify the nodes, and then restrict the edges to only those
   # that connect to these nodes
   def initialize(nodes)
-    raise "nodes cannot be empty" if nodes.empty?
     @nodes = nodes
     @adjacencies = {}
 
@@ -66,6 +65,11 @@ end
 
 class ConnectedGraph < Graph
   include Siting
+
+  def initialize(nodes)
+    raise "nodes cannot be empty" if nodes.empty?
+    super(nodes)
+  end
 
   # Maybe this could be moved to `Graph`, but I'm not sure this fully
   # makes sense for a disjoint graph.

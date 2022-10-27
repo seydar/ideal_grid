@@ -225,12 +225,11 @@ end
 
 ############################
 
-grid.calculate_reaches
+reach = grid.calculate_reach
 
-plot_grid grid
-#show_plot
-
-p grid.generators.map {|g| [g.power, g.demand] }
+plot_graph grid.graph, :color => "gray"
+plot_graph reach[:reach], :color => "blue"
+show_plot
 
 puts
 puts "Grid:"

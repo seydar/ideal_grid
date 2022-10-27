@@ -73,7 +73,7 @@ def plot_grid(grid)
   plot_graph grid
 
   grid.generators.each.with_index do |gen, i|
-    plot_generator gen, :color => (COLORS - ["red"])[i]
+    plot_generator gen, :color => COLORS[i % COLORS.size]
   end
 end
 
@@ -84,7 +84,7 @@ end
 
 def plot_generator(gen, color: "#6e6e6e")
   plot_points gen.reach.nodes, :color => color
-  plot_point gen.node, :color => "red"
+  plot_point gen.node, :color => color, :point_style => 7
 end
 
 def plot_cluster(cluster, gen)
@@ -157,3 +157,4 @@ COLORS = ["#696969",
           "#98fb98",
           "#7fffd4",
           "#ffdab9"]
+

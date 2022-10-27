@@ -33,6 +33,10 @@ class Graph
     end
   end
 
+  def load
+    nodes.map {|n| n.load }.sum
+  end
+
   def size
     nodes.size
   end

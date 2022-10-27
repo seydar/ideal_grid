@@ -69,12 +69,15 @@ def plot_graph(graph, color: "blue", point_type: 6)
   plot_points graph.nodes, :color => color, :point_type => point_type
 end
 
-def plot_grid(grid)
-  plot_graph grid
+def plot_grid(grid, focus=:unreached)
+  # Do we want to draw attention to the unreached or the reached?
+  c1, c2 = "blue", "gray"
+  c1, c2 = c2, c1 if focus == :reached
 
-  grid.generators.each.with_index do |gen, i|
-    plot_generator gen, :color => COLORS[i % COLORS.size]
-  end
+  plot_graph grid.graph, :color => c1
+  plot_graph grid.reach, :color => c2
+
+  grid.generators.each {|g| plot_generator g }
 end
 
 def plot_path(path, color: nil)
@@ -82,9 +85,8 @@ def plot_path(path, color: nil)
   plot_points path.nodes, :color => color
 end
 
-def plot_generator(gen, color: "#6e6e6e")
-  plot_points gen.reach.nodes, :color => color
-  plot_point gen.node, :color => color, :point_style => 7
+def plot_generator(gen, color: "red")
+  plot_point gen.node, :color => color, :point_type => 7
 end
 
 def plot_cluster(cluster, gen)

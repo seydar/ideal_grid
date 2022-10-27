@@ -97,6 +97,7 @@ time "Add initial generators [#{opts[:clusters]} clusters]" do
     opts[:clusters]
   end
 
+  grid.calculate_reach!
   puts "\tGenerators: #{grid.generators.size}"
   puts "\tUnreachable: #{grid.unreached.size}"
 end
@@ -116,85 +117,9 @@ time "Adding new generators via clustering" do
     end
   end
 
+  grid.calculate_reach!
   puts "\tGenerators: #{grid.generators.size}"
   puts "\tUnreachable: #{grid.unreached.size}"
-end
-
-# This one is dangerous because it will render the graph as cyclic.
-# Goodbye acyclic graph. I wonder what algorithms will no longer work?
-time "Adding new generators via construction of new lines" do
-
-end
-
-time "Adding new generators via on-premises construction" do
-  new_gens = 0
-  more_power = 0
-
-  # This is the process we would iterate
-
-  # Split the graph into its connected subgraphs
-  # Have to split into connected components and cluster those individually
-  # Because otherwise we're trying to cluster an unconnected graph using a
-  # distance formula that requires them to be connected
-  connected_graphs = grid.unreached.connected_subgraphs
-
-  # Which generators need more power to get small nearby clusters?
-
-  # Find out which clusters are attached to other clusters.
-  associations = connected_graphs.map do |cg|
-    neighbors = grid.generators.filter {|g| cg.touching g.reach }
-
-    [cg, neighbors]
-  end
-
-  # Is it worth increasing the power output of a generator? Or do we need to
-  # build a new one entirely?
-  #   o  find first suitable neighbor
-  #   o  if neighbor is enlargeable and we're not too big, join neighbor
-  #   o  if no neighbor is enlargeable, build new generator
-  associations.each do |connected_graph, neighbors|
-    added = false
-    gen = nil
-
-    # Only going to join enlargeable neighbors
-    neighbors.filter {|n| n.enlargeable? }.each do |neighbor|
-      # If we are less than 20% of the size of the neighbor,
-      # let's join them
-      if connected_graph.size.to_f / neighbor.reach.size < 0.2
-        neighbor.power += connected_graph.demand
-        neighbor.calculate_reach!
-
-        puts "\tincreased power by #{connected_graph.demand}"
-
-        added = true
-        more_power += 1
-        gen = neighbor
-        break
-      end
-    end
-
-    # If no neighbor is enlargeable, build new generator
-    if added == false
-      max_allowed_power = [connected_graph.demand, 100].min
-      # We're building a generator, but only for what we need
-      grid.generators << Generator.new(grid.graph,
-                                       connected_graph.site_on_premises,
-                                       max_allowed_power)
-      gen = grid.generators.last
-      new_gens += 1
-
-      #plot_graph connected_graph
-      #plot_generator gen
-      #show_plot
-    end
-  end
-
-  puts "\tNew generators: #{new_gens}"
-  puts "\tIncreased power: #{more_power}"
-  puts "\tUnreachable: #{grid.unreached.size}"
-
-  connected_graphs = grid.unreached.connected_subgraphs
-  puts "\t\tSubgraph sizes: #{connected_graphs.map {|cg| cg.size }.inspect}"
 end
 
 # IDEA
@@ -225,10 +150,12 @@ end
 
 ############################
 
-reach = grid.calculate_reach
+grid.calculate_reach!
 
-plot_graph grid.graph, :color => "gray"
-plot_graph reach[:reach], :color => "blue"
+plot_grid grid
+show_plot
+
+plot_grid grid, :reached
 show_plot
 
 puts
@@ -236,8 +163,7 @@ puts "Grid:"
 puts "\t# of generators: #{grid.generators.size}"
 puts "\tPower of generators: #{grid.generators.sum {|g| g.power }}"
 puts "\tPower required: #{grid.nodes.size}"
-efficiency = (grid.nodes.size.to_f - grid.unreached.size) /
-             grid.generators.sum {|g| g.power }
+efficiency = grid.reach.load / grid.power
 puts "\tEfficiency: #{efficiency}"
 puts "\tUnreached: #{grid.unreached.size}"
 

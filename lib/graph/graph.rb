@@ -93,7 +93,9 @@ class ConnectedGraph < Graph
     cluster(k[nodes.size]).map do |cluster|
       cg = ConnectedGraph.new cluster.points
 
-      if cluster.points.size == 1
+      # If there's only one cluster, then there will be no border nodes
+      # so on-premises siting won't work
+      if cluster.points.size == 1 || k[nodes.size] <= 1
         Generator.new grid.graph, cluster.points[0], power
       else
         Generator.new grid.graph, cg.site_on_premises, power

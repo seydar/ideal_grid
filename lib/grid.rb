@@ -10,6 +10,10 @@ class Grid
     @graph      = ConnectedGraph.new nodes
   end
 
+  def analyze
+    Analyzer.new reach, generators
+  end
+
   def unreached
     DisjointGraph.new(nodes - reach.nodes)
   end
@@ -22,35 +26,6 @@ class Grid
     "#<Grid: @nodes=[#{nodes.size} nodes] @generators=[#{generators.size} generators]>"
   end
 
-  # Assumes connected graph and generators are in the graph (duh)
-  # This does NOT traverse all edges. This merely traverses all nodes.
-  def traverse_nodes(&block)
-    # This is the only difference between this implementation and the
-    # implementation in `Graph`: we are starting with multiple sources
-    # instead of just one.
-    sources = generators.map {|g| g.node }
-    visited = Set.new
-
-    # Probably should replace this with a deque
-    queue = []
-    queue   += sources
-    visited += sources
-
-    until queue.empty?
-      from = queue.shift
-
-      graph.adjacencies[from].each do |to, edge|
-        unless visited.include? to
-          block.call edge, from, to
-          queue   << to
-          visited << to
-        end
-      end
-    end
-
-    visited
-  end
-
   def calculate_reach!
     reachable = generators.map {|g| g.node }
     loads     = generators.map {|g| g.node.load }.sum
@@ -60,7 +35,8 @@ class Grid
       raise "Generators can't power themselves (node.load > gen.power across all gens)"
     end
 
-    traverse_nodes do |edge, from, to|
+    # Start with the generator nodes as the sources
+    graph.traverse_nodes reachable do |edge, from, to|
       if remainder - to.load >= 0
         reachable << to
         remainder -= to.load

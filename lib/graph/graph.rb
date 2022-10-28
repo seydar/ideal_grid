@@ -112,9 +112,48 @@ class ConnectedGraph < Graph
     visited = Set.new
 
     # Probably should replace this with a deque
-    queue = []
-    queue   << source
-    visited << source
+    queue   = []
+
+    # if `source` is an array, have multiple search roots
+    if source.is_a? Array
+      queue += source
+    else
+      queue << source
+    end
+
+    until queue.empty?
+      from = queue.shift
+
+      adjacencies[from].each do |to, edge|
+        unless visited.include? edge
+          block.call edge, from, to
+          queue   << to
+          visited << edge
+        end
+      end
+    end
+
+    visited
+  end
+
+  # BFS
+  # This traverses all edges and nodes in an acyclic graph
+  # This traverses all nodes but does NOT traverse all edges in a cyclic
+  # graph
+  def traverse_nodes(source, &block)
+    visited = Set.new
+
+    # Probably should replace this with a deque
+    queue   = []
+
+    # if `source` is an array, have multiple search roots
+    if source.is_a? Array
+      queue   += source
+      visited += source
+    else
+      queue   << source
+      visited << source
+    end
 
     until queue.empty?
       from = queue.shift

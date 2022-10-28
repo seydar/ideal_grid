@@ -17,27 +17,27 @@ class Node
     "#<Node:#{object_id} @x=#{x.round 3}, @y=#{y.round 3}, # of edges=#{edges.size}>"
   end
 
-  def count_accessible_branches(except=nil, &blk)
+  def count_accessible_branches(except: nil, &blk)
     branches = edges - (except ? [except] : [])
     branches.map do |b|
-      (b.nodes - [self])[0].count_accessible_branches(b, &blk)
+      b.not_node(self).count_accessible_branches(:except => b, &blk)
     end.sum + blk.call(except, self)
   end
   
-  def total_nodes
-    count_accessible_branches do |_, _|
+  def total_nodes(except: nil)
+    count_accessible_branches :except => except do |_, _|
       1
     end
   end
   
-  def total_edge_length
-    count_accessible_branches do |edge, _|
+  def total_edge_length(except: nil)
+    count_accessible_branches :except => except do |edge, _|
       edge.length
     end
   end
   
-  def total_node_loads
-    count_accessible_branches do |_, node|
+  def total_load(except: nil)
+    count_accessible_branches :except => except do |_, node|
       node.load
     end
   end

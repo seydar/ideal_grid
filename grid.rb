@@ -155,9 +155,6 @@ grid.calculate_reach!
 plot_grid grid
 show_plot
 
-plot_grid grid, :reached
-show_plot
-
 puts
 puts "Grid:"
 puts "\t# of generators: #{grid.generators.size}"
@@ -167,6 +164,9 @@ efficiency = grid.reach.load / grid.power
 puts "\tEfficiency: #{efficiency}"
 puts "\tUnreached: #{grid.unreached.size}"
 
-#require 'pry'
-#binding.pry
+circuit = grid.analyze
+circuit.calculate_flow!
+
+require 'pry'
+binding.pry
 

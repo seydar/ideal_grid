@@ -29,7 +29,7 @@ def update_ranges(nodes)
   $plot.yrange "[#{[yprev[0], yr[0]].min}:#{[yprev[1], yr[1]].max}]"
 end
 
-def plot_edges(edges, color: "black")
+def plot_edges(edges, color: "black", width: 1)
   $plot.data += edges.map do |edge|
     xs = edge.nodes.map(&:x)
     ys = edge.nodes.map(&:y)
@@ -38,6 +38,7 @@ def plot_edges(edges, color: "black")
       ds.with = 'lines'
       ds.notitle
       ds.linecolor = "rgb \"#{color}\""
+      ds.linewidth = width
     end
   end
 end
@@ -98,19 +99,20 @@ def plot_cluster(cluster, gen)
   plot_generator gen
 end
 
-def plot_flows(grid, flows, n: 5)
+def plot_flows(grid, flows, n: 5, focus: :unreached)
   max, min = flows.values.max, flows.values.min
-  splits = n.times.map {|i| (max - min) * i / 5.0 + min }
-  splits = [min, *splits, max]
-  p splits
+  splits = n.times.map {|i| (max - min) * i / n.to_f + min }
+  splits = [*splits, max]
 
   # low to high, because that's how splits is generated
   percentiles = splits.each_cons(2).map do |bottom, top|
-    flows.filter {|e, f| f >= splits[bottom] && f <= splits[top] }.map {|e, f| e }
+    flows.filter {|e, f| f >= bottom && f <= top }.map {|e, f| e }
   end
 
-  plot_grid grid
-  percentiles.each.with_index {|pc, i| plot_edges pc, :color => RED[i] }
+  plot_grid grid, focus
+  percentiles.each.with_index do |pc, i|
+    plot_edges pc, :color => REDS[(i * REDS.size)/ n], :width => (i * 3.0 / n)
+  end
 end
 
 def show_plot

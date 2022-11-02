@@ -76,6 +76,8 @@ class Grid
     sources = generators.map {|g| g.node }
     visited = graph.traverse_edges_in_phases sources, dec_remainders, join_sources
 
+    puts "\tsaved #{i} images"
+
     reachable = visited.map {|e| e.nodes }.flatten.uniq
     @reach = DisjointGraph.new reachable
   end

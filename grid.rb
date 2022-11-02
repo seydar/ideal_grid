@@ -26,7 +26,7 @@ EOS
   opt :intermediate, "Show intermediate graphics of flow calculation"
 end
 
-grid, nodes, edges = nil
+grid, nodes, edges, flows = nil
 PRNG = Random.new 1138
 $parallel = opts[:parallel]
 $elapsed = 0
@@ -166,74 +166,20 @@ time "Calculate flow" do
     path.each {|e| flows[e] += 1 }
   end
 
-  #flows = {}
-  #nearest_nodes.each.with_index do |(g, ns), i|
-  #  cg = ConnectedGraph.new ns
-  #  cg.traverse_edges g.node do |edge, from, to|
-  #    flows[edge] = edge.flow(:from => from, :restrict => cg.nodes)
-  #  end
-  #end
-
-  max, min = flows.values.max, flows.values.min
-  quints = 5.times.map {|i| (max - min) * i / 5.0 + min }
-  puts "\t[max, min]: #{[max, min]}"
-  puts "\tquints: #{quints}"
-
-  percentile_80 = flows.filter {|e, f| f > quints[4] }.map {|e, f| e }
-  percentile_60 = flows.filter {|e, f| f > quints[3] && f < quints[4] }.map {|e, f| e }
-  percentile_40 = flows.filter {|e, f| f > quints[2] && f < quints[3] }.map {|e, f| e }
-  percentile_20 = flows.filter {|e, f| f > quints[1] && f < quints[2] }.map {|e, f| e }
-  percentile_00 = flows.filter {|e, f| f > quints[0] && f < quints[1] }.map {|e, f| e }
-
-  puts "\tReachable edges: #{flows.size}"
-  puts "\t80-100%: #{percentile_80.size}"
-  puts "\t60-80%:  #{percentile_60.size}"
-  puts "\t40-60%:  #{percentile_40.size}"
-  puts "\t20-40%:  #{percentile_20.size}"
-  puts "\t 0-20%:  #{percentile_00.size}"
-
-  plot_grid grid
-
-  plot_edges percentile_80, :color => REDS[5]
-  plot_edges percentile_60, :color => REDS[4]
-  plot_edges percentile_40, :color => REDS[3]
-  plot_edges percentile_20, :color => REDS[1]
-  plot_edges percentile_00, :color => REDS[0]
-  show_plot
-
   puts "\tUnreachable: #{grid.unreached.size}"
 end
 
-# IDEA
-#
-# Minimum spanning tree to construct the grid
-# Then:
-#   pick the median node (same # of edges on all branches)
-#     find longest edge, pick median node
-#   pick the n/3 nodes (???) such that each root has roughly the same number of nodes closest to it
-#   k-means
-#     cluster by geographic distance
-#     cluster by edges on MST
-#
-# Then:
-#   Put generators at geographic centroids of clusters
-#     then build new edges
-#   Put generators at nodal centroids of clusters
-#   Put generators at *intersections* between clusters
-#
-# Questions:
-#   How do I get clusters that overlap, so that each node has some kind of backup source?
-#     Deal with resiliency later. Although overlapping clusters is a good question
-#
-# Assign generators based on an MST
-# Assign redundancy by making a maximally connected graph, and then remove
-#   edges according to some algorithm
-
-
 ############################
 
-#plot_grid grid
-#show_plot
+
+plot_flows grid, flows, :n => 10
+show_plot
+
+plot_grid grid, :reached
+show_plot
+
+plot_grid grid, :unreached
+show_plot
 
 puts
 puts "Grid:"

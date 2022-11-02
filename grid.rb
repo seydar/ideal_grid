@@ -166,6 +166,7 @@ time "Calculate flow" do
     path.each {|e| flows[e] += 1 }
   end
 
+  puts "\tMax flow: #{flows.values.max}"
   puts "\tUnreachable: #{grid.unreached.size}"
 end
 

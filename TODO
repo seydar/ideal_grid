@@ -5,5 +5,6 @@ TODO
 * make edge/node more specific to line/load
 * **ADD PARALLELIZATION SERIALIZATION METHOD TO EASE PARALLELIZATION**
 * Fix k_means where it doesn't converge sometimes
-* For Generator#reach:
-  - need to identify traffic through edges
+
+* How do we add edges between nodes?
+  * How do we do it smartly?

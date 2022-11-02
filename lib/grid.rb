@@ -81,4 +81,34 @@ class Grid
     reachable = visited.map {|e| e.nodes }.flatten.uniq
     @reach = DisjointGraph.new reachable
   end
+
+  def build_generators_for_unreached(clusters_per_subgraph)
+    connected_graphs = unreached.connected_subgraphs
+
+    biguns = connected_graphs.filter {|cg| cg.size >  50 }
+
+    biguns.each do |graph|
+      pwr = [graph.size / clusters_per_subgraph, 50].min
+      @generators += graph.generators_for_clusters(self, pwr) { clusters_per_subgraph }
+    end
+
+    calculate_reach!
+
+    biguns.size
+  end
+
+  def grow_generators_for_unreached
+    connected_graphs = unreached.connected_subgraphs
+
+    liluns = connected_graphs.filter {|cg| cg.size <= 50 }
+
+    liluns.each do |graph|
+      nearest_gen = generators.min_by {|g| graph.manhattan_distance_as_group g.node }
+      nearest_gen.power += graph.nodes.size
+    end
+
+    calculate_reach!
+
+    liluns.size
+  end
 end

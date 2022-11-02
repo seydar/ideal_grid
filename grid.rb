@@ -101,6 +101,7 @@ time "Add initial generators [#{opts[:clusters]} clusters]" do
 
   grid.calculate_reach!
   puts "\tGenerators: #{grid.generators.size}"
+  puts "\t\t#{grid.generators.map {|g| g.power }}"
   puts "\tUnreachable: #{grid.unreached.size}"
 end
 
@@ -108,27 +109,28 @@ time "Adding new generators via clustering" do
   connected_graphs = grid.unreached.connected_subgraphs
   puts "\tUnreached subgraph sizes: #{connected_graphs.map {|cg| cg.size }.inspect}"
 
-  biguns = connected_graphs.filter {|cg| cg.size >  50 }
-  #liluns = connected_graphs.filter {|cg| cg.size <= 50 }
+  grown = grid.grow_generators_for_unreached
+  built = grid.build_generators_for_unreached opts[:clusters]
 
-  puts "\tClustering #{biguns.size} unreached subgraphs"
-  biguns.each do |graph|
-    cltrs = graph.size / opts[:clusters]
-    grid.generators += graph.generators_for_clusters grid, cltrs do |size|
-      opts[:clusters]
-    end
-  end
-
+  puts "\tBuilt: #{built}"
+  puts "\tGrown: #{grown}"
   puts "\tGenerators: #{grid.generators.size}"
   puts "\t\t#{grid.generators.map {|g| g.power }}"
+  puts "\tUnreachable: #{grid.unreached.size}"
 end
 
-time "Calculate reach" do
+time "Adding new generators via clustering" do
+  connected_graphs = grid.unreached.connected_subgraphs
+  puts "\tUnreached subgraph sizes: #{connected_graphs.map {|cg| cg.size }.inspect}"
 
-  # We have to figure out the reach so that we can restrict our viewing of
-  # "which node is closest to which generator"
-  grid.calculate_reach!
+  grown = grid.grow_generators_for_unreached
+  built = grid.build_generators_for_unreached opts[:clusters]
 
+  puts "\tBuilt: #{built}"
+  puts "\tGrown: #{grown}"
+  puts "\tGenerators: #{grid.generators.size}"
+  puts "\t\t#{grid.generators.map {|g| g.power }}"
+  puts "\tUnreachable: #{grid.unreached.size}"
 end
 
 time "Calculate flow" do 
@@ -167,7 +169,6 @@ time "Calculate flow" do
   end
 
   puts "\tMax flow: #{flows.values.max}"
-  puts "\tUnreachable: #{grid.unreached.size}"
 end
 
 ############################
@@ -176,11 +177,11 @@ end
 plot_flows grid, flows, :n => 10
 show_plot
 
-plot_grid grid, :reached
-show_plot
-
-plot_grid grid, :unreached
-show_plot
+#plot_grid grid, :reached
+#show_plot
+#
+#plot_grid grid, :unreached
+#show_plot
 
 puts
 puts "Grid:"
@@ -189,7 +190,8 @@ puts "\tPower of generators: #{grid.generators.sum {|g| g.power }}"
 puts "\tPower required: #{grid.nodes.size}"
 efficiency = grid.reach.load / grid.power.to_f
 puts "\tEfficiency: #{efficiency}"
-puts "\tUnreached: #{grid.unreached.size}"
+puts "\tUnreached: #{grid.unreached.size} " +
+     "(#{grid.unreached.connected_subgraphs.size} subgraphs)"
 
 #require 'pry'
 #binding.pry

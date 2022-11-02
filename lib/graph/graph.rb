@@ -116,8 +116,6 @@ class Graph
     while continue
       continue = false
 
-      # FIXME there's a bug in here somewhere. a whole bunch of nodes are
-      # getting added and they shouldn't be
       until queue.empty?
         from = queue.shift
 
@@ -134,10 +132,15 @@ class Graph
             # if there's at least one success, then we've got >= 1 new branch
             # to explore
             if success
-              next_queue << to
+              # The conditional here is for future work where the graph
+              # is cyclic
+              next_queue << to unless next_queue.include? to
               visited << edge
             else
-              next_queue << from
+              # a single node can have multiple edges which will
+              # all have the same `from`! This prevents `next_queue` from
+              # blowing up
+              next_queue << from unless next_queue.include? from
             end
           end
         end
@@ -195,6 +198,12 @@ class ConnectedGraph < Graph
     super(nodes)
   end
 
+  def manhattan_distance_as_group(node)
+    return 0 if nodes.include? node
+
+    border_nodes.map {|n| n.manhattan_distance node }.min
+  end
+
   # Maybe this could be moved to `Graph`, but I'm not sure this fully
   # makes sense for a disjoint graph.
   def border_nodes
@@ -209,6 +218,8 @@ class ConnectedGraph < Graph
     graph.nodes & nodes_just_beyond != []
   end
 
+  # `k` is how many clusters we want
+  # `power` should also prolly be a function as well
   def generators_for_clusters(grid, power=10, &k)
     cluster(k[nodes.size]).map do |cluster|
       cg = ConnectedGraph.new cluster.points

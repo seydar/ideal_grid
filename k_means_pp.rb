@@ -242,7 +242,7 @@ class KMeansPP
 
       changed = reassign_points
       history << changed
-      puts "\t#{changed} changed"
+      #puts "\t#{changed} changed"
 
       centroids.map do |centroid|
         self.class.cluster_for_centroid(centroid, points, true)

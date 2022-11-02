@@ -116,6 +116,8 @@ class Graph
     while continue
       continue = false
 
+      # FIXME there's a bug in here somewhere. a whole bunch of nodes are
+      # getting added and they shouldn't be
       until queue.empty?
         from = queue.shift
 

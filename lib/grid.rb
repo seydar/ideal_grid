@@ -8,7 +8,6 @@ class Grid
     @nodes      = nodes
     @generators = generators
     @graph      = ConnectedGraph.new nodes
-    @reach      = DisjointGraph.new(generators.map {|g| g.node })
   end
 
   def unreached
@@ -24,6 +23,10 @@ class Grid
   end
 
   def calculate_reach!
+    # This is here for plotting purposes. For some reason it fails when I move
+    # it to `initialize`.
+    @reach = DisjointGraph.new(generators.map {|g| g.node })
+
     remainders = Hash.new {|h, k| h[k] = 0 }
     generators.each {|g| remainders[g.node] = g.power - g.node.load }
 
@@ -45,9 +48,11 @@ class Grid
 
     # join these remainders
     join_sources = proc do |visited|
-      plot_grid self, :reached
-      plot_edges visited, :color => "purple"
-      save_plot "images/#{i}.png"
+      if $intermediate
+        plot_grid self, :reached
+        plot_edges visited, :color => "purple"
+        save_plot "images/#{i}.png"
+      end
       i += 1
 
       touching.map do |edge|

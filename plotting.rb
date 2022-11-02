@@ -98,6 +98,21 @@ def plot_cluster(cluster, gen)
   plot_generator gen
 end
 
+def plot_flows(grid, flows, n: 5)
+  max, min = flows.values.max, flows.values.min
+  splits = n.times.map {|i| (max - min) * i / 5.0 + min }
+  splits = [min, *splits, max]
+  p splits
+
+  # low to high, because that's how splits is generated
+  percentiles = splits.each_cons(2).map do |bottom, top|
+    flows.filter {|e, f| f >= splits[bottom] && f <= splits[top] }.map {|e, f| e }
+  end
+
+  plot_grid grid
+  percentiles.each.with_index {|pc, i| plot_edges pc, :color => RED[i] }
+end
+
 def show_plot
   $plot, plot = Gnuplot::Plot.new, $plot
 
@@ -121,6 +136,15 @@ def save_plot(fname)
 
   update_ranges $nodes
 end
+
+# Monochromatic scale in red
+# https://www.toptal.com/designers/colourcode/monochrome-color-builder
+REDS = ["#1C0A0C",
+        "#42171C",
+        "#68232C",
+        "#8F2F3B",
+        "#B73B4A",
+        "red"]
 
 # Generated from https://mokole.com/palette.html
 COLORS = ["#696969",

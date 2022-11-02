@@ -74,9 +74,7 @@ class Node
   # For some reason, the shitty method is faster than the
   # adjacency matrix method. Hm. Weird.
   def manhattan_distance(other)
-    track "$elapsed" do
-      Path.build(path_to(other)).edges.size
-    end
+    Path.build(path_to(other)).edges.size
   end
 
   def to_a

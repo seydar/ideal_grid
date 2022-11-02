@@ -27,5 +27,13 @@ class Generator
     str << "\t\tTotal nodes: #{reach.size}"
     str
   end
+
+  def manhattan_distance(other)
+    graph.manhattan_distance :from => node, :to => other
+  end
+
+  def path_to(other)
+    graph.path(:from => node, :to => other)
+  end
 end
 

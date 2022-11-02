@@ -3,6 +3,7 @@ class Grid
   attr_accessor :generators
   attr_accessor :graph
   attr_accessor :reach
+  attr_accessor :flows
 
   def initialize(nodes, generators)
     @nodes      = nodes
@@ -103,12 +104,45 @@ class Grid
     liluns = connected_graphs.filter {|cg| cg.size <= 50 }
 
     liluns.each do |graph|
-      nearest_gen = generators.min_by {|g| graph.manhattan_distance_as_group g.node }
+      nearest_gen = generators.min_by {|g| graph.manhattan_distance_from_group g.node }
       nearest_gen.power += graph.nodes.size
     end
 
     calculate_reach!
 
     liluns.size
+  end
+
+  def calculate_flows!
+    # Now that we know that everyone is connected (because we're dealing with
+    # `grid.reach`), we get to sorta sort everyone by the generator that they're
+    # closest to
+    #
+    # Actually, this is going to be a lot like the MST algorithm
+    neighbors = []
+    grid.reach.nodes.each do |node|
+      grid.generators.each do |gen|
+        neighbors << [node, gen, gen.path_to(node)]
+      end
+    end
+
+    # Now -- just like in the MST algorithm -- we're going to sort them
+    # and put them into the tree, provided two conditions are met:
+    #   1. we haven't already added a path for that node
+    #   2. the generator still has some juice left
+    #
+    # Remember: we already know this graph is going to be connected, so we
+    # don't have to worry about revisiting nodes in case we can suddenly reach them
+    visited   = Set.new
+    @flows    = Hash.new {|h, k| h[k] = 0 }
+    remainder = grid.generators.map {|g| [g, g.power - g.node.load] }.to_h
+
+    neighbors.sort_by {|n, g, p| p.size }.each do |node, gen, path|
+      next if visited.include? node
+      next if remainder[gen] < node.load
+
+      remainder[gen] -= node.load
+      path.each {|e| @flows[e] += 1 }
+    end
   end
 end

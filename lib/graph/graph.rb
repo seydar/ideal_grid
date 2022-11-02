@@ -198,10 +198,13 @@ class ConnectedGraph < Graph
     super(nodes)
   end
 
-  def manhattan_distance_as_group(node)
+  def manhattan_distance_from_group(node)
     return 0 if nodes.include? node
 
-    border_nodes.map {|n| n.manhattan_distance node }.min
+    # Can't use the internal memoized version because that is only good for
+    # paths within the graph. Here, we are -- by definition -- talking about
+    # nodes that are outside the graph
+    border_nodes.map {|n| n.manhattan_distance  node }.min
   end
 
   # Maybe this could be moved to `Graph`, but I'm not sure this fully

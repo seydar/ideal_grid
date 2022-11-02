@@ -140,7 +140,26 @@ time "Calculate flow" do
 
   grid.calculate_flows!
 
-  puts "\tMax flow: #{grid.flows.values.max}"
+  n = 5
+  flows = grid.flows
+  max, min = flows.values.max, flows.values.min
+  splits = n.times.map {|i| (max - min) * i / n.to_f + min }
+  splits = [*splits, max]
+
+  max, min = 100, 0
+  legend = n.times.map {|i| (max - min) * i / n.to_f + min }
+  legend = [*legend, max]
+
+  # low to high, because that's how splits is generated
+  percentiles = splits.each_cons(2).map do |bottom, top|
+    flows.filter {|e, f| f >= bottom && f <= top }.size
+  end
+
+  percentiles.zip(legend.each_cons(2)).each do |pc, legend|
+    puts "\t#{legend[0].round}-#{legend[1].round}%:\t#{pc}"
+  end
+
+  puts "\tMin, max: #{[grid.flows.values.min, grid.flows.values.max]}"
 end
 
 ############################

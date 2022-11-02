@@ -120,8 +120,8 @@ class Grid
     #
     # Actually, this is going to be a lot like the MST algorithm
     neighbors = []
-    grid.reach.nodes.each do |node|
-      grid.generators.each do |gen|
+    reach.nodes.each do |node|
+      generators.each do |gen|
         neighbors << [node, gen, gen.path_to(node)]
       end
     end
@@ -135,7 +135,7 @@ class Grid
     # don't have to worry about revisiting nodes in case we can suddenly reach them
     visited   = Set.new
     @flows    = Hash.new {|h, k| h[k] = 0 }
-    remainder = grid.generators.map {|g| [g, g.power - g.node.load] }.to_h
+    remainder = generators.map {|g| [g, g.power - g.node.load] }.to_h
 
     neighbors.sort_by {|n, g, p| p.size }.each do |node, gen, path|
       next if visited.include? node

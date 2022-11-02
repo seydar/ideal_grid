@@ -102,41 +102,42 @@ time "Add initial generators [#{opts[:clusters]} clusters]" do
   grid.calculate_reach!
   puts "\tGenerators: #{grid.generators.size}"
   puts "\t\t#{grid.generators.map {|g| g.power }}"
-  puts "\tUnreachable: #{grid.unreached.size}"
+  puts "\tUnreached: #{grid.unreached.size} " +
+       "(#{grid.unreached.connected_subgraphs.size} subgraphs)"
 end
 
 time "Adding new generators via clustering" do
   connected_graphs = grid.unreached.connected_subgraphs
   puts "\tUnreached subgraph sizes: #{connected_graphs.map {|cg| cg.size }.inspect}"
 
-  grown = grid.grow_generators_for_unreached
   built = grid.build_generators_for_unreached opts[:clusters]
+  grown = grid.grow_generators_for_unreached
 
   puts "\tBuilt: #{built}"
   puts "\tGrown: #{grown}"
   puts "\tGenerators: #{grid.generators.size}"
   puts "\t\t#{grid.generators.map {|g| g.power }}"
-  puts "\tUnreachable: #{grid.unreached.size}"
+  puts "\tUnreached: #{grid.unreached.size} " +
+       "(#{grid.unreached.connected_subgraphs.size} subgraphs)"
 end
 
 time "Adding new generators via clustering" do
   connected_graphs = grid.unreached.connected_subgraphs
   puts "\tUnreached subgraph sizes: #{connected_graphs.map {|cg| cg.size }.inspect}"
 
-  grown = grid.grow_generators_for_unreached
   built = grid.build_generators_for_unreached opts[:clusters]
+  grown = grid.grow_generators_for_unreached
 
   puts "\tBuilt: #{built}"
   puts "\tGrown: #{grown}"
   puts "\tGenerators: #{grid.generators.size}"
   puts "\t\t#{grid.generators.map {|g| g.power }}"
-  puts "\tUnreachable: #{grid.unreached.size}"
+  puts "\tUnreached: #{grid.unreached.size} " +
+       "(#{grid.unreached.connected_subgraphs.size} subgraphs)"
 end
 
 time "Calculate flow" do 
 
-  # FIXME this is flawed
-  #
   # Now that we know that everyone is connected (because we're dealing with
   # `grid.reach`), we get to sorta sort everyone by the generator that they're
   # closest to
@@ -190,6 +191,7 @@ puts "\tPower of generators: #{grid.generators.sum {|g| g.power }}"
 puts "\tPower required: #{grid.nodes.size}"
 efficiency = grid.reach.load / grid.power.to_f
 puts "\tEfficiency: #{efficiency}"
+puts "\tReached: #{grid.reach.size}"
 puts "\tUnreached: #{grid.unreached.size} " +
      "(#{grid.unreached.connected_subgraphs.size} subgraphs)"
 

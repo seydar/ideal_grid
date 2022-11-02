@@ -119,6 +119,7 @@ time "Adding new generators via clustering" do
 
   grid.calculate_reach!
   puts "\tGenerators: #{grid.generators.size}"
+  puts "\t\t#{grid.generators.map {|g| g.power }}"
   puts "\tUnreachable: #{grid.unreached.size}"
 end
 
@@ -152,7 +153,7 @@ end
 
 grid.calculate_reach!
 
-plot_grid grid
+plot_grid grid, :reached
 show_plot
 
 puts
@@ -164,9 +165,9 @@ efficiency = grid.reach.load / grid.power
 puts "\tEfficiency: #{efficiency}"
 puts "\tUnreached: #{grid.unreached.size}"
 
-circuit = grid.analyze
-circuit.calculate_flow!
+circuits = grid.analyze
+circuits.each {|c| c.calculate_flow! }
 
-require 'pry'
-binding.pry
+#require 'pry'
+#binding.pry
 

@@ -29,7 +29,7 @@ def update_ranges(nodes)
   $plot.yrange "[#{[yprev[0], yr[0]].min}:#{[yprev[1], yr[1]].max}]"
 end
 
-def plot_edges(edges, color: nil)
+def plot_edges(edges, color: "black")
   $plot.data += edges.map do |edge|
     xs = edge.nodes.map(&:x)
     ys = edge.nodes.map(&:y)
@@ -37,9 +37,13 @@ def plot_edges(edges, color: nil)
     Gnuplot::DataSet.new([xs, ys]) do |ds|
       ds.with = 'lines'
       ds.notitle
-      ds.linecolor = "-1"
+      ds.linecolor = "rgb \"#{color}\""
     end
   end
+end
+
+def plot_edge(edge, color: nil)
+  plot_edges [edge], :color => color
 end
 
 def plot_points(nodes, color: nil, point_type: 6)

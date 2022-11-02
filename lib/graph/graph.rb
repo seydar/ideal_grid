@@ -33,6 +33,124 @@ class Graph
     end
   end
 
+  # BFS
+  # Gets all edges. Some nodes will be reached twice in a cyclic graph.
+  def traverse_edges(source, &block)
+    visited = Set.new
+
+    # Probably should replace this with a deque
+    queue   = []
+
+    # if `source` is an array, have multiple search roots
+    if source.is_a? Array
+      queue += source
+    else
+      queue << source
+    end
+
+    until queue.empty?
+      from = queue.shift
+
+      adjacencies[from].each do |to, edge|
+        unless visited.include? edge
+          block.call edge, from, to
+          queue   << to
+          visited << edge
+        end
+      end
+    end
+
+    visited
+  end
+
+  # BFS
+  # This traverses all edges and nodes in an acyclic graph
+  # This traverses all nodes but does NOT traverse all edges in a cyclic
+  # graph
+  def traverse_nodes(source, &block)
+    visited = Set.new
+
+    # Probably should replace this with a deque
+    queue   = []
+
+    # if `source` is an array, have multiple search roots
+    if source.is_a? Array
+      queue   += source
+      visited += source
+    else
+      queue   << source
+      visited << source
+    end
+
+    until queue.empty?
+      from = queue.shift
+
+      adjacencies[from].each do |to, edge|
+        unless visited.include? to
+          block.call edge, from, to
+          queue   << to
+          visited << to
+        end
+      end
+    end
+
+    visited
+  end
+
+  # BFS
+  def traverse_edges_in_phases(source, block1, block2)
+    visited = Set.new
+
+    # Probably should replace this with a deque
+    queue   = []
+    next_queue = []
+
+    # if `source` is an array, have multiple search roots
+    if source.is_a? Array
+      queue  += source
+    else
+      queue  << source
+    end
+
+    continue = true # I hate this double declaration but yolo
+    while continue
+      continue = false
+
+      until queue.empty?
+        from = queue.shift
+
+        adjacencies[from].each do |to, edge|
+          unless visited.include? edge
+            success = block1.call edge, from, to
+            continue |= success
+
+            # (This is all custom-built for determining reach)
+            # If the generator doesn't have enough juice, then we don't want
+            # to continue down that branch. We'll keep checking it though
+            #
+            # `success` is also used to determine whether we do another loop:
+            # if there's at least one success, then we've got >= 1 new branch
+            # to explore
+            if success
+              next_queue << to
+              visited << edge
+            else
+              next_queue << from
+            end
+          end
+        end
+      end
+
+      # Do something else now that one unit of time has passed and all sources
+      # have been explored simultaneously
+      block2.call visited
+
+      queue, next_queue = next_queue, []
+    end
+
+    visited
+  end
+
   def load
     nodes.map {|n| n.load }.sum
   end
@@ -105,69 +223,6 @@ class ConnectedGraph < Graph
 
   def demand
     nodes.map {|n| n.load }.sum
-  end
-
-  # BFS
-  def traverse_edges(source, &block)
-    visited = Set.new
-
-    # Probably should replace this with a deque
-    queue   = []
-
-    # if `source` is an array, have multiple search roots
-    if source.is_a? Array
-      queue += source
-    else
-      queue << source
-    end
-
-    until queue.empty?
-      from = queue.shift
-
-      adjacencies[from].each do |to, edge|
-        unless visited.include? edge
-          block.call edge, from, to
-          queue   << to
-          visited << edge
-        end
-      end
-    end
-
-    visited
-  end
-
-  # BFS
-  # This traverses all edges and nodes in an acyclic graph
-  # This traverses all nodes but does NOT traverse all edges in a cyclic
-  # graph
-  def traverse_nodes(source, &block)
-    visited = Set.new
-
-    # Probably should replace this with a deque
-    queue   = []
-
-    # if `source` is an array, have multiple search roots
-    if source.is_a? Array
-      queue   += source
-      visited += source
-    else
-      queue   << source
-      visited << source
-    end
-
-    until queue.empty?
-      from = queue.shift
-
-      adjacencies[from].each do |to, edge|
-        unless visited.include? to
-          block.call edge, from, to
-          queue   << to
-          visited << to
-        end
-      end
-    end
-
-    visited
   end
 
   # Hell yeah baby, memoization for the motherfucking win

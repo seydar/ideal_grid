@@ -165,9 +165,6 @@ efficiency = grid.reach.load / grid.power
 puts "\tEfficiency: #{efficiency}"
 puts "\tUnreached: #{grid.unreached.size}"
 
-circuits = grid.analyze
-circuits.each {|c| c.calculate_flow! }
-
 #require 'pry'
 #binding.pry
 

@@ -11,13 +11,6 @@ class Grid
     @reach      = DisjointGraph.new(generators.map {|g| g.node })
   end
 
-  def analyze
-    reach.connected_subgraphs.map do |cg|
-      applicable_generators = generators.filter {|g| cg.nodes.include? g.node }
-      Analyzer.new cg, applicable_generators
-    end
-  end
-
   def unreached
     DisjointGraph.new(nodes - reach.nodes)
   end
@@ -28,39 +21,6 @@ class Grid
 
   def inspect
     "#<Grid: @nodes=[#{nodes.size} nodes] @generators=[#{generators.size} generators]>"
-  end
-
-  # FIXME with disjoint reaches (where generator reaches don't touch), some
-  # generators can accidentally claim more than their fair share, so you'll
-  # end up with a subgraph that has 12 nodes but a generator power of only 10:
-  #   # ./grid.rb -n 50 -c 2
-  #
-  # Start by simultaneously calculating the reaches for each generator.
-  # Then, when two graphs become connected, join their remainders.
-  # Continue checking graphs even when their remainder is zero.
-  #
-  # From Keir:
-  #   "Start with potential, which will tell you the direction of flow, and
-  #    then determine the amps."
-  def old_calculate_reach!
-    reachable = generators.map {|g| g.node }
-    loads     = generators.map {|g| g.node.load }.sum
-    remainder = power - loads
-
-    if remainder < 0
-      raise "Generators can't power themselves (node.load > gen.power across all gens)"
-    end
-
-    # Start with the generator nodes as the sources
-    graph.traverse_nodes reachable do |edge, from, to|
-      if remainder - to.load >= 0
-        reachable << to
-        remainder -= to.load
-      end
-    end
-
-    # Not necessarily a connected subgraph!
-    @reach = DisjointGraph.new reachable
   end
 
   def calculate_reach!

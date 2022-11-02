@@ -3,21 +3,27 @@ require_relative "../siting.rb"
 
 class Graph
   attr_accessor :nodes
-  attr_accessor :adjacencies
 
   # Need to specify the nodes, and then restrict the edges to only those
   # that connect to these nodes
   def initialize(nodes)
     @nodes = nodes
-    @adjacencies = {}
+    @adjacencies = nil
 
     fill_adjacencies!
   end
 
+  def adjacencies
+    return @adjacencies if @adjacencies
+    fill_adjacencies!
+    @adjacencies
+  end
+
   def fill_adjacencies!
+    @adjacencies = {}
     nodes.each do |node|
 
-      adjacencies[node]  = []
+      @adjacencies[node]  = []
       node.edges.each do |edge|
         other = edge.not_node node
 
@@ -28,7 +34,7 @@ class Graph
         #
         # You are correct in thinking that I did not myself remember this
         # for many hours.
-        adjacencies[node] << [other, edge] if nodes.include? other
+        @adjacencies[node] << [other, edge] if nodes.include? other
       end
     end
   end
@@ -264,6 +270,7 @@ class ConnectedGraph < Graph
   # Spoil the cache
   def invalidate_cache!
     @paths = nil
+    @adjacencies = nil
   end
 
   def manhattan_distance(from: nil, to: nil)

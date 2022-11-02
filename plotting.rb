@@ -99,7 +99,8 @@ def plot_cluster(cluster, gen)
   plot_generator gen
 end
 
-def plot_flows(grid, flows, n: 5, focus: :unreached)
+def plot_flows(grid, n: 5, focus: :unreached)
+  flows = grid.flows
   max, min = flows.values.max, flows.values.min
   splits = n.times.map {|i| (max - min) * i / n.to_f + min }
   splits = [*splits, max]

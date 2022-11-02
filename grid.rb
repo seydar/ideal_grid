@@ -140,33 +140,40 @@ time "Calculate flow" do
 
   grid.calculate_flows!
 
-  n = 5
-  flows = grid.flows
-  max, min = flows.values.max, flows.values.min
-  splits = n.times.map {|i| (max - min) * i / n.to_f + min }
-  splits = [*splits, max]
-
-  max, min = 100, 0
-  legend = n.times.map {|i| (max - min) * i / n.to_f + min }
-  legend = [*legend, max]
-
-  # low to high, because that's how splits is generated
-  percentiles = splits.each_cons(2).map do |bottom, top|
-    flows.filter {|e, f| f >= bottom && f <= top }.size
-  end
-
-  percentiles.zip(legend.each_cons(2)).each do |pc, legend|
-    puts "\t#{legend[0].round}-#{legend[1].round}%:\t#{pc}"
-  end
-
-  puts "\tMin, max: #{[grid.flows.values.min, grid.flows.values.max]}"
+  puts grid.flow_info
 end
 
-############################
-
-
-plot_flows grid, flows, :n => 10
+plot_flows grid, :n => 10
 show_plot
+
+time "Reduce congestion" do
+
+  congested = grid.flows.sort_by {|e, f| -f } # max first
+  unused    = edges - grid.flows.keys # these are possible shunts; unused edges
+
+  # `unused` is the rest of the complete graph, so anything we could possibly
+  # dream of is in it, which means we have to be very judicious and specific
+  # about which edge we want from it.
+  #
+  # But for now, let's just fuck around and see what happens
+  max_gen = grid.generators.max_by {|g| g.power }
+  edge = unused.filter {|e| e.nodes.include? max_gen.node }.sample
+  #edge = unused.filter {|e| e.nodes.include? grid.unreached.nodes[0] }.sample
+  $edge = edge
+  #edge = unused.sample
+  edge.mark_nodes!
+  grid.graph.invalidate_cache!
+
+  grid.calculate_reach!
+  grid.calculate_flows!
+
+  puts grid.flow_info
+end
+
+plot_flows grid, :n => 10
+show_plot
+
+############################
 
 #plot_grid grid, :reached
 #show_plot

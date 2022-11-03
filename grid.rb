@@ -71,9 +71,9 @@ def circle(nodes)
   end
 end
 
+  mst = []
 time "Tree production" do
 
-  mst = []
 
   # Builds edges between nodes according to the MST
   parallel_filter_kruskal edges, UnionF.new(nodes), mst
@@ -140,38 +140,45 @@ time "Calculate flow" do
 
   grid.calculate_flows!
 
-  puts grid.flow_info
-end
-
-plot_flows grid, :n => 10
-show_plot
-
-time "Reduce congestion" do
-
-  congested = grid.flows.sort_by {|e, f| -f } # max first
-  unused    = edges - grid.flows.keys # these are possible shunts; unused edges
-
-  # `unused` is the rest of the complete graph, so anything we could possibly
-  # dream of is in it, which means we have to be very judicious and specific
-  # about which edge we want from it.
-  #
-  # But for now, let's just fuck around and see what happens
-  max_gen = grid.generators.max_by {|g| g.power }
-  edge = unused.filter {|e| e.nodes.include? max_gen.node }.sample
-  #edge = unused.filter {|e| e.nodes.include? grid.unreached.nodes[0] }.sample
-  $edge = edge
-  #edge = unused.sample
-  edge.mark_nodes!
-  grid.graph.invalidate_cache!
-
-  grid.calculate_reach!
-  grid.calculate_flows!
+  flowing_edges = grid.flows.keys
+  untread = mst - flowing_edges
 
   puts grid.flow_info
+
+  plot_flows grid, :n => 10
+  plot_edges untread, :color => "cyan"
+  show_plot
 end
 
-plot_flows grid, :n => 10
-show_plot
+#plot_flows grid, :n => 10
+#show_plot
+#
+#time "Reduce congestion" do
+#
+#  congested = grid.flows.sort_by {|e, f| -f } # max first
+#  unused    = edges - grid.flows.keys # these are possible shunts; unused edges
+#
+#  # `unused` is the rest of the complete graph, so anything we could possibly
+#  # dream of is in it, which means we have to be very judicious and specific
+#  # about which edge we want from it.
+#  #
+#  # But for now, let's just fuck around and see what happens
+#  #max_gen = grid.generators.max_by {|g| g.power }
+#  #edge = unused.filter {|e| e.nodes.include? max_gen.node }.sample
+#  #edge = unused.filter {|e| e.nodes.include? grid.unreached.nodes[0] }.sample
+#  #edge = unused.sample
+#  #edges = unused.sort_by {|e| e.length }[0..10]
+#  cong_nodes  = congested[0..20].map {|e, f| e.nodes }.flatten
+#  needs_shunt = cong_nodes.sort_by {|n| n.edges.size }[0..10]
+#  edges = unused.filter {|e| (e.nodes - needs_shunt).size == 1 }[0..10]
+#
+#  edges.each {|e| e.mark_nodes! }
+#
+#  p grid.flows.size
+#  grid.reset!
+#
+#  puts grid.flow_info
+#end
 
 ############################
 

@@ -23,11 +23,13 @@ class Grid
     "#<Grid: @nodes=[#{nodes.size} nodes] @generators=[#{generators.size} generators]>"
   end
 
-  def calculate_reach!
-    # This is here for plotting purposes. For some reason it fails when I move
-    # it to `initialize`.
-    @reach = DisjointGraph.new(generators.map {|g| g.node })
+  def reset!
+    graph.invalidate_cache!
+    calculate_reach!
+    calculate_flows!
+  end
 
+  def calculate_reach!
     remainders = Hash.new {|h, k| h[k] = 0 }
     generators.each {|g| remainders[g.node] = g.power - g.node.load }
 
@@ -126,6 +128,8 @@ class Grid
       end
     end
 
+    puts "reach is #{reach.nodes.size}"
+
     # Now -- just like in the MST algorithm -- we're going to sort them
     # and put them into the tree, provided two conditions are met:
     #   1. we haven't already added a path for that node
@@ -133,25 +137,44 @@ class Grid
     #
     # Remember: we already know this graph is going to be connected, so we
     # don't have to worry about revisiting nodes in case we can suddenly reach them
+    #
+    # Also: since we're visiting all of the nodes, we *don't* need to start off
+    # by subtracting the generator's self-load from their power. This is contrary
+    # to `#calculate_reach!`, which uses `#traverse_edges_in_phases`, which won't
+    # visit the sources (generators' nodes).
     visited   = Set.new
     @flows    = Hash.new {|h, k| h[k] = 0 }
-    remainder = generators.map {|g| [g, g.power - g.node.load] }.to_h
+    remainder = generators.map {|g| [g, g.power] }.to_h
 
     neighbors.sort_by {|n, g, p| p.size }.each do |node, gen, path|
       next if visited.include? node
+
       next if remainder[gen] < node.load
 
       remainder[gen] -= node.load
-      path.each {|e| @flows[e] += 1 }
+      update_flows_for_path node, path
+      visited << node
     end
+  end
+
+  def update_flows_for_path(node, path)
+    path.each {|e| @flows[e] += 1 }
+
+
+    #prev = node
+    #path.each do |edge|
+    #  # if we're facing the right direction
+    #  if edge.nodes[0] == prev
+    #end
   end
 
   def flow_info(n=5)
     str = ""
 
     max, min = flows.values.max, flows.values.min
+    #max, min = (nodes.size / 6).round(1), 1
     splits = n.times.map {|i| (max - min) * i / n.to_f + min }
-    splits = [*splits, max]
+    splits = [*splits, [flows.values.max, max].max + 1]
 
     max, min = 100, 0
     legend = n.times.map {|i| (max - min) * i / n.to_f + min }
@@ -159,11 +182,13 @@ class Grid
 
     # low to high, because that's how splits is generated
     percentiles = splits.each_cons(2).map do |bottom, top|
-      flows.filter {|e, f| f >= bottom && f <= top }.size
+      flows.filter {|e, f| f >= bottom && f < top }.size
     end
 
-    percentiles.zip(legend.each_cons(2)).each do |pc, legend|
-      str << "\t#{legend[0].round}-#{legend[1].round}%: #{pc}\n"
+    percentiles.zip(legend.each_cons(2))
+               .zip(splits.each_cons(2))
+               .each do |(pc, legend), (bottom, top)|
+      str << "\t#{legend[0].round}-#{legend[1].round}%\t(#{bottom.round(1)}-#{top.round(1)}):\t#{pc}\n"
     end
 
     str << "\tMin, max: #{[flows.values.min, flows.values.max]}"

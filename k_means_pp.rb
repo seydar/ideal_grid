@@ -254,7 +254,9 @@ class KMeansPP
       # FIXME still got the bug where it fails to converge and gets stuck
       # swapping two points back and forth
       # why do i suck
-      if history.size > 4 && history[-4..-3] == history[-2..-1]
+      if history.size > 4 &&
+         (history[-4..-3] == history[-2..-1] ||
+          history[-6..-4] == history[-3..-1])
         puts "\t***FAILED TO CONVERGE***"
         break
       end

@@ -102,17 +102,20 @@ end
 def plot_flows(grid, n: 5, focus: :unreached)
   flows = grid.flows
   max, min = flows.values.max, flows.values.min
+  #max, min = ($nodes.size / 6).round(1), 1
   splits = n.times.map {|i| (max - min) * i / n.to_f + min }
-  splits = [*splits, max]
+  splits = [*splits, [flows.values.max, max].max + 1]
 
   # low to high, because that's how splits is generated
   percentiles = splits.each_cons(2).map do |bottom, top|
-    flows.filter {|e, f| f >= bottom && f <= top }.map {|e, f| e }
+    flows.filter {|e, f| f >= bottom && f < top }.map {|e, f| e }
   end
 
   plot_grid grid, focus
+
+  colors = BLUES.reverse + ["black"] + REDS
   percentiles.each.with_index do |pc, i|
-    plot_edges pc, :color => REDS[(i * REDS.size)/ n], :width => (i * 3.0 / n)
+    plot_edges pc, :color => colors[(i * colors.size) / n], :width => (i * 3.0 / n)
   end
 end
 
@@ -148,6 +151,15 @@ REDS = ["#1C0A0C",
         "#8F2F3B",
         "#B73B4A",
         "red"]
+
+# Monochromatic scale in blue
+# https://www.toptal.com/designers/colourcode/monochrome-color-builder
+BLUES = ["#16173E",
+         "#232465",
+         "#2F318B",
+         "#3B3DB3",
+         "#5759C9",
+         "blue"]
 
 # Generated from https://mokole.com/palette.html
 COLORS = ["#696969",

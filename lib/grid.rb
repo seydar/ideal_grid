@@ -152,20 +152,45 @@ class Grid
       next if remainder[gen] < node.load
 
       remainder[gen] -= node.load
-      update_flows_for_path node, path
+      #update_flows_for_path node, path # useful for debugging, i guess
+      path.each {|e| @flows[e] += node.load }
       visited << node
     end
   end
 
+  # positive flow if going "the right way"
+  # negative flow if going "the other way"
+  # not even sure if this matters
+  # we can draw arrows and find out though
   def update_flows_for_path(node, path)
-    path.each {|e| @flows[e] += 1 }
+    prev = node
+    path.each do |edge|
+      # if we're facing the right direction
+      if edge.nodes[0] == prev
+        @flows[edge] += node.load
 
+        if @flows[edge] < 0
+          puts "ahoy"
+          p edge
+          p node
+          plot_grid self
+          plot_path Path.build(path), :color => "dark-chartreuse"
+          show_plot
+        end
+      else # we're going the other direction
+        @flows[edge] -= node.load
 
-    #prev = node
-    #path.each do |edge|
-    #  # if we're facing the right direction
-    #  if edge.nodes[0] == prev
-    #end
+        if @flows[edge] > 0
+          puts "WHOAAAAAAA"
+          p edge
+          p node
+          plot_grid self
+          plot_path Path.build(path), :color => "purple"
+          show_plot
+        end
+      end
+      prev = edge.not_node(prev)
+    end
   end
 
   def flow_info(n=5)

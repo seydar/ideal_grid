@@ -86,7 +86,7 @@ def plot_grid(grid, focus=:unreached)
 end
 
 def plot_path(path, color: nil)
-  plot_edges path.edges
+  plot_edges path.edges, :color => color
   plot_points path.nodes, :color => color
 end
 

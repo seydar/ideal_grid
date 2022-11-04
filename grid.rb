@@ -145,9 +145,9 @@ time "Calculate flow" do
 
   puts grid.flow_info
 
-  #plot_flows grid, :n => 10
-  #plot_edges untread, :color => "cyan"
-  #show_plot
+  plot_flows grid, :n => 10
+  plot_edges untread, :color => "cyan"
+  show_plot
 end
 
 #plot_flows grid, :n => 10

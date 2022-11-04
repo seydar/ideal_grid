@@ -162,6 +162,8 @@ class Grid
   # negative flow if going "the other way"
   # not even sure if this matters
   # we can draw arrows and find out though
+  #
+  # This method is useful for debugging. Maybe. I guess.
   def update_flows_for_path(node, path)
     prev = node
     path.each do |edge|

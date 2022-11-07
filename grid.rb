@@ -23,7 +23,7 @@ EOS
   opt :parallel, "Parallelize the clustering algorithm"
   opt :nodes, "Number of nodes in the grid", :type => :integer, :default => 100
   opt :clusters, "Cluster the nodes into k clusters", :type => :integer, :default => 10
-  opt :intermediate, "Show intermediate graphics of flow calculation"
+  opt :intermediate, "Show intermediate graphics of flow calculation", :type => :integer
 end
 
 grid, nodes, edges, flows = nil
@@ -99,7 +99,7 @@ time "Add initial generators [#{opts[:clusters]} clusters]" do
     opts[:clusters]
   end
 
-  grid.calculate_reach!
+  grid.calculate_flows!
   puts "\tGenerators: #{grid.generators.size}"
   puts "\t\t#{grid.generators.map {|g| g.power }}"
   puts "\tUnreached: #{grid.unreached.size} " +
@@ -136,6 +136,7 @@ time "Adding new generators via clustering" do
        "(#{grid.unreached.connected_subgraphs.size} subgraphs)"
 end
 
+untread = nil
 time "Calculate flow" do 
 
   grid.calculate_flows!
@@ -144,15 +145,12 @@ time "Calculate flow" do
   untread = mst - flowing_edges
 
   puts grid.flow_info
-
-  plot_flows grid, :n => 10
-  plot_edges untread, :color => "cyan"
-  show_plot
 end
 
-#plot_flows grid, :n => 10
-#show_plot
-#
+plot_flows grid, :n => 10
+plot_edges untread, :color => "cyan"
+show_plot
+
 #time "Reduce congestion" do
 #
 #  congested = grid.flows.sort_by {|e, f| -f } # max first
@@ -168,17 +166,28 @@ end
 #  #edge = unused.filter {|e| e.nodes.include? grid.unreached.nodes[0] }.sample
 #  #edge = unused.sample
 #  #edges = unused.sort_by {|e| e.length }[0..10]
-#  cong_nodes  = congested[0..20].map {|e, f| e.nodes }.flatten
-#  needs_shunt = cong_nodes.sort_by {|n| n.edges.size }[0..10]
-#  edges = unused.filter {|e| (e.nodes - needs_shunt).size == 1 }[0..10]
+#  #cong_nodes  = congested[0..20].map {|e, f| e.nodes }.flatten
+#  #needs_shunt = cong_nodes.sort_by {|n| n.edges.size }[0..10]
+#  #edges = unused.filter {|e| (e.nodes - needs_shunt).size == 1 }[0..10]
 #
-#  edges.each {|e| e.mark_nodes! }
+#  #edges.each {|e| e.mark_nodes! }
+#  edge = edges.find do |e|
+#    e.nodes.include?(nodes[279]) &&
+#    e.nodes.include?(nodes[778])
+#  end
+#  edge.mark_nodes!
 #
-#  p grid.flows.size
 #  grid.reset!
+#
+#  flowing_edges = grid.flows.keys
+#  untread = mst - flowing_edges
 #
 #  puts grid.flow_info
 #end
+#
+#plot_flows grid, :n => 10
+#plot_edges untread, :color => "cyan"
+#show_plot
 
 ############################
 

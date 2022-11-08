@@ -100,55 +100,54 @@ time "Add initial generators [#{opts[:clusters]} clusters]" do
   end
 
   grid.calculate_flows!
-  puts "\tGenerators: #{grid.generators.size}"
-  puts "\t\t#{grid.generators.map {|g| g.power }}"
-  puts "\tUnreached: #{grid.unreached.size} " +
-       "(#{grid.unreached.connected_subgraphs.size} subgraphs)"
+  puts grid.info
 end
 
 time "Adding new generators via clustering" do
   connected_graphs = grid.unreached.connected_subgraphs
-  puts "\tUnreached subgraph sizes: #{connected_graphs.map {|cg| cg.size }.inspect}"
+  puts ("\tUnreached: #{grid.unreached.size} " +
+        "(#{connected_graphs.size} subgraphs)")
+  puts "\t\t#{connected_graphs.map {|cg| cg.size }}"
 
   built = grid.build_generators_for_unreached opts[:clusters]
   grown = grid.grow_generators_for_unreached
 
   puts "\tBuilt: #{built}"
   puts "\tGrown: #{grown}"
-  puts "\tGenerators: #{grid.generators.size}"
-  puts "\t\t#{grid.generators.map {|g| g.power }}"
-  puts "\tUnreached: #{grid.unreached.size} " +
-       "(#{grid.unreached.connected_subgraphs.size} subgraphs)"
+  puts grid.info
 end
 
 time "Adding new generators via clustering" do
   connected_graphs = grid.unreached.connected_subgraphs
-  puts "\tUnreached subgraph sizes: #{connected_graphs.map {|cg| cg.size }.inspect}"
+  puts ("\tUnreached: #{grid.unreached.size} " +
+        "(#{connected_graphs.size} subgraphs)")
+  puts "\t\t#{connected_graphs.map {|cg| cg.size }}"
 
   built = grid.build_generators_for_unreached opts[:clusters]
-  grown = grid.grow_generators_for_unreached
+
+  grown = 0
+  added = nil
+  i = 0
+  until added == 0
+    added = grid.grow_generators_for_unreached
+    puts "\tmerged #{added} unreached subgraphs"
+    grown += added
+    i += 1
+  end
 
   puts "\tBuilt: #{built}"
   puts "\tGrown: #{grown}"
-  puts "\tGenerators: #{grid.generators.size}"
-  puts "\t\t#{grid.generators.map {|g| g.power }}"
-  puts "\tUnreached: #{grid.unreached.size} " +
-       "(#{grid.unreached.connected_subgraphs.size} subgraphs)"
+  puts grid.info
 end
 
-untread = nil
 time "Calculate flow" do 
 
-  grid.calculate_flows!
-
-  flowing_edges = grid.flows.keys
-  untread = mst - flowing_edges
+  grid.calculate_flows! # redundant; already done in `#grow_generators_for_unreached`
 
   puts grid.flow_info
 end
 
 plot_flows grid, :n => 10
-plot_edges untread, :color => "cyan"
 show_plot
 
 #time "Reduce congestion" do
@@ -156,21 +155,6 @@ show_plot
 #  congested = grid.flows.sort_by {|e, f| -f } # max first
 #  unused    = edges - grid.flows.keys # these are possible shunts; unused edges
 #
-#  # `unused` is the rest of the complete graph, so anything we could possibly
-#  # dream of is in it, which means we have to be very judicious and specific
-#  # about which edge we want from it.
-#  #
-#  # But for now, let's just fuck around and see what happens
-#  #max_gen = grid.generators.max_by {|g| g.power }
-#  #edge = unused.filter {|e| e.nodes.include? max_gen.node }.sample
-#  #edge = unused.filter {|e| e.nodes.include? grid.unreached.nodes[0] }.sample
-#  #edge = unused.sample
-#  #edges = unused.sort_by {|e| e.length }[0..10]
-#  #cong_nodes  = congested[0..20].map {|e, f| e.nodes }.flatten
-#  #needs_shunt = cong_nodes.sort_by {|n| n.edges.size }[0..10]
-#  #edges = unused.filter {|e| (e.nodes - needs_shunt).size == 1 }[0..10]
-#
-#  #edges.each {|e| e.mark_nodes! }
 #  edge = edges.find do |e|
 #    e.nodes.include?(nodes[279]) &&
 #    e.nodes.include?(nodes[778])
@@ -179,14 +163,10 @@ show_plot
 #
 #  grid.reset!
 #
-#  flowing_edges = grid.flows.keys
-#  untread = mst - flowing_edges
-#
 #  puts grid.flow_info
 #end
 #
 #plot_flows grid, :n => 10
-#plot_edges untread, :color => "cyan"
 #show_plot
 
 ############################
@@ -199,14 +179,7 @@ show_plot
 
 puts
 puts "Grid:"
-puts "\t# of generators: #{grid.generators.size}"
-puts "\tPower of generators: #{grid.generators.sum {|g| g.power }}"
-puts "\tPower required: #{grid.nodes.size}"
-efficiency = grid.reach.load / grid.power.to_f
-puts "\tEfficiency: #{efficiency}"
-puts "\tReached: #{grid.reach.size}"
-puts "\tUnreached: #{grid.unreached.size} " +
-     "(#{grid.unreached.connected_subgraphs.size} subgraphs)"
+puts grid.info
 
 #require 'pry'
 #binding.pry

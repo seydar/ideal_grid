@@ -10,4 +10,4 @@ TODO
   * How do we do it smartly?
 * How do we decide whether to enlarge a generator or build a new one?
   * there is currently no method to this madness
-* Consolidate all the restrictions on generator sizes
+* edges need to have transmission loss. there needs to be a penalty for longer transmission lines

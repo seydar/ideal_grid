@@ -113,10 +113,15 @@ def plot_flows(grid, n: 5, focus: :unreached)
 
   plot_grid grid, focus
 
-  colors = BLUES.reverse + ["black"] + REDS
+  colors = BLUES.reverse + REDS
   percentiles.each.with_index do |pc, i|
     plot_edges pc, :color => colors[(i * colors.size) / n], :width => (i * 3.0 / n)
   end
+
+  # Plot the untread edges to see if there are any even breaks in the grid
+  edges = grid.graph.nodes.map {|n| n.edges }.flatten.uniq
+  untread = edges - grid.flows.keys
+  plot_edges untread, :color => "cyan"
 end
 
 def show_plot

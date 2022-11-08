@@ -6,6 +6,11 @@ class Edge
   
   attr_accessor :flow
 
+  # literally just pulling this out of my ass
+  # https://skm-eleksys.com/2011/03/transmission-line-parameters-resistance.html
+  # Plus, it'll be multiplied by the length of the line
+  R_I = 0.001
+
   def initialize(to, from, length=0, id: nil)
     @length = length
     @nodes  = [to, from]
@@ -13,10 +18,20 @@ class Edge
     @flow   = {}
   end
 
+  # Joule's effect (in reference to Joule heating,
+  # https://en.wikipedia.org/wiki/Joule_heating) says that we're going to lose
+  # power to heating, since transmission lines will have non-zero resistance.
+  #   P = I^2 * R
+  # Thus, the cost is going to be proportional to the square of the current (flow)
+  def cost(flow)
+    flow ** 2 * R_I
+  end
+
   def mark_nodes!
     nodes.each {|n| n.edges << self }
   end
   
+  # Pretty sure this is unused. DEADBEEF dead code
   def flow(from: nil, restrict: nil)
     return @flow[from] if @flow[from]
 

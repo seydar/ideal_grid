@@ -209,8 +209,8 @@ class ConnectedGraph < Graph
 
     # Can't use the internal memoized version because that is only good for
     # paths within the graph. Here, we are -- by definition -- talking about
-    # nodes that are outside the graph
-    border_nodes.map {|n| n.manhattan_distance  node }.min
+    # nodes that are outside the graph (for `node`)
+    border_nodes.map {|n| n.manhattan_distance node }.min
   end
 
   # Maybe this could be moved to `Graph`, but I'm not sure this fully

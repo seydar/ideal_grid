@@ -39,6 +39,8 @@ class Grid
 
     biguns = connected_graphs.filter {|cg| cg.size > THRESHOLD_FOR_BUILD }
 
+    old_size = generators.size
+
     biguns.each do |graph|
       pwr = [graph.size / clusters_per_subgraph, MAX_BUILD_POWER].min
       @generators += graph.generators_for_clusters(self, pwr) { clusters_per_subgraph }
@@ -46,7 +48,7 @@ class Grid
 
     calculate_flows!
 
-    biguns.size
+    generators.size - old_size
   end
 
   def grow_generators_for_unreached
@@ -54,14 +56,17 @@ class Grid
 
     liluns = connected_graphs.filter {|cg| cg.size <= THRESHOLD_FOR_BUILD }
 
+    grown = 0
     liluns.each do |graph|
       nearest_gen = generators.min_by {|g| graph.manhattan_distance_from_group g.node }
+      old_power = nearest_gen.power
       nearest_gen.power = [nearest_gen.power + graph.nodes.size, MAX_GROW_POWER].min
+      grown += 1 if old_power != nearest_gen.power
     end
 
     calculate_flows!
 
-    liluns.size
+    grown
   end
 
   def calculate_flows!
@@ -105,10 +110,13 @@ class Grid
       visited << node
     end
 
-    puts "\tGenerators:"
-    remainder.each do |gen, rem|
-      puts "#{gen.node.to_a.map {|v| v.round(2) }} [#{gen.power}] => #{rem}"
-    end
+    #puts "\tGenerators with remainders:"
+    #print "\t["
+    #remainder.each do |gen, rem|
+    #  next if rem == 0
+    #  puts "\t\t#{gen.node.to_a.map {|v| v.round(2) }} [#{gen.power}] => #{rem}"
+    #end
+    #puts "]"
 
     @reach = DisjointGraph.new visited.to_a
   end
@@ -137,5 +145,18 @@ class Grid
     end
 
     str << "\tMin, max: #{[flows.values.min, flows.values.max]}"
+  end
+
+  def info
+    str = ""
+    str << "\tPower required: #{nodes.sum {|n| n.load }}\n"
+    efficiency = reach.load / power.to_f
+    str << "\tEfficiency: #{efficiency}\n"
+    str << "\tPower: #{generators.sum {|g| g.power }} (#{generators.size} gens)\n"
+    str << "\t\t#{generators.map {|g| g.power }}\n"
+    str << "\tReached: #{reach.size}\n"
+    str << ("\tUnreached: #{unreached.size} " +
+            "(#{unreached.connected_subgraphs.size} subgraphs)\n")
+    str << "\t\t#{unreached.connected_subgraphs.map {|cg| cg.size }}"
   end
 end

@@ -74,7 +74,6 @@ end
   mst = []
 time "Tree production" do
 
-
   # Builds edges between nodes according to the MST
   parallel_filter_kruskal edges, UnionF.new(nodes), mst
 
@@ -128,24 +127,58 @@ end
 plot_flows grid, :n => 10
 show_plot
 
-#time "Reduce congestion" do
-#
-#  congested = grid.flows.sort_by {|e, f| -f } # max first
-#  unused    = edges - grid.flows.keys # these are possible shunts; unused edges
-#
-#  edge = edges.find do |e|
-#    e.nodes.include?(nodes[279]) &&
-#    e.nodes.include?(nodes[778])
-#  end
-#  edge.mark_nodes!
-#
-#  grid.reset!
-#
-#  puts grid.flow_info
-#end
-#
-#plot_flows grid, :n => 10
-#show_plot
+added = []
+time "Reduce congestion" do
+
+  # How do I find the generators that have the heaviest flows?
+
+  5.times do |i|
+    groupings = grid.graph.nodes.group_by {|n| grid.nearest_generator n }
+    stressed_gens = groupings.keys.sort_by do |gen|
+      ns = groupings[gen]
+      es = ns.map {|n| n.edges }.flatten.uniq
+      es.sum {|e| grid.flows[e] }
+    end
+
+    gen_factors = grid.generators.combination(2).map do |g1, g2|
+      delta_position = (stressed_gens.index(g1) - stressed_gens.index(g2)).abs
+      [g1,
+       g2,
+       delta_position /
+         g1.node.euclidean_distance(g2.node)]
+    end.sort_by {|_, _, v| -v }
+
+    # get the first pair that contains the overloaded generator
+    pair = gen_factors[i]
+
+    puts "\tConnecting the group around #{pair[0].node.to_a} to #{pair[1].node.to_a}"
+    added << grid.connect_graphs(pair[0], pair[1])
+
+    grid.reset!
+
+    puts grid.flow_info
+    puts grid.info
+  end
+end
+
+plot_flows grid, :n => 10
+plot_edges added, :color => "yellow", :width => 3
+show_plot
+
+g2 = nil
+time "Fresh map" do
+  g2 = Grid.new grid.nodes, []
+  g2.build_generators_for_unreached opts[:clusters]
+  g2.grow_generators_for_unreached
+  g2.build_generators_for_unreached opts[:clusters]
+  g2.grow_generators_for_unreached
+
+  puts g2.flow_info
+  puts g2.info
+end
+
+plot_flows g2, :n => 10
+show_plot
 
 ############################
 

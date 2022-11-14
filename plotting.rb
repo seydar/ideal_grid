@@ -41,10 +41,12 @@ def plot_edges(edges, color: "black", width: 1)
       ds.linewidth = width
     end
   end
+
+  nil
 end
 
-def plot_edge(edge, color: nil)
-  plot_edges [edge], :color => color
+def plot_edge(edge, color: "black", width: 1)
+  plot_edges [edge], :color => color, :width => width
 end
 
 def plot_points(nodes, color: nil, point_type: 6)
@@ -59,6 +61,8 @@ def plot_points(nodes, color: nil, point_type: 6)
     ds.linecolor = "rgb \"#{color || COLORS.sample}\""
   end
   $plot.data << ds
+
+  nil
 end
 
 def plot_point(point, color: nil, point_type: 6)

@@ -35,6 +35,10 @@ class Grid
     calculate_flows!
   end
 
+  def nearest_generator(node)
+    generators.min_by {|g| graph.manhattan_distance :from => node, :to => g.node }
+  end
+
   def build_generators_for_unreached(nodes_per_cluster)
     connected_graphs = unreached.connected_subgraphs
 
@@ -65,11 +69,31 @@ class Grid
       old_power = nearest_gen.power
       nearest_gen.power = [nearest_gen.power + lilun.nodes.size, MAX_GROW_POWER].min
       grown += 1 if old_power != nearest_gen.power
+      calculate_flows!
     end
 
     calculate_flows!
 
     grown
+  end
+
+  def connect_graphs(gen_1, gen_2)
+    groupings = graph.nodes.group_by {|n| nearest_generator n }
+
+    cg1 = ConnectedGraph.new groupings[gen_1]
+    cg2 = ConnectedGraph.new groupings[gen_2]
+
+    #outer_points_1 = cg1.nodes.filter {|n| n.edges.size == 1 }
+    #outer_points_2 = cg2.nodes.filter {|n| n.edges.size == 1 }
+
+    rankings = cg1.nodes.product(cg2.nodes).map do |a, b|
+      [a, b, a.euclidean_distance(b)]
+    end.sort_by {|_, _, v| v }
+
+    e = Edge.new rankings[0][0], rankings[0][1], rankings[0][2]
+    e.mark_nodes!
+
+    e
   end
 
   def calculate_flows!

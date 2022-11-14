@@ -11,3 +11,7 @@ TODO
 * How do we decide whether to enlarge a generator or build a new one?
   * there is currently no method to this madness
 * edges need to have transmission loss. there needs to be a penalty for longer transmission lines
+
+BUGGY RUNS
+---------------------------------
+./grid.rb -n 1000 -c 60

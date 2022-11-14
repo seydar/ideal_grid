@@ -9,7 +9,12 @@ class Edge
   # literally just pulling this out of my ass
   # https://skm-eleksys.com/2011/03/transmission-line-parameters-resistance.html
   # Plus, it'll be multiplied by the length of the line
-  R_I = 0.001
+  #
+  # https://www.midalcable.com/sites/default/files/ACSR-metric.PDF
+  #
+  # Using "quail" from the above link.
+  # I will pretend that each edge length is in km
+  R_I_a = 0.4247 # Ohm / km
 
   def initialize(to, from, length=0, id: nil)
     @length = length
@@ -23,31 +28,32 @@ class Edge
   # power to heating, since transmission lines will have non-zero resistance.
   #   P = I^2 * R
   # Thus, the cost is going to be proportional to the square of the current (flow)
-  def cost(flow)
-    flow ** 2 * R_I
+  #
+  # Not currently using but would be good:
+  #   https://www.unioviedo.es/pcasielles/uploads/proyectantes/cosas_lineas.pdf
+  #
+  # Ignoring:
+  #   - frequency effect
+  #     (since all lines will be assumed to be the same voltage -- I'm looking
+  #     at transmission lines, not distribution lines)
+  #   - temperature effect
+  #     because I'm lazy and don't think it'll have a big effect
+  #   - noise
+  #     Johnson-Nyquist effect. because I think it'll be minor
+  def power_loss(flow)
+    resistive_loss(flow) + reactive_loss(flow)
+  end
+
+  def resistive_loss(flow)
+    flow ** 2 * R_I_a * length * 1e-3 # 1e-3 because our flow is in units of kA
+  end
+
+  def reactive_loss(flow)
+    0
   end
 
   def mark_nodes!
     nodes.each {|n| n.edges << self }
-  end
-  
-  # Pretty sure this is unused. DEADBEEF dead code
-  def flow(from: nil, restrict: nil)
-    return @flow[from] if @flow[from]
-
-    other_node  = not_node from
-    other_edges = other_node.edges - [self]
-    
-    return 0 unless restrict.include? other_node
-
-    # base case
-    if other_edges.empty?
-      @flow[from] = other_node.load
-    else
-      @flow[from] = other_edges.map do |edge|
-        edge.flow(:from => other_node, :restrict => restrict)
-      end.sum + other_node.load
-    end
   end
 
   def not_node(node)

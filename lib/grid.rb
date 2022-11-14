@@ -9,6 +9,7 @@ class Grid
   attr_accessor :graph
   attr_accessor :reach
   attr_accessor :flows
+  attr_accessor :losses
 
   def initialize(nodes, generators)
     @nodes      = nodes
@@ -43,7 +44,9 @@ class Grid
 
     biguns.each do |graph|
       pwr = [graph.size / clusters_per_subgraph, MAX_BUILD_POWER].min
-      @generators += graph.generators_for_clusters(self, pwr) { clusters_per_subgraph }
+      @generators += graph.generators_for_clusters(self, pwr) do |num|
+        (num.to_f/ clusters_per_subgraph).ceil
+      end
     end
 
     calculate_flows!
@@ -57,10 +60,10 @@ class Grid
     liluns = connected_graphs.filter {|cg| cg.size <= THRESHOLD_FOR_BUILD }
 
     grown = 0
-    liluns.each do |graph|
-      nearest_gen = generators.min_by {|g| graph.manhattan_distance_from_group g.node }
+    liluns.each do |lilun|
+      nearest_gen = generators.min_by {|g| graph.manhattan_distance_from_group g.node, lilun }
       old_power = nearest_gen.power
-      nearest_gen.power = [nearest_gen.power + graph.nodes.size, MAX_GROW_POWER].min
+      nearest_gen.power = [nearest_gen.power + lilun.nodes.size, MAX_GROW_POWER].min
       grown += 1 if old_power != nearest_gen.power
     end
 
@@ -99,16 +102,32 @@ class Grid
     # Damn. I really gotta have faith that this made-up algorithm is correct.
     visited   = Set.new
     @flows    = Hash.new {|h, k| h[k] = 0 }
+
+    # {edge => transmission losses}, so we only recalculate the ones we need
+    @losses   = Hash.new {|h, k| h[k] = 0 }
     remainder = generators.map {|g| [g, g.power] }.to_h
 
     neighbors.sort_by {|n, g, p| p.size }.each do |node, gen, path|
       next if visited.include? node
-      next if remainder[gen] < node.load
+      
+      # Compute the power losses here so we can decide if we can even afford to
+      # take on this new node
+      tx_losses = path.map {|e| [e, e.power_loss(@flows[e] + node.load) - @losses[e]] }
+
+      next if remainder[gen] < (node.load + tx_losses.sum {|e, l| l })
 
       remainder[gen] -= node.load
       path.each {|e| @flows[e] += node.load }
+
+      # Reuse the already-calculated transmission losses
+      tx_losses.each {|e, l| @losses[e] = l }
+
       visited << node
     end
+
+    @reach = DisjointGraph.new visited.to_a
+
+    #@losses = @flows.sum {|edge, flow| edge.power_loss flow }.round 5
 
     #puts "\tGenerators with remainders:"
     #print "\t["
@@ -118,7 +137,6 @@ class Grid
     #end
     #puts "]"
 
-    @reach = DisjointGraph.new visited.to_a
   end
 
   def flow_info(n=5)
@@ -150,9 +168,14 @@ class Grid
   def info
     str = ""
     str << "\tPower required: #{nodes.sum {|n| n.load }}\n"
-    efficiency = reach.load / power.to_f
+    total_load = reach.load + losses.values.sum
+    str << "\tReach load: #{total_load.round 2}\n"
+    str << "\t\tNodes: #{reach.load}\n"
+    str << "\t\tTx losses: #{losses.values.sum.round(2)} "
+    str <<      "(#{(100 * losses.values.sum / reach.load.to_f).round 2}%)\n"
+    efficiency = total_load / power.to_f
     str << "\tEfficiency: #{efficiency}\n"
-    str << "\tPower: #{generators.sum {|g| g.power }} (#{generators.size} gens)\n"
+    str << "\tPower: #{power} (#{generators.size} gens)\n"
     str << "\t\t#{generators.map {|g| g.power }}\n"
     str << "\tReached: #{reach.size}\n"
     str << ("\tUnreached: #{unreached.size} " +

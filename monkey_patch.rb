@@ -28,9 +28,10 @@ end
 
 # unfortunate variable shadowing
 def time(phrase, &block)
+  puts phrase
   start = Time.now
   res = block.call
-  puts "#{phrase} (#{Time.now - start})"
+  puts "  => (#{Time.now - start})"
   res
 end
 

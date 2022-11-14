@@ -32,9 +32,9 @@ $parallel = opts[:parallel]
 $elapsed = 0
 $intermediate = opts[:intermediate]
 
-time "Edge production" do
 
-  puts "parallel: #{$parallel}"
+puts "parallel: #{$parallel}"
+time "Edge production" do
 
   # Generate a bunch of random points
   # We track IDs here so that equality can be asserted more easily after
@@ -54,7 +54,7 @@ time "Edge production" do
              :id => i
   end
 
-  puts "#{opts[:nodes]} nodes"
+  puts "\t#{opts[:nodes]} nodes"
   puts "\t#{edges.size} edges in complete graph"
 end
 
@@ -83,7 +83,7 @@ time "Tree production" do
   puts "\t#{mst.size} edges in MST"
 end
 
-time "Add initial generators [#{opts[:clusters]} clusters]" do
+time "Add initial generators [#{opts[:clusters]} nodes/generator]" do
 
   grid = Grid.new nodes, []
 
@@ -96,7 +96,7 @@ time "Add initial generators [#{opts[:clusters]} clusters]" do
   KMeansPP.graph = graph
 
   grid.generators = graph.generators_for_clusters grid do |size|
-    opts[:clusters]
+    size / opts[:clusters]
   end
 
   grid.calculate_flows!
@@ -123,14 +123,17 @@ time "Adding new generators via clustering" do
         "(#{connected_graphs.size} subgraphs)")
   puts "\t\t#{connected_graphs.map {|cg| cg.size }}"
 
+  puts "\tBuilding..."
   built = grid.build_generators_for_unreached opts[:clusters]
+
+  puts "\tGrowing..."
 
   grown = 0
   added = nil
   i = 0
   until added == 0
     added = grid.grow_generators_for_unreached
-    puts "\tmerged #{added} unreached subgraphs"
+    puts "\t\tmerged #{added} unreached subgraphs"
     grown += added
     i += 1
   end

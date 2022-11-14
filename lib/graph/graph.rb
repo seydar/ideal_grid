@@ -104,6 +104,7 @@ class Graph
   end
 
   # BFS
+  # dead code
   def traverse_edges_in_phases(source, block1, block2)
     visited = Set.new
 
@@ -204,13 +205,11 @@ class ConnectedGraph < Graph
     super(nodes)
   end
 
-  def manhattan_distance_from_group(node)
+  # Used only from the major overarching graph
+  def manhattan_distance_from_group(node, group)
     return 0 if nodes.include? node
 
-    # Can't use the internal memoized version because that is only good for
-    # paths within the graph. Here, we are -- by definition -- talking about
-    # nodes that are outside the graph (for `node`)
-    border_nodes.map {|n| n.manhattan_distance node }.min
+    group.border_nodes.map {|n| manhattan_distance :from => node, :to => n }.min
   end
 
   # Maybe this could be moved to `Graph`, but I'm not sure this fully
@@ -230,6 +229,7 @@ class ConnectedGraph < Graph
   # `k` is how many clusters we want
   # `power` should also prolly be a function as well
   def generators_for_clusters(grid, power=10, &k)
+    puts "creating #{k[nodes.size]} clusters"
     cluster(k[nodes.size]).map do |cluster|
       cg = ConnectedGraph.new cluster.points
 
@@ -238,7 +238,8 @@ class ConnectedGraph < Graph
       if cluster.points.size == 1 || k[nodes.size] <= 1
         Generator.new grid.graph, cluster.points[0], power
       else
-        Generator.new grid.graph, cg.site_on_premises, power
+        # Siting at the median because we're now concerned with high flow
+        Generator.new grid.graph, cg.site_median, power
       end
     end
   end

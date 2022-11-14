@@ -53,17 +53,22 @@ class Node
   # matrix in `Graph` be faster? Yes. Is it worth it? TBD.
   # 
   # Edit: turns out it's not that much slower than an adjacency matrix
-  def path_to(p_2, prev=nil)
+  def path_to(p_2, history=[])
     return [] if p_2 == self
 
     edges.each do |edge|
       # Don't go back the way we came
-      next if edge == prev
+      next if history.include? edge
+
+      # this will be shared across all calls with this initialization
+      # but I think that'll be okay
+      history << edge
 
       if edge.not_node(self) == p_2
         return [edge]
       else
-        path = edge.not_node(self).path_to p_2, edge
+        #puts "#{to_a} => #{edge.not_node(self).to_a} (#{p_2.to_a})"
+        path = edge.not_node(self).path_to p_2, history
         return (path << edge) unless path.empty?
       end
     end

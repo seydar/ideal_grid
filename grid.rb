@@ -94,12 +94,9 @@ time "Add initial generators [#{opts[:clusters]} nodes/generator]" do
   # Needed for the global adjacency matrix for doing faster manhattan distance
   # calculations
   KMeansPP.graph = graph
+  
+  grid.build_generators_for_unreached opts[:clusters]
 
-  grid.generators = graph.generators_for_clusters grid do |size|
-    size / opts[:clusters]
-  end
-
-  grid.calculate_flows!
   puts grid.info
 end
 
@@ -114,32 +111,10 @@ time "Adding new generators via clustering" do
 
   puts "\tBuilt: #{built}"
   puts "\tGrown: #{grown}"
-  puts grid.info
-end
 
-time "Adding new generators via clustering" do
-  connected_graphs = grid.unreached.connected_subgraphs
-  puts ("\tUnreached: #{grid.unreached.size} " +
-        "(#{connected_graphs.size} subgraphs)")
-  puts "\t\t#{connected_graphs.map {|cg| cg.size }}"
-
-  puts "\tBuilding..."
-  built = grid.build_generators_for_unreached opts[:clusters]
-
-  puts "\tGrowing..."
-
-  grown = 0
-  added = nil
-  i = 0
-  until added == 0
-    added = grid.grow_generators_for_unreached
-    puts "\t\tmerged #{added} unreached subgraphs"
-    grown += added
-    i += 1
-  end
-
-  puts "\tBuilt: #{built}"
+  grown = grid.grow_generators_for_unreached
   puts "\tGrown: #{grown}"
+
   puts grid.info
 end
 

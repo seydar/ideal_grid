@@ -1,7 +1,7 @@
 class Grid
   # Constraints, in one place
   MAX_BUILD_POWER = 80 # units of power
-  MAX_GROW_POWER  = 80
+  MAX_GROW_POWER  = 100
   THRESHOLD_FOR_BUILD = 50
 
   attr_accessor :nodes
@@ -15,7 +15,7 @@ class Grid
     @nodes      = nodes
     @generators = generators
     @graph      = ConnectedGraph.new nodes
-    @reach      = DisjointGraph.new nodes
+    @reach      = DisjointGraph.new []
   end
 
   def unreached
@@ -35,7 +35,7 @@ class Grid
     calculate_flows!
   end
 
-  def build_generators_for_unreached(clusters_per_subgraph)
+  def build_generators_for_unreached(nodes_per_cluster)
     connected_graphs = unreached.connected_subgraphs
 
     biguns = connected_graphs.filter {|cg| cg.size > THRESHOLD_FOR_BUILD }
@@ -43,9 +43,9 @@ class Grid
     old_size = generators.size
 
     biguns.each do |graph|
-      pwr = [graph.size / clusters_per_subgraph, MAX_BUILD_POWER].min
+      pwr = [nodes_per_cluster, MAX_BUILD_POWER].min
       @generators += graph.generators_for_clusters(self, pwr) do |num|
-        (num.to_f/ clusters_per_subgraph).ceil
+        (num.to_f/ nodes_per_cluster).ceil
       end
     end
 

@@ -239,6 +239,8 @@ class ConnectedGraph < Graph
         Generator.new grid.graph, cluster.points[0], power
       else
         # Siting at the median because we're now concerned with high flow
+        # #site_on_premises is better for disjoint graphs, and #site_median
+        # is better for clusters in a single connected graph
         Generator.new grid.graph, cg.site_median, power
       end
     end

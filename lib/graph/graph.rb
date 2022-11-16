@@ -13,6 +13,10 @@ class Graph
     fill_adjacencies!
   end
 
+  def edges
+    @edges ||= nodes.map {|n| n.edges.filter {|e| e.nodes - nodes == [] } }.flatten
+  end
+
   def adjacencies
     return @adjacencies if @adjacencies
     fill_adjacencies!
@@ -285,6 +289,10 @@ class ConnectedGraph < Graph
     start, _ = farthest_node_from node
 
     Path.build path(from: start, to: node)
+  end
+
+  def median_node
+    longest_path.median
   end
 
   def longest_path_from(source)

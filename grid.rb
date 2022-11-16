@@ -132,28 +132,49 @@ time "Reduce congestion" do
 
   # How do I find the generators that have the heaviest flows?
 
-  5.times do |i|
-    groupings = grid.graph.nodes.group_by {|n| grid.nearest_generator n }
-    stressed_gens = groupings.keys.sort_by do |gen|
-      ns = groupings[gen]
-      es = ns.map {|n| n.edges }.flatten.uniq
-      es.sum {|e| grid.flows[e] }
+  4.times do |i|
+    top_5           = mst.size / 20
+    grouped_flows   = grid.flows.group_by {|e, f| f }
+    group_keys      = grouped_flows.keys.sort
+
+    low_flows  = group_keys[0..group_keys.size / 5].map {|k| grouped_flows[k] }.flatten 1
+    high_flows = group_keys[-(group_keys.size / 5)..-1].map {|k| grouped_flows[k] }.flatten 1
+
+    plot_flows grid
+    h_es = high_flows.map {|e, f| e }
+    l_es = low_flows.map {|e, f| e }
+    plot_edges h_es, :color => "yellow"
+    plot_edges l_es, :color => "green"
+    show_plot
+
+    nodes = (h_es + l_es).map {|e| e.nodes }.flatten.uniq
+    disjoint = DisjointGraph.new nodes
+
+    cgs = disjoint.connected_subgraphs.map do |cg|
+      [cg, cg.edges.sum {|e| grid.flows[e] }]
     end
 
-    gen_factors = stressed_gens[-1..-1].product(stressed_gens[0..-2]).map do |g1, g2|
-      delta_position = (stressed_gens.index(g1) - stressed_gens.index(g2)).abs
-      [g1,
-       g2,
-       delta_position /
-         g1.node.euclidean_distance(g2.node)]
+    plot_flows grid
+    cgs.each {|cg, _| plot_edges cg.edges, :color => "green" }
+    show_plot
+
+
+    scores = cgs.combination(2).map do |(cg1, cg1_sum), (cg2, cg2_sum)|
+      [cg1,
+       cg2,
+       (cg1_sum - cg2_sum).abs * grid.group_distance(cg1, cg2) /
+         grid.connect_graphs(cg1, cg2).length
+      ]
     end.sort_by {|_, _, v| -v }
 
-    # get the first pair that contains the overloaded generator
-    pair = gen_factors[i]
+    pair = scores[0]
 
-    puts "\tConnecting the group around #{pair[0].node.to_a} to #{pair[1].node.to_a}"
-    e = grid.connect_generators(pair[0], pair[1])
-    added << e if e
+    puts "\tConnecting the group around #{pair[0].inspect} to #{pair[1].inspect}"
+    e = grid.connect_graphs(pair[0], pair[1])
+    if e
+      added << e
+      e.mark_nodes!
+    end
 
     grid.reset!
 

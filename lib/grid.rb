@@ -98,10 +98,12 @@ class Grid
     # TODO revert this bullshit. not build an edge? get outta here
     return if rankings[0][0].edge? rankings[0][1]
 
-    e = Edge.new rankings[0][0], rankings[0][1], rankings[0][2]
-    e.mark_nodes!
+    Edge.new rankings[0][0], rankings[0][1], rankings[0][2]
+  end
 
-    e
+  # How far away are two connected graphs?
+  def group_distance(cg1, cg2)
+    graph.manhattan_distance :from => cg1.median_node, :to => cg2.median_node
   end
 
   def calculate_flows!

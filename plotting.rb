@@ -69,12 +69,12 @@ def plot_point(point, color: nil, point_type: 6)
   plot_points [point], :color => color, :point_type => point_type
 end
 
-def plot_graph(graph, color: "blue", point_type: 6)
+def plot_graph(graph, color: "blue", edge_color: "black", point_type: 6)
   update_ranges graph.nodes
 
   edges = graph.nodes.map {|n| n.edges }.flatten
 
-  plot_edges edges
+  plot_edges edges, :color => edge_color
   plot_points graph.nodes, :color => color, :point_type => point_type
 end
 
@@ -103,7 +103,7 @@ def plot_cluster(cluster, gen)
   plot_generator gen
 end
 
-def plot_flows(grid, n: 5, focus: :unreached)
+def plot_flows(grid, n: 10, focus: :unreached)
   flows = grid.flows
   max, min = flows.values.max, flows.values.min
   #max, min = ($nodes.size / 6).round(1), 1

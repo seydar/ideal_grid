@@ -229,7 +229,7 @@ class ConnectedGraph < Graph
   # `k` is how many clusters we want
   # `power` should also prolly be a function as well
   def generators_for_clusters(grid, power=10, &k)
-    puts "creating #{k[nodes.size]} clusters"
+    puts "\tCreating #{k[nodes.size]} clusters"
     cluster(k[nodes.size]).map do |cluster|
       cg = ConnectedGraph.new cluster.points
 

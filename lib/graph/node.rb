@@ -76,6 +76,10 @@ class Node
     []
   end
 
+  def edge?(other)
+    edges.any? {|e| e.nodes.include? other }
+  end
+
   # For some reason, the shitty method is faster than the
   # adjacency matrix method. Hm. Weird.
   def manhattan_distance(other)

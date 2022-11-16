@@ -22,11 +22,11 @@ EOS
 
   opt :parallel, "Parallelize the clustering algorithm"
   opt :nodes, "Number of nodes in the grid", :type => :integer, :default => 100
-  opt :clusters, "Cluster the nodes into k clusters", :type => :integer, :default => 10
+  opt :clusters, "How many nodes per generator", :type => :integer, :default => 10
   opt :intermediate, "Show intermediate graphics of flow calculation", :type => :integer
 end
 
-grid, nodes, edges, flows = nil
+grid, nodes, edges = nil
 PRNG = Random.new 1138
 $parallel = opts[:parallel]
 $elapsed = 0
@@ -140,7 +140,7 @@ time "Reduce congestion" do
       es.sum {|e| grid.flows[e] }
     end
 
-    gen_factors = grid.generators.combination(2).map do |g1, g2|
+    gen_factors = stressed_gens[-1..-1].product(stressed_gens[0..-2]).map do |g1, g2|
       delta_position = (stressed_gens.index(g1) - stressed_gens.index(g2)).abs
       [g1,
        g2,
@@ -152,7 +152,8 @@ time "Reduce congestion" do
     pair = gen_factors[i]
 
     puts "\tConnecting the group around #{pair[0].node.to_a} to #{pair[1].node.to_a}"
-    added << grid.connect_graphs(pair[0], pair[1])
+    e = grid.connect_generators(pair[0], pair[1])
+    added << e if e
 
     grid.reset!
 
@@ -181,16 +182,6 @@ plot_flows g2, :n => 10
 show_plot
 
 ############################
-
-#plot_grid grid, :reached
-#show_plot
-#
-#plot_grid grid, :unreached
-#show_plot
-
-puts
-puts "Grid:"
-puts grid.info
 
 #require 'pry'
 #binding.pry

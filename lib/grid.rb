@@ -77,18 +77,26 @@ class Grid
     grown
   end
 
-  def connect_graphs(gen_1, gen_2)
+  def connect_generators(gen_1, gen_2)
     groupings = graph.nodes.group_by {|n| nearest_generator n }
 
     cg1 = ConnectedGraph.new groupings[gen_1]
     cg2 = ConnectedGraph.new groupings[gen_2]
 
-    #outer_points_1 = cg1.nodes.filter {|n| n.edges.size == 1 }
-    #outer_points_2 = cg2.nodes.filter {|n| n.edges.size == 1 }
+    connect_graphs cg1, cg2
+  end
 
+  def connect_graphs(cg1, cg2)
+    # Get the list of possible edges
+    # Filter to only include those that don't currently exist
+    # Sort with the shortest distance first
     rankings = cg1.nodes.product(cg2.nodes).map do |a, b|
       [a, b, a.euclidean_distance(b)]
+    #end.filter {|a, b, d| not a.edge?(b) }.sort_by {|_, _, v| v }
     end.sort_by {|_, _, v| v }
+
+    # TODO revert this bullshit. not build an edge? get outta here
+    return if rankings[0][0].edge? rankings[0][1]
 
     e = Edge.new rankings[0][0], rankings[0][1], rankings[0][2]
     e.mark_nodes!

@@ -132,8 +132,7 @@ time "Reduce congestion" do
 
   # How do I find the generators that have the heaviest flows?
 
-  4.times do |i|
-    top_5           = mst.size / 20
+  10.times do |i|
     grouped_flows   = grid.flows.group_by {|e, f| f }
     group_keys      = grouped_flows.keys.sort
 
@@ -143,9 +142,9 @@ time "Reduce congestion" do
     plot_flows grid
     h_es = high_flows.map {|e, f| e }
     l_es = low_flows.map {|e, f| e }
-    plot_edges h_es, :color => "yellow"
-    plot_edges l_es, :color => "green"
-    show_plot
+    #plot_edges h_es, :color => "yellow"
+    #plot_edges l_es, :color => "green"
+    #show_plot
 
     nodes = (h_es + l_es).map {|e| e.nodes }.flatten.uniq
     disjoint = DisjointGraph.new nodes
@@ -154,9 +153,9 @@ time "Reduce congestion" do
       [cg, cg.edges.sum {|e| grid.flows[e] }]
     end
 
-    plot_flows grid
-    cgs.each {|cg, _| plot_edges cg.edges, :color => "green" }
-    show_plot
+    #plot_flows grid
+    #cgs.each {|cg, _| plot_edges cg.edges, :color => "green" }
+    #show_plot
 
 
     scores = cgs.combination(2).map do |(cg1, cg1_sum), (cg2, cg2_sum)|

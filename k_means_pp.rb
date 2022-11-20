@@ -260,6 +260,11 @@ class KMeansPP
         puts "\t***FAILED TO CONVERGE***"
         break
       end
+
+      if history.size > 50
+        puts "\t***TOO LONG***"
+        break
+      end
     end
   end
 

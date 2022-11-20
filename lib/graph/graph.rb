@@ -209,6 +209,15 @@ class ConnectedGraph < Graph
     super(nodes)
   end
 
+  # \Sigma 1 / ((d(u) * d(v)) ^ 1/2)
+  # u, v for all edges(u, v) in G
+  def randic_index
+    edges.sum do |edge|
+      sqrt = Math.sqrt(edge.nodes[0].edges.size * edge.nodes[1].edges.size)
+      1.0 / sqrt
+    end
+  end
+
   # Used only from the major overarching graph
   def manhattan_distance_from_group(node, group)
     return 0 if nodes.include? node

@@ -12,6 +12,11 @@ TODO
   * there is currently no method to this madness
 * edges need to have transmission loss. there needs to be a penalty for longer transmission lines
 
+* Physarum polycephalum is the bacteria that can develop optimal transportation networks
+* Randić index could be useful?
+  * https://www.sciencedirect.com/science/article/pii/S0972860017301408
+
 BUGGY RUNS
 ---------------------------------
 ./grid.rb -n 1000 -c 60
+./grid.rb -n 1000 -c 80

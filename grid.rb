@@ -86,13 +86,11 @@ time "Add initial generators [#{opts[:clusters]} nodes/generator]" do
 
   grid = Grid.new nodes, []
 
-  # Keep generators an array of arrays so we can track which generators were built
-  # after which iteration
   graph = ConnectedGraph.new nodes
 
   # Needed for the global adjacency matrix for doing faster manhattan distance
   # calculations
-  KMeansClusterer.graph = graph
+  KMeansClusterer::Distance.graph = graph
   
   grid.build_generators_for_unreached opts[:clusters]
 
@@ -139,9 +137,10 @@ time "Reduce congestion" do
     low_flows  = group_keys[0..group_keys.size / 5].map {|k| grouped_flows[k] }.flatten 1
     high_flows = group_keys[-(group_keys.size / 5)..-1].map {|k| grouped_flows[k] }.flatten 1
 
-    plot_flows grid
     h_es = high_flows.map {|e, f| e }
     l_es = low_flows.map {|e, f| e }
+
+    #plot_flows grid
     #plot_edges h_es, :color => "yellow"
     #plot_edges l_es, :color => "green"
     #show_plot
@@ -167,6 +166,12 @@ time "Reduce congestion" do
     end.sort_by {|_, _, v| -v }
 
     pair = scores[0]
+
+    # TODO god this whole thing is ugly
+    unless pair
+      puts "\tNo subgraphs to connect; all graphs are even"
+      return
+    end
 
     puts "\tConnecting the group around #{pair[0].inspect} to #{pair[1].inspect}"
     e = grid.connect_graphs(pair[0], pair[1])

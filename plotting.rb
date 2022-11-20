@@ -105,10 +105,10 @@ end
 
 def plot_flows(grid, n: 10, focus: :unreached)
   flows = grid.flows
-  max, min = flows.values.max, flows.values.min
+  max, min = flows.values.max || 0, flows.values.min || 0
   #max, min = ($nodes.size / 6).round(1), 1
   splits = n.times.map {|i| (max - min) * i / n.to_f + min }
-  splits = [*splits, [flows.values.max, max].max + 1]
+  splits = [*splits, [flows.values.max || 0, max].max + 1]
 
   # low to high, because that's how splits is generated
   percentiles = splits.each_cons(2).map do |bottom, top|

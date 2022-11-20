@@ -7,6 +7,8 @@ class Graph
   # Need to specify the nodes, and then restrict the edges to only those
   # that connect to these nodes
   def initialize(nodes)
+    raise unless nodes[0] == nil ||
+                 nodes[0].class == Node
     @nodes = nodes
     @adjacencies = nil
 
@@ -244,13 +246,13 @@ class ConnectedGraph < Graph
   def generators_for_clusters(grid, power=10, &k)
     puts "\tCreating #{k[nodes.size]} clusters"
     cluster(k[nodes.size]).clusters.map do |cluster|
-      p cluster
-      cg = ConnectedGraph.new cluster.points
+      pts = cluster.points.map {|p| p.label }
+      cg = ConnectedGraph.new pts
 
       # If there's only one cluster, then there will be no border nodes
       # so on-premises siting won't work
       if cluster.points.size == 1 || k[nodes.size] <= 1
-        Generator.new grid.graph, cluster.points[0], power
+        Generator.new grid.graph, pts[0], power
       else
         # Siting at the median because we're now concerned with high flow
         # #site_on_premises is better for disjoint graphs, and #site_median

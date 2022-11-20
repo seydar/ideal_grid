@@ -45,6 +45,12 @@ class KMeansClusterer
   end
 
   module Distance
+
+    class << self
+      attr_accessor :graph
+      attr_accessor :labels
+    end
+
     def self.euclidean x, y, yy = nil
       if x.is_a?(NMatrix) && y.is_a?(NMatrix)
         xx = Scaler.row_norms(x)
@@ -53,20 +59,31 @@ class KMeansClusterer
         distance = xy * -2
         distance += xx
         distance += yy.transpose
-        NMath.sqrt distance
+        res = NMath.sqrt distance
+        #p res
+        res
       else
         NMath.sqrt ((x - y)**2).sum(0)
       end
     end
 
-    def self.manhattan x, y, graph
+    def self.manhattan x, y, yy = nil
       if x.is_a?(NMatrix) || y.is_a?(NMatrix) 
-        [*x].product([*y]).map do |x_, y_|
-          graph.manhattan_distance :from => x_.label, :to => y_.label
+        dists = [*x].map do |x_|
+          [*y].map do |y_|
+            graph.manhattan_distance :from => labels[x_], :to => labels[y_]
+          end
         end
+        p dists
+        NMatrix.cast dists
       else
-        graph.manhattan_distance :from => x.label, :to => y.label
+        graph.manhattan_distance :from => label[x], :to => labels[y]
       end
+    end
+
+    def self.distance x, y, yy = nil
+      #manhattan x, y
+      euclidean x, y, yy
     end
   end
 
@@ -123,7 +140,7 @@ class KMeansClusterer
       point = point.data if point.is_a?(Point)
       point = NArray.cast(point, @centroid.typecode) unless point.is_a?(NArray)
       points_data = NArray.cast(@points.map(&:data))
-      distances = Distance.euclidean(points_data, point)
+      distances = Distance.distance(points_data, point)
       @points.sort_by.with_index {|p, i| distances[i] }
     end
   end
@@ -165,10 +182,6 @@ class KMeansClusterer
     bestrun.finish
   end
 
-  class << self
-    attr_accessor :graph
-  end
-
 
   attr_reader :k, :points, :clusters, :centroids, :error, :mean, :std, :iterations, :runtime, :distances, :data
 
@@ -187,6 +200,8 @@ class KMeansClusterer
     @typecode = TYPECODE[opts[:float_precision] || :double]
     @max_iter = opts[:max_iter]
 
+    Distance.labels = @data.to_a.zip(@labels).to_h
+
     init_centroids
   end
 
@@ -200,8 +215,7 @@ class KMeansClusterer
       @iterations +=1
 
       min_distances.fill! Float::INFINITY
-      @distances = Distance.euclidean(@centroids, @data, @row_norms)
-      #@distances = Distance.manhattan(@centroids, @data, self.class.graph)
+      @distances = Distance.distance(@centroids, @data, @row_norms)
 
       @k.times do |cluster_id|
         dist = NArray.ref @distances[true, cluster_id].flatten
@@ -219,8 +233,7 @@ class KMeansClusterer
         unless point_ids.empty?
           points = @data[true, point_ids]
           newcenter = points.mean(1)
-          move = Distance.euclidean(centroid, newcenter)
-          #move = Distance.manhattan(centroid, newcenter, self.class.graph)
+          move = Distance.distance(centroid, newcenter)
           max_move = move if move > max_move
           @centroids[true, cluster_id] = newcenter
         end
@@ -259,8 +272,7 @@ class KMeansClusterer
   def predict data
     data = Utils.ensure_matrix data, @typecode
     data, _m, _s = Scaler.scale(data, @mean, @std, @typecode) if @scale_data
-    distances = Distance.euclidean(@centroids, data)
-    #distances = Distance.manhattan(@centroids, data, self.class.graph)
+    distances = Distance.distance(@centroids, data)
     data.shape[1].times.map do |i|
       distances[i, true].sort_index[0] # index of closest cluster
     end
@@ -269,8 +281,7 @@ class KMeansClusterer
   def sorted_clusters point = origin
     point = point.data if point.is_a?(Point)
     point = NArray.cast(point, @typecode) unless point.is_a?(NArray)
-    distances = Distance.euclidean(NArray.ref(@centroids), point)
-    #distances = Distance.manhattan(NArray.ref(@centroids), point, self.class.graph)
+    distances = Distance.distance(NArray.ref(@centroids), point)
     @clusters.sort_by.with_index {|c, i| distances[i] }
   end
 
@@ -279,8 +290,7 @@ class KMeansClusterer
 
     # calculate all point-to-point distances at once
     # uses more memory, but much faster
-    point_distances = Distance.euclidean @data, @data
-    #point_distances = Distance.manhattan @data, @data, self.class.graph
+    point_distances = Distance.distance @data, @data
 
     scores = @points.map do |point|
       dissimilarities = @clusters.map do |cluster|  
@@ -328,8 +338,7 @@ class KMeansClusterer
 
       while centroid_ids.length < @k
         centroids = @data[true, centroid_ids]
-        distances = Distance.euclidean(centroids, @data, @row_norms)
-        #distances = Distance.manhattan(centroids, @data, self.class.graph)
+        distances = Distance.distance(centroids, @data, @row_norms)
         
         # squared distances of each point to the nearest centroid
         d2 = NArray.ref(distances.min(1).flatten)**2

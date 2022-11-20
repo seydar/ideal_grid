@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 require 'gnuplot'
 require 'optimist'
-require_relative 'k_means_pp.rb'
+require_relative 'kmeans-clusterer.rb'
 require_relative 'plotting.rb'
 require_relative 'monkey_patch.rb'
 Dir['./lib/**/*.rb'].each {|f| require_relative f }
@@ -92,7 +92,7 @@ time "Add initial generators [#{opts[:clusters]} nodes/generator]" do
 
   # Needed for the global adjacency matrix for doing faster manhattan distance
   # calculations
-  KMeansPP.graph = graph
+  KMeansClusterer.graph = graph
   
   grid.build_generators_for_unreached opts[:clusters]
 

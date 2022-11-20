@@ -243,7 +243,8 @@ class ConnectedGraph < Graph
   # `power` should also prolly be a function as well
   def generators_for_clusters(grid, power=10, &k)
     puts "\tCreating #{k[nodes.size]} clusters"
-    cluster(k[nodes.size]).map do |cluster|
+    cluster(k[nodes.size]).clusters.map do |cluster|
+      p cluster
       cg = ConnectedGraph.new cluster.points
 
       # If there's only one cluster, then there will be no border nodes
@@ -333,7 +334,11 @@ class ConnectedGraph < Graph
     # I guess that's okay? The proc is to provide pertinent serialization
     # across processes during parallelization. I suppose a graph and its
     # nodes have to be made with each other in mind.
-    KMeansPP.clusters(nodes, [clusters, nodes.size].min) {|n| n.to_a }
+
+    data = nodes.map {|n| n.to_a }
+    KMeansClusterer.run [clusters, nodes.size].min,
+                        data,
+                        :labels => nodes
   end
 end
 

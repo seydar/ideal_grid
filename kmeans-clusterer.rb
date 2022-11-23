@@ -59,9 +59,7 @@ class KMeansClusterer
         distance = xy * -2
         distance += xx
         distance += yy.transpose
-        res = NMath.sqrt distance
-        #p res
-        res
+        NMath.sqrt distance
       else
         NMath.sqrt ((x - y)**2).sum(0)
       end
@@ -74,16 +72,15 @@ class KMeansClusterer
             graph.manhattan_distance :from => labels[x_], :to => labels[y_]
           end
         end
-        p dists
         NMatrix.cast dists
       else
-        graph.manhattan_distance :from => label[x], :to => labels[y]
+        graph.manhattan_distance :from => labels[x], :to => labels[y]
       end
     end
 
     def self.distance x, y, yy = nil
-      #manhattan x, y
-      euclidean x, y, yy
+      manhattan x, y
+      #euclidean x, y, yy
     end
   end
 
@@ -333,7 +330,7 @@ class KMeansClusterer
     # k-means++
     def kmpp_centroid_init
       centroid_ids = []
-      pick = rand(@points_count)
+      pick = PRNG.rand(@points_count)
       centroid_ids << pick
 
       while centroid_ids.length < @k
@@ -345,7 +342,7 @@ class KMeansClusterer
 
         probs = d2 / d2.sum
         cumprobs = probs.cumsum
-        r = rand
+        r = PRNG.rand
         pick = (cumprobs >= r).where[0]
         centroid_ids << pick
       end
@@ -363,7 +360,7 @@ class KMeansClusterer
     end
 
     def pick_k_random_indexes
-      @points_count.times.to_a.sample @k
+      @points_count.times.to_a.sample @k, :random => PRNG
     end
 
     def origin

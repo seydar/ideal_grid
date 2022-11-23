@@ -1,7 +1,7 @@
 class Grid
   # Constraints, in one place
-  MAX_BUILD_POWER = 80 # units of power
-  MAX_GROW_POWER  = 100
+  MAX_BUILD_POWER = 150 # units of power
+  MAX_GROW_POWER  = 120
   THRESHOLD_FOR_BUILD = 50
 
   attr_accessor :nodes
@@ -49,7 +49,7 @@ class Grid
     biguns.each do |graph|
       pwr = [nodes_per_cluster, MAX_BUILD_POWER].min
       @generators += graph.generators_for_clusters(self, pwr) do |num|
-        (num.to_f/ nodes_per_cluster).ceil
+        (num.to_f / nodes_per_cluster).ceil
       end
     end
 

@@ -292,8 +292,10 @@ class ConnectedGraph < Graph
     @adjacencies = nil
   end
 
+  # TODO this is just the number of edges. let's make this length as well
+  # If this is an integer, the clustering algorithm will fail
   def manhattan_distance(from: nil, to: nil)
-    path(from: from, to: to).size
+    path(from: from, to: to).sum {|e| e.length }.to_f
   end
 
   def longest_path
@@ -340,7 +342,8 @@ class ConnectedGraph < Graph
     data = nodes.map {|n| n.to_a }
     KMeansClusterer.run [clusters, nodes.size].min,
                         data,
-                        :labels => nodes
+                        :labels => nodes,
+                        :runs => 1
   end
 end
 

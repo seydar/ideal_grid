@@ -24,6 +24,7 @@ EOS
   opt :nodes, "Number of nodes in the grid", :type => :integer, :default => 100
   opt :clusters, "How many nodes per generator", :type => :integer, :default => 10
   opt :intermediate, "Show intermediate graphics of flow calculation", :type => :integer
+  opt :reduce, "How many times should we try to reduce congestion", :type => :integer, :default => 1
 end
 
 grid, nodes, edges = nil
@@ -130,7 +131,7 @@ time "Reduce congestion" do
 
   # How do I find the generators that have the heaviest flows?
 
-  10.times do |i|
+  opts[:reduce].times do |i|
     grouped_flows   = grid.flows.group_by {|e, f| f }
     group_keys      = grouped_flows.keys.sort
 
@@ -169,7 +170,7 @@ time "Reduce congestion" do
 
     # TODO god this whole thing is ugly
     unless pair
-      puts "\tNo subgraphs to connect; all graphs are even"
+      puts "\tNo subgraphs to connect; all flows are even"
       return
     end
 
@@ -188,7 +189,7 @@ time "Reduce congestion" do
 end
 
 plot_flows grid, :n => 10
-plot_edges added, :color => "yellow", :width => 3
+plot_edges added, :color => "green", :width => 3
 show_plot
 
 g2 = nil

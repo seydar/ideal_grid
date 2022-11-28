@@ -171,9 +171,11 @@ class Grid
       next if remainder[gen] < (node.load + tx_losses.sum {|e, l| l })
 
       # Reuse the already-calculated transmission losses
-      remainder[gen] -= node.load
-      path.each      {|e|    @flows[e]  += node.load }
-      tx_losses.each {|e, l| @losses[e] += l }
+      remainder[gen] -= node.load + tx_losses.sum {|e, l| l }
+      tx_losses.each do |edge, loss_delta|
+        @flows[edge]  += node.load + loss_delta
+        @losses[edge] += loss_delta
+      end
 
       visited << node
     end

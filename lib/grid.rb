@@ -67,7 +67,12 @@ class Grid
     liluns.each do |lilun|
       nearest_gen = generators.min_by {|g| graph.manhattan_distance_from_group g.node, lilun }
       old_power = nearest_gen.power
-      nearest_gen.power = [nearest_gen.power + lilun.nodes.size, MAX_GROW_POWER].min
+
+      # This is to a) set an upper limit on how power a generator can be,
+      #        and b) to limit how much it can grow in a single iteration.
+      # b) is pretty arbitrary. Can't remember why I wrote it in the first place.
+      nearest_gen.power = [[nearest_gen.power + lilun.nodes.size, MAX_GROW_POWER].min,
+                           nearest_gen.power + 5].min
       grown += 1 if old_power != nearest_gen.power
       calculate_flows!
     end
@@ -96,8 +101,12 @@ class Grid
     end.sort_by {|_, _, v| v }
 
     # TODO revert this bullshit. not build an edge? get outta here
+    #
+    # This returns and does nothing if the edge already exists.
+    # What we *should* do is find the next best edge and connect that.
     return if rankings[0][0].edge? rankings[0][1]
 
+    # DON'T mark the nodes -- simply provide the edge that accomplishes the mission.
     Edge.new rankings[0][0], rankings[0][1], rankings[0][2]
   end
 

@@ -20,7 +20,6 @@ where [options] are:
 
 EOS
 
-  opt :parallel, "Parallelize the clustering algorithm"
   opt :nodes, "Number of nodes in the grid", :type => :integer, :default => 100
   opt :clusters, "How many nodes per generator", :type => :integer, :default => 10
   opt :intermediate, "Show intermediate graphics of flow calculation", :type => :integer
@@ -29,12 +28,10 @@ end
 
 grid, nodes, edges = nil
 PRNG = Random.new 1138
-$parallel = opts[:parallel]
 $elapsed = 0
 $intermediate = opts[:intermediate]
 
 
-puts "parallel: #{$parallel}"
 time "Edge production" do
 
   # Generate a bunch of random points
@@ -72,8 +69,8 @@ def circle(nodes)
   end
 end
 
-  mst = []
 time "Tree production" do
+  mst = []
 
   # Builds edges between nodes according to the MST
   parallel_filter_kruskal edges, UnionF.new(nodes), mst
@@ -141,10 +138,10 @@ time "Reduce congestion" do
     h_es = high_flows.map {|e, f| e }
     l_es = low_flows.map {|e, f| e }
 
-    #plot_flows grid
-    #plot_edges h_es, :color => "yellow"
-    #plot_edges l_es, :color => "green"
-    #show_plot
+    plot_flows grid
+    plot_edges h_es, :color => "yellow"
+    plot_edges l_es, :color => "green"
+    show_plot
 
     nodes = (h_es + l_es).map {|e| e.nodes }.flatten.uniq
     disjoint = DisjointGraph.new nodes
@@ -153,9 +150,9 @@ time "Reduce congestion" do
       [cg, cg.edges.sum {|e| grid.flows[e] }]
     end
 
-    #plot_flows grid
-    #cgs.each {|cg, _| plot_edges cg.edges, :color => "green" }
-    #show_plot
+    plot_flows grid
+    cgs.each {|cg, _| plot_edges cg.edges, :color => "green" }
+    show_plot
 
 
     scores = cgs.combination(2).map do |(cg1, cg1_sum), (cg2, cg2_sum)|

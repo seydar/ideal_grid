@@ -4,17 +4,20 @@ TODO
 * also integrate k_means_pp.rb et al into graph.rb
 * make edge/node more specific to line/load
 * **ADD PARALLELIZATION SERIALIZATION METHOD TO EASE PARALLELIZATION**
-* Fix k_means where it doesn't converge sometimes
 
 * How do we add edges between nodes?
   * How do we do it smartly?
 * How do we decide whether to enlarge a generator or build a new one?
   * there is currently no method to this madness
-* edges need to have transmission loss. there needs to be a penalty for longer transmission lines
 
 * Physarum polycephalum is the bacteria that can develop optimal transportation networks
 * Randić index could be useful?
   * https://www.sciencedirect.com/science/article/pii/S0972860017301408
+
+DONE
+----------------------------
+* Fix k_means where it doesn't converge sometimes
+* edges need to have transmission loss. there needs to be a penalty for longer transmission lines
 
 BUGGY RUNS
 ---------------------------------

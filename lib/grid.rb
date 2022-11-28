@@ -1,8 +1,25 @@
 class Grid
+  # According to the EIA:
+  #   DC consumed 37 trillion BTU in 2020
+  #     ~ 10843629596.372223 kWh
+  #     ~ avg 1237857.25986 kW
+  #     ~ avg 1238 MW
+  #
+  #   NH:
+  #     296 trillion BTU in 2020
+  #     ~ 86749036770.97778 kWh
+  #     ~ avg 9902858.07888 kW
+  #     ~ avg 9903 kW
+  #
+  #   LNG turbine: 250 kW
+  #   Nuclear: 1000 kW
+  #
+  #   For modeling NH, call it 990 nodes, LNG 25, nuclear 100
+
   # Constraints, in one place
-  MAX_BUILD_POWER = 150 # units of power
-  MAX_GROW_POWER  = 120
-  THRESHOLD_FOR_BUILD = 50
+  MAX_BUILD_POWER = 100 # units of power
+  MAX_GROW_POWER  = 100
+  THRESHOLD_FOR_BUILD = 20
 
   attr_accessor :nodes
   attr_accessor :generators
@@ -100,14 +117,8 @@ class Grid
     #end.filter {|a, b, d| not a.edge?(b) }.sort_by {|_, _, v| v }
     end.sort_by {|_, _, v| v }
 
-    # TODO revert this bullshit. not build an edge? get outta here
-    #
-    # This returns and does nothing if the edge already exists.
-    # What we *should* do is find the next best edge and connect that.
-    return if rankings[0][0].edge? rankings[0][1]
-
     # DON'T mark the nodes -- simply provide the edge that accomplishes the mission.
-    Edge.new rankings[0][0], rankings[0][1], rankings[0][2]
+    Edge.new rankings[0][0], rankings[0][1], rankings[0][2], :id => PRNG.rand
   end
 
   # How far away are two connected graphs?
@@ -159,11 +170,10 @@ class Grid
 
       next if remainder[gen] < (node.load + tx_losses.sum {|e, l| l })
 
-      remainder[gen] -= node.load
-      path.each {|e| @flows[e] += node.load }
-
       # Reuse the already-calculated transmission losses
-      tx_losses.each {|e, l| @losses[e] = l }
+      remainder[gen] -= node.load
+      path.each      {|e|    @flows[e]  += node.load }
+      tx_losses.each {|e, l| @losses[e] += l }
 
       visited << node
     end

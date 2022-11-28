@@ -306,7 +306,13 @@ class ConnectedGraph < Graph
   end
 
   def median_node
-    longest_path.median
+    lp = longest_path
+
+    if lp.empty?
+      nodes[0]
+    else
+      lp.median
+    end
   end
 
   def longest_path_from(source)

@@ -132,38 +132,82 @@ time "Reduce congestion" do
     grouped_flows   = grid.flows.group_by {|e, f| f }
     group_keys      = grouped_flows.keys.sort
 
-    low_flows  = group_keys[0..group_keys.size / 5].map {|k| grouped_flows[k] }.flatten 1
-    high_flows = group_keys[-(group_keys.size / 5)..-1].map {|k| grouped_flows[k] }.flatten 1
+    # Okay. Find the sources. The sources have to be *individual edges*, or
+    # else we defeat the purpose of reducing the flow down those edges.
+    # This isn't entirely true, but it's close enough for now.
+    #
+    # Options for sources:
+    #   1. Build new edge that connects to a node on a high-flow edge
+    #   2. Increase the load on a low-flow edge that already connects to a
+    #      high-flow edge
+    #
+    #   (#2 feels like a general case of #1)
+    #
+    # Options for destinations:
+    #   1. Connect the source to a low-flow CG.
+    #      dafuq does this mean. Still an unsolved problem.
+    #
+    #      What does CG mean? Yes the CG is connected, but a graph of which
+    #      nodes?
+    #
+    #      I think you can't just connect a high-flow edge to a random low-flow
+    #      edge. There's a current (hah) of flow that is feeding a set of nodes,
+    #      and if a generator now has to feed another region of nodes, then the
+    #      original heavy current is unlikely to change (if the new region of
+    #      nodes is too far away).
+    #
+    #      I need to basically create a circular connection so that heavy current
+    #      gets a closer connection to the source.
+    #
+    # Nitpick: you don't connect an edge to an edge, you connect a node to a node
+    # Yes, you connect edges, but in the interest of being deliberate with what
+    # we do, we want to pick *nodes*.
+    
+    # Source; option 1
+    max_edge, _ = grid.flows.max_by {|e, f| f }
 
-    h_es = high_flows.map {|e, f| e }
-    l_es = low_flows.map {|e, f| e }
+    # Which is the node of the edge that touches the low-flow edge?
+    # What if each node of the edge has multiple edges connecting to it?
+    adj_edges = max_edge.nodes.map do |node|
+      grid.graph.adjacencies[node] # [[node, edge]]
+    end.flatten 1 # [[node, edge]]
 
-    plot_flows grid
-    plot_edges h_es, :color => "yellow"
-    plot_edges l_es, :color => "green"
-    show_plot
+    # There are only going to be two options for the nodes here, since our base
+    # is `max_edge.nodes` up above. So this finds the edge that doesn't bear much
+    # of the load.
+    source, _ = adj_edges.max_by {|n, e| grid.flows[e] }
+    s_cg = ConnectedGraph.new [source]
+    
+    ######
 
-    nodes = (h_es + l_es).map {|e| e.nodes }.flatten.uniq
+    low  = 3 * group_keys.size / 5
+    high = 4 * group_keys.size / 5
+    med_flows  = group_keys[low..high].map {|k| grouped_flows[k] }.flatten 1
+
+    m_es = med_flows.map {|e, f| e }
+
+    nodes = m_es.map {|e| e.nodes }.flatten.uniq
     disjoint = DisjointGraph.new nodes
 
     cgs = disjoint.connected_subgraphs.map do |cg|
       [cg, cg.edges.sum {|e| grid.flows[e] }]
     end
 
+
     plot_flows grid
     cgs.each {|cg, _| plot_edges cg.edges, :color => "green" }
     show_plot
 
 
-    scores = cgs.combination(2).map do |(cg1, cg1_sum), (cg2, cg2_sum)|
+    scores = [s_cg].product(cgs).map do |cg1, (cg2, cg2_sum)|
       [cg1,
        cg2,
-       (cg1_sum - cg2_sum).abs * grid.group_distance(cg1, cg2) /
+       cg2_sum /
          grid.connect_graphs(cg1, cg2).length
       ]
     end.sort_by {|_, _, v| -v }
 
-    pair = scores[0]
+    pair = scores[i]
 
     # TODO god this whole thing is ugly
     unless pair

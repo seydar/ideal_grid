@@ -40,20 +40,18 @@ class Edge
   #     because I'm lazy and don't think it'll have a big effect
   #   - noise
   #     Johnson-Nyquist effect. because I think it'll be minor
+  #   - reactive power
+  #     should prolly add this in
   def power_loss(flow)
-    resistive_loss(flow) + reactive_loss(flow)
+    resistive_loss(flow)
   end
 
   def resistive_loss(flow)
     flow ** 2 * R_I_a * length * 1e-3 # 1e-3 because our flow is in units of kA
   end
 
-  def reactive_loss(flow)
-    0
-  end
-
   def mark_nodes!
-    nodes.each {|n| n.edges << self }
+    nodes.each {|n| n.edges << self unless n.edges.include?(self) }
   end
 
   def not_node(node)

@@ -30,6 +30,10 @@ class Path
     @nodes = []
   end
 
+  def empty?
+    edges.empty?
+  end
+
   # Edges are in order, but their points are not necessarily. In addition,
   # they'll repeat points (edge X is from A - B, edge Y is B - C, so you can't
   # just map all the points together)

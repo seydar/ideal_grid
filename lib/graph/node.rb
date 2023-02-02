@@ -56,9 +56,11 @@ class Node
   def path_to(p_2, history=[])
     return [] if p_2 == self
 
+    p edges.size
     edges.each do |edge|
       # Don't go back the way we came
       next if history.include? edge
+      print "\t"; p edge
 
       # this will be shared across all calls with this initialization
       # but I think that'll be okay

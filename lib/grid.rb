@@ -163,6 +163,16 @@ class Grid
 
     neighbors.sort_by {|n, g, p| p.size }.each do |node, gen, path|
       next if visited.include? node
+
+      # There are two cases. Either the node is at the generator (so we have no
+      # path), or the node is transversing some path.
+      if node == gen.node
+        remainder[gen] -= node.load
+        visited << node
+        next
+      end
+
+      # Now, we're dealing with a node that has a path to its nearest generator
       
       # Compute the power losses here so we can decide if we can even afford to
       # take on this new node
@@ -173,25 +183,78 @@ class Grid
       # Reuse the already-calculated transmission losses
       remainder[gen] -= node.load + tx_losses.sum {|e, l| l }
       tx_losses.each do |edge, loss_delta|
+        # This line isn't in use right now, but I'm pretty sure it's wrong.
+        # `loss_delta` is just the delta for a given edge, but it should be
+        # looking at the total node load (noad.load + tx_losses_delta.sum),
+        # and after each edge, we subtract that edge's contribution and pass
+        # the rest down the line, because a line has to carry all of the load
+        # for those downstream (including *their* loss deltas)
         @flows[edge]  += node.load + loss_delta
         @losses[edge] += loss_delta
       end
+
+      #raise "GET FLOWS IN HERE. which direction is electricity flowing down lines?"
+
+      # TODO FIXME
+      # I need to gather all of the edges and then rearrange them. so
+      # basically... this all needs to go. Every time a path is added, the whole
+      # tree needs to be reweighted.
+      #
+      # Maybe this is like a self-balancing tree? I should write a self-balancing
+      # tree (not binary, though maybe start there) and see how that works.
+      #
+      # Okay, so currently:
+      #   All possible paths between all nodes and all generators are computed
+      #   Paths are sorted by distance
+      #   Shortest connection goes first
+      #   Paths are pruned as a node is visited or a generator is maxed out
+      #
+      # The above is accurate for *overall* flow across a line, but not for
+      # determining direction. Do we even need to?
+      #
+      # New idea:
+      #   All possible paths are computed, same way
+      #   Paths are grouped by node
+      #   Groups are sorted by size (which node has the fewest options)
+      #     But since no pruning has occurred, all groups will have same size
+      #     and pruning will affect each group the same, since all nodes have same 
+      #   Shortest connection goes first
+      #   Paths are pruned same way
+
+      #prev = node
+      #path.each do |edge|
+      #  if edge.nodes[0] == prev # facing the right way
+      #    if @flows[edge] < 0
+      #      p [node, edge, @flows[edge], gen]
+      #      plot_grid self, :reached
+      #      plot_path Path.build(path), :color => "purple"
+      #      show_plot
+
+      #      require 'pry'
+      #      binding.pry
+
+      #      raise
+      #    end
+
+      #    p node
+      #    # This should be the load plus the losses (and the losses for the
+      #    # downstream trip as well)
+      #    @flows[edge] += node.load # fuck it it's wrong, i don't care
+      #  else # facing the wrong way
+      #    if @flows[edge] > 0
+      #      p [node, edge, @flows[edge], gen]
+      #      raise
+      #    end
+
+      #    @flows[edge] -= node.load
+      #  end
+      #  prev = edge.not_node prev
+      #end
 
       visited << node
     end
 
     @reach = DisjointGraph.new visited.to_a
-
-    #@losses = @flows.sum {|edge, flow| edge.power_loss flow }.round 5
-
-    #puts "\tGenerators with remainders:"
-    #print "\t["
-    #remainder.each do |gen, rem|
-    #  next if rem == 0
-    #  puts "\t\t#{gen.node.to_a.map {|v| v.round(2) }} [#{gen.power}] => #{rem}"
-    #end
-    #puts "]"
-
   end
 
   def flow_info(n=5)

@@ -60,11 +60,13 @@ class Graph
       queue << source
     end
 
+    i = 0
     until queue.empty?
       from = queue.shift
 
       adjacencies[from].each do |to, edge|
         unless visited.include? edge
+        i += 1
           block.call edge, from, to
           queue   << to
           visited << edge
@@ -104,66 +106,6 @@ class Graph
           visited << to
         end
       end
-    end
-
-    visited
-  end
-
-  # BFS
-  # dead code
-  def traverse_edges_in_phases(source, block1, block2)
-    visited = Set.new
-
-    # Probably should replace this with a deque
-    queue   = []
-    next_queue = []
-
-    # if `source` is an array, have multiple search roots
-    if source.is_a? Array
-      queue  += source
-    else
-      queue  << source
-    end
-
-    continue = true # I hate this double declaration but yolo
-    while continue
-      continue = false
-
-      until queue.empty?
-        from = queue.shift
-
-        adjacencies[from].each do |to, edge|
-          unless visited.include? edge
-            success = block1.call edge, from, to
-            continue |= success
-
-            # (This is all custom-built for determining reach)
-            # If the generator doesn't have enough juice, then we don't want
-            # to continue down that branch. We'll keep checking it though
-            #
-            # `success` is also used to determine whether we do another loop:
-            # if there's at least one success, then we've got >= 1 new branch
-            # to explore
-            if success
-              # The conditional here is for future work where the graph
-              # is cyclic
-              next_queue << to unless next_queue.include? to
-              visited << edge
-            else
-              # a single node can have multiple edges which will
-              # all have the same `from`! This prevents `next_queue` from
-              # blowing up
-              next_queue << from unless next_queue.include? from
-            end
-          end
-        end
-      end
-
-      # Do something else now that one unit of time has passed and all sources
-      # have been explored simultaneously
-      block2.call visited
-
-      queue, next_queue = next_queue, []
     end
 
     visited

@@ -27,7 +27,9 @@ module Enumerable
 end
 
 # unfortunate variable shadowing
-def time(phrase, &block)
+def time(phrase, run: true, &block)
+  return unless run
+
   puts phrase
   start = Time.now
   res = block.call

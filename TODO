@@ -4,6 +4,12 @@ TODO
 * also integrate k_means_pp.rb et al into graph.rb
 * make edge/node more specific to line/load
 * **ADD PARALLELIZATION SERIALIZATION METHOD TO EASE PARALLELIZATION**
+  * for when dealing with the serialization of objects (mapping the copies
+    to their originals based on IDs/returning IDs instead of modifying
+    objects) across parallelization boundaries
+* Easy way to get the total load of a node
+  * given node and path and *where it is on its journey*, calculate how
+    much load is passing through that part of the trip
 
 * How do we add edges between nodes?
   * How do we do it smartly?
@@ -17,9 +23,15 @@ TODO
 DONE
 ----------------------------
 * Fix k_means where it doesn't converge sometimes
+  * i cheated, though: i fixed it by using a different k-means implementation
 * edges need to have transmission loss. there needs to be a penalty for longer transmission lines
 
 BUGGY RUNS
 ---------------------------------
 ./grid.rb -n 1000 -c 60
 ./grid.rb -n 1000 -c 80
+./grid.rb -n 25 -c 3
+
+In `./grid.rb -n 25 -c 3`:
+  There are two adjacent generators. Why are their nodes trying to connect
+  to *not* the closest generator (they're trying to connect to the other)?

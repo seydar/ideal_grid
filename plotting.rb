@@ -84,7 +84,7 @@ def plot_grid(grid, focus=:unreached)
   c1, c2 = c2, c1 if focus == :reached
 
   plot_graph grid.graph, :color => c1
-  plot_graph grid.reach, :color => c2
+  #plot_graph grid.reach, :color => c2
 
   grid.generators.each {|g| plot_generator g }
 end

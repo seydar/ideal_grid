@@ -123,8 +123,10 @@ end
 plot_flows grid, :n => 10
 show_plot
 
+exit
+
 added = []
-time "Reduce congestion" do
+time "Reduce congestion", run: false do
 
   # How do I find the generators that have the heaviest flows?
 

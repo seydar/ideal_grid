@@ -193,64 +193,6 @@ class Grid
         @losses[edge] += loss_delta
       end
 
-      #raise "GET FLOWS IN HERE. which direction is electricity flowing down lines?"
-
-      # TODO FIXME
-      # I need to gather all of the edges and then rearrange them. so
-      # basically... this all needs to go. Every time a path is added, the whole
-      # tree needs to be reweighted.
-      #
-      # Maybe this is like a self-balancing tree? I should write a self-balancing
-      # tree (not binary, though maybe start there) and see how that works.
-      #
-      # Okay, so currently:
-      #   All possible paths between all nodes and all generators are computed
-      #   Paths are sorted by distance
-      #   Shortest connection goes first
-      #   Paths are pruned as a node is visited or a generator is maxed out
-      #
-      # The above is accurate for *overall* flow across a line, but not for
-      # determining direction. Do we even need to?
-      #
-      # New idea:
-      #   All possible paths are computed, same way
-      #   Paths are grouped by node
-      #   Groups are sorted by size (which node has the fewest options)
-      #     But since no pruning has occurred, all groups will have same size
-      #     and pruning will affect each group the same, since all nodes have same 
-      #   Shortest connection goes first
-      #   Paths are pruned same way
-
-      #prev = node
-      #path.each do |edge|
-      #  if edge.nodes[0] == prev # facing the right way
-      #    if @flows[edge] < 0
-      #      p [node, edge, @flows[edge], gen]
-      #      plot_grid self, :reached
-      #      plot_path Path.build(path), :color => "purple"
-      #      show_plot
-
-      #      require 'pry'
-      #      binding.pry
-
-      #      raise
-      #    end
-
-      #    p node
-      #    # This should be the load plus the losses (and the losses for the
-      #    # downstream trip as well)
-      #    @flows[edge] += node.load # fuck it it's wrong, i don't care
-      #  else # facing the wrong way
-      #    if @flows[edge] > 0
-      #      p [node, edge, @flows[edge], gen]
-      #      raise
-      #    end
-
-      #    @flows[edge] -= node.load
-      #  end
-      #  prev = edge.not_node prev
-      #end
-
       visited << node
     end
 

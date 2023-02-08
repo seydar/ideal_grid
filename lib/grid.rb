@@ -154,7 +154,7 @@ class Grid
     # nodes).
     #
     # Damn. I really gotta have faith that this made-up algorithm is correct.
-    visited   = Set.new
+    visited   = Set.new # could reasonably be a [] since we check for doubles
     @flows    = Hash.new {|h, k| h[k] = 0 }
 
     # {edge => transmission losses}, so we only recalculate the ones we need
@@ -164,15 +164,8 @@ class Grid
     neighbors.sort_by {|n, g, p| p.size }.each do |node, gen, path|
       next if visited.include? node
 
-      # There are two cases. Either the node is at the generator (so we have no
-      # path), or the node is transversing some path.
-      if node == gen.node
-        remainder[gen] -= node.load
-        visited << node
-        next
-      end
-
       # Now, we're dealing with a node that has a path to its nearest generator
+      # If the node *is* the generator, then the path is empty and its sum is 0.
       
       # Compute the power losses here so we can decide if we can even afford to
       # take on this new node

@@ -31,7 +31,5 @@ BUGGY RUNS
 ./grid.rb -n 1000 -c 60
 ./grid.rb -n 1000 -c 80
 ./grid.rb -n 25 -c 3
+./grid.rb -n 1000 -c 400
 
-In `./grid.rb -n 25 -c 3`:
-  There are two adjacent generators. Why are their nodes trying to connect
-  to *not* the closest generator (they're trying to connect to the other)?

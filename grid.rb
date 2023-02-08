@@ -186,7 +186,7 @@ time "Reduce congestion" do
       end
     end
 
-    range = percentile[10][6..10]
+    range = percentile[10][6..8]
     med_flows  = group_keys[range].map {|k| grouped_flows[k] }.flatten 1
 
     m_es = med_flows.map {|e, f| e }
@@ -198,14 +198,15 @@ time "Reduce congestion" do
       [cg, cg.edges.sum {|e| grid.flows[e] }]
     end
 
-    scores = [s_cg].product(cgs).map do |cg1, (cg2, cg2_sum)|
-      e = grid.connect_graphs cg1, cg2
+    scores = cgs.map do |cg, cg_sum|
+      cg = grid.expand cg
+      e = grid.connect_graphs s_cg, cg
 
       next if e.exists?
 
-      [cg1,
-       cg2,
-       cg2_sum / e.length
+      [s_cg,
+       cg,
+       cg_sum / e.length
       ]
     end.compact.sort_by {|_, _, v| -v }
 

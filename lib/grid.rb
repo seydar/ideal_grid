@@ -108,7 +108,9 @@ class Grid
     connect_graphs cg1, cg2
   end
 
-  def connect_graphs(cg1, cg2)
+  # Find the two closest nodes between the two CGs and draw a straight line
+  # between them
+  def connect_graphs_direct(cg1, cg2)
     # Get the list of possible edges
     # Filter to only include those that don't currently exist
     # Sort with the shortest distance first
@@ -119,6 +121,31 @@ class Grid
 
     # DON'T mark the nodes -- simply provide the edge that accomplishes the mission.
     Edge.new rankings[0][0], rankings[0][1], rankings[0][2], :id => PRNG.rand
+  end
+
+  # Find ANOTHER node (that might not even be in the CGs!) that connects the two CGs
+  # with the minimum new construction
+  def connect_graphs(cg1, cg2, steps: 5)
+    # We need to expand the CGs and then check for the direct connection.
+    cg1 = expand cg1, :steps => steps
+    cg2 = expand cg2, :steps => steps
+
+    connect_graphs_direct cg1, cg2
+  end
+
+  # grow a CG by a certain number of steps
+  def expand(cg, steps: 5)
+    nodes = cg.nodes
+
+    steps.times do
+      border_nodes = nodes.map do |node|
+        node.edges.map {|e| e.not_node node }
+      end.flatten
+      new_nodes = border_nodes - nodes
+      nodes += new_nodes
+    end
+
+    ConnectedGraph.new nodes
   end
 
   # How far away are two connected graphs?

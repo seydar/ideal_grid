@@ -1,8 +1,11 @@
 $plot = Gnuplot::Plot.new
-#COLORS = ["green", "cyan", "purple", "blue", "#ffa3d7", "#bcffa3", "#ebffa3", "#ebffa3"]
+
+def resize_plot(x=750, y=600)
+  $plot.terminal "qt size #{x},#{y}"
+end
 
 def buffered_range(points, buffer=0.1)
-  range = buffered_range_int points
+  range = buffered_range_int points, buffer
   "[#{range[0]}:#{range[1]}]"
 end
 
@@ -20,8 +23,8 @@ def read_buffered_range(range)
 end
 
 def update_ranges(nodes)
-  xr = buffered_range_int(nodes.map {|p| p.x }, 0.2)
-  yr = buffered_range_int(nodes.map {|p| p.y }, 0.2)
+  xr = buffered_range_int(nodes.map {|p| p.x }, 0.05)
+  yr = buffered_range_int(nodes.map {|p| p.y }, 0.05)
 
   xprev = read_buffered_range($plot.settings.find {|e| e[1] == "xrange" })
   yprev = read_buffered_range($plot.settings.find {|e| e[1] == "yrange" })
@@ -86,7 +89,7 @@ end
 def plot_grid(grid, focus=:unreached)
   # Do we want to draw attention to the unreached or the reached?
   c1, c2 = "blue", "gray"
-  c1, c2 = c2, c1 if focus == :reached
+  c1, c2 = c2, c1 if focus == :unreached
 
   plot_graph grid.graph, :color => c1
   #plot_graph grid.reach, :color => c2
@@ -125,7 +128,7 @@ def plot_flows(grid, n: 10, focus: :unreached, labels: false)
   colors = BLUES.reverse + REDS
   percentiles.each.with_index do |pc, i|
     rhea = labels ? pc.map {|e| flows[e].round(2) } : []
-    plot_edges pc, :color  => colors[(i * colors.size) / n],
+    plot_edges pc, :color  => colors[((i + 1) * colors.size) / (n + 1)],
                    :width  => (i * 3.0 / n),
                    :labels => rhea
   end
@@ -137,6 +140,7 @@ def plot_flows(grid, n: 10, focus: :unreached, labels: false)
 end
 
 def show_plot
+  resize_plot 750, 600
   $plot, plot = Gnuplot::Plot.new, $plot
 
   Gnuplot.open do |gp|
@@ -145,6 +149,7 @@ def show_plot
   end
 
   update_ranges $nodes
+  resize_plot 750, 600
 end
 
 def save_plot(fname)
@@ -162,21 +167,79 @@ end
 
 # Monochromatic scale in red
 # https://www.toptal.com/designers/colourcode/monochrome-color-builder
-REDS = ["#1C0A0C",
-        "#42171C",
-        "#68232C",
-        "#8F2F3B",
-        "#B73B4A",
-        "red"]
+#REDS = ["#1C0A0C",
+#        "#42171C",
+#        "#68232C",
+#        "#8F2F3B",
+#        "#B73B4A",
+#        "red"]
+
+# Made by hand using ruby color-math
+# HSL (360, 100, [25-50]) => hex
+REDS = ["#800000",
+        "#850000",
+        "#8A0000",
+        "#8F0000",
+        "#940000",
+        "#990000",
+        "#9E0000",
+        "#A30000",
+        "#A80000",
+        "#AD0000",
+        "#B30000",
+        "#B80000",
+        "#BD0000",
+        "#C20000",
+        "#C70000",
+        "#CC0000",
+        "#D10000",
+        "#D60000",
+        "#DB0000",
+        "#E00000",
+        "#E60000",
+        "#EB0000",
+        "#F00000",
+        "#F50000",
+        "#FA0000",
+        "#FF0000"]
 
 # Monochromatic scale in blue
 # https://www.toptal.com/designers/colourcode/monochrome-color-builder
-BLUES = ["#16173E",
-         "#232465",
-         "#2F318B",
-         "#3B3DB3",
-         "#5759C9",
-         "blue"]
+#BLUES = ["#16173E",
+#         "#232465",
+#         "#2F318B",
+#         "#3B3DB3",
+#         "#5759C9",
+#         "blue"]
+
+# more math
+# HSL(240, 100, [25-50])
+BLUES = ["#000080",
+         "#000085",
+         "#00008A",
+         "#00008F",
+         "#000094",
+         "#000099",
+         "#00009E",
+         "#0000A3",
+         "#0000A8",
+         "#0000AD",
+         "#0000B3",
+         "#0000B8",
+         "#0000BD",
+         "#0000C2",
+         "#0000C7",
+         "#0000CC",
+         "#0000D1",
+         "#0000D6",
+         "#0000DB",
+         "#0000E0",
+         "#0000E6",
+         "#0000EB",
+         "#0000F0",
+         "#0000F5",
+         "#0000FA",
+         "#0000FF"]
 
 # Generated from https://mokole.com/palette.html
 COLORS = ["#696969",

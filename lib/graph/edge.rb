@@ -54,6 +54,15 @@ class Edge
     nodes.each {|n| n.edges << self unless n.edges.include?(self) }
   end
 
+  # Are the nodes already marked?
+  def exists?
+    # mistakenly created an edge from one node to itself
+    return true if nodes[0] == nodes[1]
+
+    # do we already exist?
+    nodes.all? {|n| n.edges.include? self }
+  end
+
   def not_node(node)
     (nodes - [node])[0]
   end

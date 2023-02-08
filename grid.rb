@@ -118,15 +118,13 @@ time "Calculate flow" do
   grid.calculate_flows! # redundant; already done in `#grow_generators_for_unreached`
 
   puts grid.flow_info
+
+  #plot_flows grid, :n => 100
+  #show_plot
 end
 
-plot_flows grid, :n => 10, :focus => :reached
-show_plot
-
-exit
-
 added = []
-time "Reduce congestion", run: false do
+time "Reduce congestion" do
 
   # How do I find the generators that have the heaviest flows?
 
@@ -177,14 +175,19 @@ time "Reduce congestion", run: false do
     # There are only going to be two options for the nodes here, since our base
     # is `max_edge.nodes` up above. So this finds the edge that doesn't bear much
     # of the load.
-    source, _ = adj_edges.max_by {|n, e| grid.flows[e] }
-    s_cg = ConnectedGraph.new [source]
+    sources = adj_edges.filter {|n, e| e == max_edge }.map {|n, _| n }
+    s_cg = ConnectedGraph.new sources
     
     ######
 
-    low  = 3 * group_keys.size / 5
-    high = 4 * group_keys.size / 5
-    med_flows  = group_keys[low..high].map {|k| grouped_flows[k] }.flatten 1
+    percentile = proc do |n|
+      proc do |rng|
+        (rng.begin * group_keys.size / n)..(rng.end * group_keys.size / n)
+      end
+    end
+
+    range = percentile[10][6..10]
+    med_flows  = group_keys[range].map {|k| grouped_flows[k] }.flatten 1
 
     m_es = med_flows.map {|e, f| e }
 
@@ -195,19 +198,16 @@ time "Reduce congestion", run: false do
       [cg, cg.edges.sum {|e| grid.flows[e] }]
     end
 
-
-    plot_flows grid
-    cgs.each {|cg, _| plot_edges cg.edges, :color => "green" }
-    show_plot
-
-
     scores = [s_cg].product(cgs).map do |cg1, (cg2, cg2_sum)|
+      e = grid.connect_graphs cg1, cg2
+
+      next if e.exists?
+
       [cg1,
        cg2,
-       cg2_sum /
-         grid.connect_graphs(cg1, cg2).length
+       cg2_sum / e.length
       ]
-    end.sort_by {|_, _, v| -v }
+    end.compact.sort_by {|_, _, v| -v }
 
     pair = scores[i]
 
@@ -217,9 +217,16 @@ time "Reduce congestion", run: false do
       return
     end
 
-    puts "\tConnecting the group around #{pair[0].inspect} to #{pair[1].inspect}"
-    e = grid.connect_graphs(pair[0], pair[1])
-    if e
+    plot_flows grid
+    [pair[0], pair[1]].each do |cg|
+      cg = grid.expand cg, :steps => 5
+      plot_edges cg.edges, :color => "green"
+    end
+    show_plot
+
+    puts "\tConnecting the groups around #{pair[0].inspect} to #{pair[1].inspect}"
+
+    if e = grid.connect_graphs(pair[0], pair[1])
       added << e
       e.mark_nodes!
     end
@@ -229,14 +236,14 @@ time "Reduce congestion", run: false do
     puts grid.flow_info
     puts grid.info
   end
+
+  plot_flows grid, :n => 10
+  plot_edges added, :color => "green", :width => 3
+  show_plot
 end
 
-plot_flows grid, :n => 10
-plot_edges added, :color => "green", :width => 3
-show_plot
-
 g2 = nil
-time "Fresh map" do
+time "Fresh map", :run => false do
   g2 = Grid.new grid.nodes, []
   g2.build_generators_for_unreached opts[:clusters]
   g2.grow_generators_for_unreached
@@ -245,10 +252,10 @@ time "Fresh map" do
 
   puts g2.flow_info
   puts g2.info
-end
 
-plot_flows g2, :n => 10
-show_plot
+  plot_flows g2, :n => 10
+  show_plot
+end
 
 ############################
 

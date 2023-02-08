@@ -29,10 +29,15 @@ def update_ranges(nodes)
   $plot.yrange "[#{[yprev[0], yr[0]].min}:#{[yprev[1], yr[1]].max}]"
 end
 
-def plot_edges(edges, color: "black", width: 1)
-  $plot.data += edges.map do |edge|
+def plot_edges(edges, color: "black", width: 1, labels: [])
+  $plot.data += edges.zip(labels).map do |edge, label|
     xs = edge.nodes.map(&:x)
     ys = edge.nodes.map(&:y)
+
+    if label
+      center = [xs.avg, ys.avg]
+      $plot.arbitrary_lines << "set label \"#{label}\" at #{center.join(",")} offset 2"
+    end
   
     Gnuplot::DataSet.new([xs, ys]) do |ds|
       ds.with = 'lines'
@@ -45,8 +50,8 @@ def plot_edges(edges, color: "black", width: 1)
   nil
 end
 
-def plot_edge(edge, color: "black", width: 1)
-  plot_edges [edge], :color => color, :width => width
+def plot_edge(edge, color: "black", width: 1, label: nil)
+  plot_edges [edge], :color => color, :width => width, :labels => [label]
 end
 
 def plot_points(nodes, color: nil, point_type: 6)
@@ -103,7 +108,7 @@ def plot_cluster(cluster, gen)
   plot_generator gen
 end
 
-def plot_flows(grid, n: 10, focus: :unreached)
+def plot_flows(grid, n: 10, focus: :unreached, labels: false)
   flows = grid.flows
   max, min = flows.values.max || 0, flows.values.min || 0
   #max, min = ($nodes.size / 6).round(1), 1
@@ -119,7 +124,10 @@ def plot_flows(grid, n: 10, focus: :unreached)
 
   colors = BLUES.reverse + REDS
   percentiles.each.with_index do |pc, i|
-    plot_edges pc, :color => colors[(i * colors.size) / n], :width => (i * 3.0 / n)
+    rhea = labels ? pc.map {|e| flows[e].round(2) } : []
+    plot_edges pc, :color  => colors[(i * colors.size) / n],
+                   :width  => (i * 3.0 / n),
+                   :labels => rhea
   end
 
   # Plot the untread edges to see if there are any even breaks in the grid

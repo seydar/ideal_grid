@@ -120,7 +120,7 @@ time "Calculate flow" do
   puts grid.flow_info
 end
 
-plot_flows grid, :n => 10
+plot_flows grid, :n => 10, :focus => :reached
 show_plot
 
 exit

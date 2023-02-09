@@ -163,23 +163,8 @@ time "Reduce congestion" do
     # Yes, you connect edges, but in the interest of being deliberate with what
     # we do, we want to pick *nodes*.
     
-    # Source; option 1
-    max_edge, _ = grid.flows.max_by {|e, f| f }
 
-    # Which is the node of the edge that touches the low-flow edge?
-    # What if each node of the edge has multiple edges connecting to it?
-    adj_edges = max_edge.nodes.map do |node|
-      grid.graph.adjacencies[node] # [[node, edge]]
-    end.flatten 1 # [[node, edge]]
-
-    # There are only going to be two options for the nodes here, since our base
-    # is `max_edge.nodes` up above. So this finds the edge that doesn't bear much
-    # of the load.
-    sources = adj_edges.filter {|n, e| e == max_edge }.map {|n, _| n }
-    s_cg = ConnectedGraph.new sources
-    
-    ######
-
+    # Source; finding the medium-flow CG
     percentile = proc do |n|
       proc do |rng|
         (rng.begin * group_keys.size / n)..(rng.end * group_keys.size / n)
@@ -187,55 +172,72 @@ time "Reduce congestion" do
     end
 
     range = percentile[10][6..8]
-    med_flows  = group_keys[range].map {|k| grouped_flows[k] }.flatten 1
+    selected_flows  = group_keys[range].map {|k| grouped_flows[k] }.flatten 1
 
-    m_es = med_flows.map {|e, f| e }
+    s_es = selected_flows.map {|e, f| e }
 
-    nodes = m_es.map {|e| e.nodes }.flatten.uniq
+    nodes = s_es.map {|e| e.nodes }.flatten.uniq
     disjoint = DisjointGraph.new nodes
 
-    cgs = disjoint.connected_subgraphs.map do |cg|
+    selected_cgs = disjoint.connected_subgraphs.map do |cg|
       [cg, cg.edges.sum {|e| grid.flows[e] }]
     end
 
-    scores = cgs.map do |cg, cg_sum|
-      cg = grid.expand cg
-      e = grid.connect_graphs s_cg, cg
-
-      next if e.exists?
-
-      [s_cg,
-       cg,
-       cg_sum / e.length
-      ]
-    end.compact.sort_by {|_, _, v| -v }
-
-    pair = scores[i]
-
-    # TODO god this whole thing is ugly
-    unless pair
-      puts "\tNo subgraphs to connect; all flows are even"
-      return
+    bounds = selected_cgs.map do |cg, sum|
+      gen = grid.nearest_generator cg.median_node
+      dist = grid.graph.manhattan_distance :from => cg.median_node, :to => gen.node
+      [cg, dist]
     end
 
-    plot_flows grid
-    [pair[0], pair[1]].each do |cg|
-      cg = grid.expand cg, :steps => 5
-      plot_edges cg.edges, :color => "green"
+    # For each CG, find another CG from another generator (outwardly expanding)
+    # that can beat the current distance to a generator
+    new_edges = bounds.map do |src, dist|
+      new_edges = grid.generators.map do |gen|
+        # fuck it, dist / 2 is made up
+        # How do we *actually* know whether we've sufficiently expanded a group
+        # in our attempts to connect to it?
+        tgt = grid.expand ConnectedGraph.new([gen.node]), :steps => [(dist - 2).ceil, 0].max
+
+        # Find the ideal edge to connect these graphs
+        e, _, dst_n = grid.connect_graphs_direct src, tgt
+
+        # Find the distance from the destination node to the generator
+        new_d = grid.graph.manhattan_distance :from => dst_n, :to => gen.node
+
+        [tgt, e, e.length + new_d]
+      end.filter {|_, e, _| e.possible? }
+
+      tgt, e, new_dist = new_edges.min_by {|_, _, d| d }
+      [src, tgt, e, new_dist]
     end
-    show_plot
+
+    puts "New edges: #{new_edges.size}"
+    new_edges.each do |src, tgt, edge|
+      p [src.edges.size, tgt.edges.size, edge]
+      p tgt.nodes
+      p tgt.edges
+      p edge.length
+      plot_flows grid
+      plot_edges src.edges, :color => "green"
+      plot_edges tgt.edges, :color => "purple"
+      plot_edge  edge, :color => "orange", :width => 3
+      show_plot
+      gets
+    end
 
     puts "\tConnecting the groups around #{pair[0].inspect} to #{pair[1].inspect}"
 
-    if e = grid.connect_graphs(pair[0], pair[1])
+    if e = grid.connect_graphs_direct(pair[0], pair[1])
       added << e
       e.mark_nodes!
     end
 
     grid.reset!
 
-    puts grid.flow_info
-    puts grid.info
+    time "how long for flow" do
+      puts grid.flow_info
+      puts grid.info
+    end
   end
 
   plot_flows grid, :n => 10

@@ -120,7 +120,9 @@ class Grid
     end.sort_by {|_, _, v| v }
 
     # DON'T mark the nodes -- simply provide the edge that accomplishes the mission.
-    Edge.new rankings[0][0], rankings[0][1], rankings[0][2], :id => PRNG.rand
+    [Edge.new(rankings[0][0], rankings[0][1], rankings[0][2], :id => PRNG.rand),
+     rankings[0][0],
+     rankings[0][1]]
   end
 
   # Find ANOTHER node (that might not even be in the CGs!) that connects the two CGs

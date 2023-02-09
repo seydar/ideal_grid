@@ -7,9 +7,6 @@ TODO
   * for when dealing with the serialization of objects (mapping the copies
     to their originals based on IDs/returning IDs instead of modifying
     objects) across parallelization boundaries
-* Easy way to get the total load of a node
-  * given node and path and *where it is on its journey*, calculate how
-    much load is passing through that part of the trip
 
 * How do we add edges between nodes?
   * How do we do it smartly?
@@ -20,11 +17,17 @@ TODO
 * Randić index could be useful?
   * https://www.sciencedirect.com/science/article/pii/S0972860017301408
 
+* When constructing an edge between two nodes, see if part of the edge can be
+  shortened by going through already-created edges that pass nearby it
+
 DONE
 ----------------------------
 * Fix k_means where it doesn't converge sometimes
   * i cheated, though: i fixed it by using a different k-means implementation
 * edges need to have transmission loss. there needs to be a penalty for longer transmission lines
+* Easy way to get the total load of a node
+  * given node and path and *where it is on its journey*, calculate how
+    much load is passing through that part of the trip
 
 BUGGY RUNS
 ---------------------------------

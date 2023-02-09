@@ -16,7 +16,7 @@ class Graph
   end
 
   def edges
-    @edges ||= nodes.map {|n| n.edges.filter {|e| e.nodes - nodes == [] } }.flatten
+    @edges ||= nodes.map {|n| n.edges.filter {|e| e.nodes - nodes == [] } }.flatten.uniq
   end
 
   def adjacencies

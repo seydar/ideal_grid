@@ -209,14 +209,6 @@ time "Reduce congestion" do
         ns = grid.nodes_near :edge => e, :distance => 0.25
         p "#{ns.size} nodes found near this edge"
 
-        plot_grid grid
-        plot_points src.nodes, :color => "red"
-        plot_points tgt.nodes, :color => "blue"
-        plot_points ns, :color => "yellow"
-        plot_edge e, :color => "orange"
-        show_plot
-        gets
-
         # Then, add all of those nodes and the nodes of the two base CGs into
         #   a DisjointGraph.
         dj = DisjointGraph.new(ns + src.nodes + tgt.nodes)
@@ -225,12 +217,21 @@ time "Reduce congestion" do
         # Skip the cases where the src and tgt CGs are already connected
         next if subgraphs.size == 1
         # Then, connect that subgraphs
-        e, _, dst_n = grid.connect_graphs_direct *subgraphs
+        e2, _, dst_n = grid.connect_graphs_direct *subgraphs
+
+        plot_grid grid
+        plot_points src.nodes, :color => "red"
+        plot_points tgt.nodes, :color => "blue"
+        plot_points ns, :color => "yellow"
+        plot_edge e, :color => "orange"
+        plot_edge e2, :color => "orange"
+        show_plot
+        gets
 
         # Find the distance from the destination node to the generator
         new_d = grid.graph.manhattan_distance :from => dst_n, :to => gen.node
 
-        [tgt, e, e.length + new_d]
+        [tgt, e2, e2.length + new_d]
       end.compact.filter {|_, e, _| e.possible? }
 
       tgt, e, new_dist = new_edges.min_by {|_, _, d| d }

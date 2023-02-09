@@ -238,18 +238,6 @@ time "Reduce congestion" do
     end
 
     puts "New edges: #{new_edges.size}"
-    new_edges.each do |src, tgt, edge|
-      #p [src.edges.size, tgt.edges.size, edge]
-      #p tgt.nodes
-      #p tgt.edges
-      p edge.length
-      #plot_flows grid
-      #plot_edges src.edges, :color => "green"
-      #plot_edges tgt.edges, :color => "purple"
-      #plot_edge  edge, :color => "orange", :width => 3
-      #show_plot
-      #gets
-    end
 
     new_edges = new_edges.filter do |src, tgt, edge|
       edge.length < 0.5

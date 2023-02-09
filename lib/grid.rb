@@ -137,7 +137,6 @@ class Grid
 
   # grow a CG by a certain number of steps
   def expand(cg, steps: 5)
-    p steps
     handful = cg.nodes
 
     steps.times do

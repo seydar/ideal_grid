@@ -192,7 +192,6 @@ time "Reduce congestion" do
     # For each CG, find another CG from another generator (outwardly expanding)
     # that can beat the current distance to a generator
     new_edges = bounds.map do |src, dist|
-      p dist
       new_edges = grid.generators.map do |gen|
         # fuck it, dist / 2 is made up
         # How do we *actually* know whether we've sufficiently expanded a group
@@ -206,8 +205,8 @@ time "Reduce congestion" do
         # FIXME
         # Somewhere in here, I need to add all of the nodes that are within a
         # certain distance of the line.
-        ns = grid.nodes_near :edge => e, :distance => 0.25
-        p "#{ns.size} nodes found near this edge"
+        ns = grid.nodes_near :edge => e, :distance => 0.75
+        #p "#{ns.size} nodes found near this edge"
 
         # Then, add all of those nodes and the nodes of the two base CGs into
         #   a DisjointGraph.
@@ -219,14 +218,14 @@ time "Reduce congestion" do
         # Then, connect that subgraphs
         e2, _, dst_n = grid.connect_graphs_direct *subgraphs
 
-        plot_grid grid
-        plot_points src.nodes, :color => "red"
-        plot_points tgt.nodes, :color => "blue"
-        plot_points ns, :color => "yellow"
-        plot_edge e, :color => "orange"
-        plot_edge e2, :color => "orange"
-        show_plot
-        gets
+        #plot_grid grid
+        #plot_points src.nodes, :color => "red"
+        #plot_points tgt.nodes, :color => "blue"
+        #plot_points ns, :color => "yellow"
+        #plot_edge e, :color => "orange"
+        #plot_edge e2, :color => "orange"
+        #show_plot
+        #gets
 
         # Find the distance from the destination node to the generator
         new_d = grid.graph.manhattan_distance :from => dst_n, :to => gen.node
@@ -240,21 +239,23 @@ time "Reduce congestion" do
 
     puts "New edges: #{new_edges.size}"
     new_edges.each do |src, tgt, edge|
-      p [src.edges.size, tgt.edges.size, edge]
-      p tgt.nodes
-      p tgt.edges
+      #p [src.edges.size, tgt.edges.size, edge]
+      #p tgt.nodes
+      #p tgt.edges
       p edge.length
-      plot_flows grid
-      plot_edges src.edges, :color => "green"
-      plot_edges tgt.edges, :color => "purple"
-      plot_edge  edge, :color => "orange", :width => 3
-      show_plot
-      gets
+      #plot_flows grid
+      #plot_edges src.edges, :color => "green"
+      #plot_edges tgt.edges, :color => "purple"
+      #plot_edge  edge, :color => "orange", :width => 3
+      #show_plot
+      #gets
     end
 
-    puts "\tConnecting the groups around #{pair[0].inspect} to #{pair[1].inspect}"
+    new_edges = new_edges.filter do |src, tgt, edge|
+      edge.length < 0.5
+    end
 
-    if e = grid.connect_graphs_direct(pair[0], pair[1])
+    new_edges.each do |_, _, e|
       added << e
       e.mark_nodes!
     end

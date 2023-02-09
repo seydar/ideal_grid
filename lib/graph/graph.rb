@@ -234,8 +234,6 @@ class ConnectedGraph < Graph
     @adjacencies = nil
   end
 
-  # TODO this is just the number of edges. let's make this length as well
-  # If this is an integer, the clustering algorithm will fail
   def manhattan_distance(from: nil, to: nil)
     path(from: from, to: to).sum {|e| e.length }.to_f
   end

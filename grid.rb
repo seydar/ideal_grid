@@ -185,27 +185,53 @@ time "Reduce congestion" do
 
     bounds = selected_cgs.map do |cg, sum|
       gen = grid.nearest_generator cg.median_node
-      dist = grid.graph.manhattan_distance :from => cg.median_node, :to => gen.node
+      dist = grid.graph.path(:from => cg.median_node, :to => gen.node).size
       [cg, dist]
     end
 
     # For each CG, find another CG from another generator (outwardly expanding)
     # that can beat the current distance to a generator
     new_edges = bounds.map do |src, dist|
+      p dist
       new_edges = grid.generators.map do |gen|
         # fuck it, dist / 2 is made up
         # How do we *actually* know whether we've sufficiently expanded a group
         # in our attempts to connect to it?
-        tgt = grid.expand ConnectedGraph.new([gen.node]), :steps => [(dist - 2).ceil, 0].max
+        tgt = grid.expand ConnectedGraph.new([gen.node]), :steps => (dist - 1)
 
         # Find the ideal edge to connect these graphs
-        e, _, dst_n = grid.connect_graphs_direct src, tgt
+        e, _, _ = grid.connect_graphs_direct src, tgt
+        next unless e.possible?
+
+        # FIXME
+        # Somewhere in here, I need to add all of the nodes that are within a
+        # certain distance of the line.
+        ns = grid.nodes_near :edge => e, :distance => 0.25
+        p "#{ns.size} nodes found near this edge"
+
+        plot_grid grid
+        plot_points src.nodes, :color => "red"
+        plot_points tgt.nodes, :color => "blue"
+        plot_points ns, :color => "yellow"
+        plot_edge e, :color => "orange"
+        show_plot
+        gets
+
+        # Then, add all of those nodes and the nodes of the two base CGs into
+        #   a DisjointGraph.
+        dj = DisjointGraph.new(ns + src.nodes + tgt.nodes)
+        # Then, get the two largest connected subgraphs.
+        subgraphs = dj.connected_subgraphs.sort_by {|cg| -cg.size }[0..1]
+        # Skip the cases where the src and tgt CGs are already connected
+        next if subgraphs.size == 1
+        # Then, connect that subgraphs
+        e, _, dst_n = grid.connect_graphs_direct *subgraphs
 
         # Find the distance from the destination node to the generator
         new_d = grid.graph.manhattan_distance :from => dst_n, :to => gen.node
 
         [tgt, e, e.length + new_d]
-      end.filter {|_, e, _| e.possible? }
+      end.compact.filter {|_, e, _| e.possible? }
 
       tgt, e, new_dist = new_edges.min_by {|_, _, d| d }
       [src, tgt, e, new_dist]

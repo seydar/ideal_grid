@@ -137,17 +137,44 @@ class Grid
 
   # grow a CG by a certain number of steps
   def expand(cg, steps: 5)
-    nodes = cg.nodes
+    p steps
+    handful = cg.nodes
 
     steps.times do
-      border_nodes = nodes.map do |node|
+      border_nodes = handful.map do |node|
         node.edges.map {|e| e.not_node node }
       end.flatten
-      new_nodes = border_nodes - nodes
-      nodes += new_nodes
+      new_nodes = border_nodes - handful
+      handful += new_nodes
     end
 
-    ConnectedGraph.new nodes
+    ConnectedGraph.new handful
+  end
+
+  def nodes_near(edge: nil, distance: 0)
+    p1, p2 = *edge.nodes
+    min_x, max_x = [p1.x, p2.x].min, [p1.x, p2.x].max
+    min_y, max_y = [p1.y, p2.y].min, [p1.y, p2.y].max
+
+    nodes.filter do |n|
+      # Short circuits for faster processing (though honestly might not even be)
+      next if n.x < min_x - distance 
+      next if n.x > max_x + distance 
+      next if n.y < min_y - distance 
+      next if n.y > max_y + distance 
+
+      d = line_point_distance(n, :edge => edge)
+      d <= distance
+    end
+  end
+
+  # https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line#Line_defined_by_two_points
+  def line_point_distance(p0, edge: nil)
+    p1, p2 = *edge.nodes
+    numerator   = (((p2.x - p1.x) * (p1.y - p0.y)) - ((p1.x - p0.x) * (p2.y - p1.y))).abs
+    denominator = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2)
+
+    numerator / denominator
   end
 
   # How far away are two connected graphs?

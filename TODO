@@ -19,6 +19,11 @@ TODO
 
 * When constructing an edge between two nodes, see if part of the edge can be
   shortened by going through already-created edges that pass nearby it
+  * boom almost done
+
+* Instead of looking for high-flow edges to connect to, look for nodes that are
+  drawing power from far-away generators. the distances are calculated during the
+  flow calculations, and we just have to beat that number.
 
 DONE
 ----------------------------

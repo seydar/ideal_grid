@@ -119,8 +119,8 @@ time "Calculate flow" do
 
   puts grid.flow_info
 
-  #plot_flows grid, :n => 100
-  #show_plot
+  plot_flows grid, :n => 100
+  show_plot
 end
 
 added = []
@@ -202,7 +202,6 @@ time "Reduce congestion" do
         e, _, _ = grid.connect_graphs_direct src, tgt
         next unless e.possible?
 
-        # FIXME
         # Somewhere in here, I need to add all of the nodes that are within a
         # certain distance of the line.
         ns = grid.nodes_near :edge => e, :distance => 0.75
@@ -250,13 +249,11 @@ time "Reduce congestion" do
 
     grid.reset!
 
-    time "how long for flow" do
-      puts grid.flow_info
-      puts grid.info
-    end
+    puts grid.flow_info
+    puts grid.info
   end
 
-  plot_flows grid, :n => 10
+  plot_flows grid, :n => 10, :focus => :unreached
   plot_edges added, :color => "green", :width => 3
   show_plot
 end

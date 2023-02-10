@@ -99,18 +99,9 @@ class Grid
     grown
   end
 
-  def connect_generators(gen_1, gen_2)
-    groupings = graph.nodes.group_by {|n| nearest_generator n }
-
-    cg1 = ConnectedGraph.new groupings[gen_1]
-    cg2 = ConnectedGraph.new groupings[gen_2]
-
-    connect_graphs cg1, cg2
-  end
-
   # Find the two closest nodes between the two CGs and draw a straight line
   # between them
-  def connect_graphs_direct(cg1, cg2)
+  def connect_graphs(cg1, cg2)
     # Get the list of possible edges
     # Filter to only include those that don't currently exist
     # Sort with the shortest distance first
@@ -123,16 +114,6 @@ class Grid
     [Edge.new(rankings[0][0], rankings[0][1], rankings[0][2], :id => PRNG.rand),
      rankings[0][0],
      rankings[0][1]]
-  end
-
-  # Find ANOTHER node (that might not even be in the CGs!) that connects the two CGs
-  # with the minimum new construction
-  def connect_graphs(cg1, cg2, steps: 5)
-    # We need to expand the CGs and then check for the direct connection.
-    cg1 = expand cg1, :steps => steps
-    cg2 = expand cg2, :steps => steps
-
-    connect_graphs_direct cg1, cg2
   end
 
   # grow a CG by a certain number of steps
@@ -156,24 +137,126 @@ class Grid
     min_y, max_y = [p1.y, p2.y].min, [p1.y, p2.y].max
 
     nodes.filter do |n|
-      # Short circuits for faster processing (though honestly might not even be)
+      # This isn't glatt, but it's kosher enough
       next if n.x < min_x - distance 
       next if n.x > max_x + distance 
       next if n.y < min_y - distance 
       next if n.y > max_y + distance 
 
-      d = line_point_distance(n, :edge => edge)
+      d = edge.ray_distance_to_point n
       d <= distance
     end
   end
 
-  # https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line#Line_defined_by_two_points
-  def line_point_distance(p0, edge: nil)
-    p1, p2 = *edge.nodes
-    numerator   = (((p2.x - p1.x) * (p1.y - p0.y)) - ((p1.x - p0.x) * (p2.y - p1.y))).abs
-    denominator = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2)
+  def reduce_congestion
+    grouped_flows   = flows.group_by {|e, f| f }
+    group_keys      = grouped_flows.keys.sort
 
-    numerator / denominator
+    # Okay. Find the sources. The sources have to be *individual edges*, or
+    # else we defeat the purpose of reducing the flow down those edges.
+    # This isn't entirely true, but it's close enough for now.
+    #
+    # Options for sources:
+    #   1. Build new edge that connects to a node on a high-flow edge
+    #   2. Increase the load on a low-flow edge that already connects to a
+    #      high-flow edge
+    #
+    #   (#2 feels like a general case of #1)
+    #
+    # Options for destinations:
+    #   1. Connect the source to a low-flow CG.
+    #      dafuq does this mean. Still an unsolved problem.
+    #
+    #      What does CG mean? Yes the CG is connected, but a graph of which
+    #      nodes?
+    #
+    #      I think you can't just connect a high-flow edge to a random low-flow
+    #      edge. There's a current (hah) of flow that is feeding a set of nodes,
+    #      and if a generator now has to feed another region of nodes, then the
+    #      original heavy current is unlikely to change (if the new region of
+    #      nodes is too far away).
+    #
+    #      I need to basically create a circular connection so that heavy current
+    #      gets a closer connection to the source.
+    #
+    # Nitpick: you don't connect an edge to an edge, you connect a node to a node
+    # Yes, you connect edges, but in the interest of being deliberate with what
+    # we do, we want to pick *nodes*.
+    
+
+    # Source; finding the medium-flow CG
+    percentile = proc do |n|
+      proc do |rng|
+        (rng.begin * group_keys.size / n)..(rng.end * group_keys.size / n)
+      end
+    end
+
+    range = percentile[10][6..8]
+    selected_flows  = group_keys[range].map {|k| grouped_flows[k] }.flatten 1
+
+    s_es = selected_flows.map {|e, f| e }
+
+    nodes = s_es.map {|e| e.nodes }.flatten.uniq
+    disjoint = DisjointGraph.new nodes
+
+    selected_cgs = disjoint.connected_subgraphs.map do |cg|
+      [cg, cg.edges.sum {|e| flows[e] }]
+    end
+
+    bounds = selected_cgs.map do |cg, sum|
+      gen = nearest_generator cg.median_node
+      dist = graph.path(:from => cg.median_node, :to => gen.node).size
+      [cg, dist]
+    end
+
+    # For each CG, find another CG from another generator (outwardly expanding)
+    # that can beat the current distance to a generator
+    new_edges = bounds.map do |src, dist|
+      new_edges = generators.map do |gen|
+        # fuck it, dist - 1 is made up
+        # How do we *actually* know whether we've sufficiently expanded a group
+        # in our attempts to connect to it?
+        tgt = expand ConnectedGraph.new([gen.node]), :steps => (dist - 3)
+
+        # Find the ideal edge to connect these graphs
+        e, _, _ = connect_graphs src, tgt
+        next unless e.possible?
+
+        # Somewhere in here, I need to add all of the nodes that are within a
+        # certain distance of the line.
+        ns = nodes_near :edge => e, :distance => 0.75
+        #p "#{ns.size} nodes found near this edge"
+
+        # Then, add all of those nodes and the nodes of the two base CGs into
+        #   a DisjointGraph.
+        dj = DisjointGraph.new(ns + src.nodes + tgt.nodes)
+        # Then, get the two largest connected subgraphs.
+        subgraphs = dj.connected_subgraphs.sort_by {|cg| -cg.size }[0..1]
+        # Skip the cases where the src and tgt CGs are already connected
+        next if subgraphs.size == 1
+        # Then, connect that subgraphs
+        e2, _, dst_n = connect_graphs *subgraphs
+
+        #plot_grid self
+        #plot_points src.nodes, :color => "red"
+        #plot_points tgt.nodes, :color => "blue"
+        #plot_points ns, :color => "yellow"
+        #plot_edge e, :color => "orange"
+        #plot_edge e2, :color => "orange"
+        #show_plot
+        #gets
+
+        # Find the distance from the destination node to the generator
+        new_d = graph.manhattan_distance :from => dst_n, :to => gen.node
+
+        [tgt, e2, e2.length + new_d]
+      end.compact.filter {|_, e, _| e.possible? }
+
+      tgt, e, new_dist = new_edges.min_by {|_, _, d| d }
+      [src, tgt, e, new_dist]
+    end
+
+    new_edges
   end
 
   # How far away are two connected graphs?

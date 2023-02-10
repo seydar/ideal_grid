@@ -79,5 +79,14 @@ class Edge
     return false unless other.is_a? Edge
     id == other.id
   end
+
+  # https://en.wikipedia.org/wiki/Distance_from_a_point_to_a_line#Line_defined_by_two_points
+  def ray_distance_to_point(p0)
+    p1, p2 = *nodes
+    numerator   = (((p2.x - p1.x) * (p1.y - p0.y)) - ((p1.x - p0.x) * (p2.y - p1.y))).abs
+    denominator = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2)
+
+    numerator / denominator
+  end
 end
 

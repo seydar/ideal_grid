@@ -25,6 +25,8 @@ TODO
   drawing power from far-away generators. the distances are calculated during the
   flow calculations, and we just have to beat that number.
 
+* Why aren't unreached nodes being highlighted during plotting?
+
 DONE
 ----------------------------
 * Fix k_means where it doesn't converge sometimes

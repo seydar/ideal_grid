@@ -1,0 +1,12 @@
+[out:json];
+
+(
+  way["power"="line"]({{bbox}});
+  way["power"="minor_line"]({{bbox}});
+);
+
+out body;
+
+Power generators:
+https://synapse.maps.arcgis.com/apps/dashboards/201fc98c0d74482d8b3acb0c4cc47f16
+

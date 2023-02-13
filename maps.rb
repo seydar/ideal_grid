@@ -1,4 +1,5 @@
 require "overpass_api_ruby"
+require 'json'
 require_relative 'lib/graph/edge.rb'
 require_relative 'lib/graph/node.rb'
 require_relative 'plotting.rb'
@@ -72,30 +73,71 @@ class Polygon
   end
 end
 
+def download_overpass
+  query = "way['power'='line'];(._;>;);out body;"
+  
+  options = {:bbox => {:n =>  45.01, :s =>  42.71,
+                       :e => -71.01, :w => -73.25}}
+  #options = {:bbox => {:n =>  45.3154, :s =>  44.6424,
+  #                     :e => -71.9248, :w => -72.627}}
+  
+  overpass = OverpassAPI::QL.new options
+  response = overpass.query query
 
-query = "way['power'='line'];(._;>;);out body;"
+  lines = response[:elements].filter {|e| e[:type] == "way" }
+  nodes = response[:elements].filter {|e| e[:type] == "node" }.map do |n|
+    [n[:id], Node.new(n[:lon], n[:lat], :id => n[:id])]
+  end.to_h
+  
+  $nodes = nodes.values
+  
+  puts "Full:"
+  puts "\tNodes: #{nodes.size}"
+  puts "\tLines: #{lines.size}"
+  
+  lines.each do |line|
+    line[:nodes]   = line[:nodes].map {|id| nodes[id] }
+  end
 
-options = {:bbox => {:n =>  45.01, :s =>  42.71,
-                     :e => -71.01, :w => -73.25}}
-#options = {:bbox => {:n =>  45.3154, :s =>  44.6424,
-#                     :e => -71.9248, :w => -72.627}}
+  lines
+end
 
-overpass = OverpassAPI::QL.new options
-response = overpass.query query
+def read_geojson(path)
+  dedup = {}
+  json  = JSON.load File.read(path)
+  lines = json["features"]
 
-lines = response[:elements].filter {|e| e[:type] == "way" }
-nodes = response[:elements].filter {|e| e[:type] == "node" }.map do |n|
-  [n[:id], Node.new(n[:lon], n[:lat], :id => n[:id])]
-end.to_h
+  lines.each do |line|
+    line[:nodes] = line['geometry']["coordinates"].map do |coord|
+      dedup[coord] ||= Node.new(coord[0], coord[1], :id => dedup.size)
+    end
+  end
 
-$nodes = nodes.values
+  $nodes = lines.map {|l| l[:nodes] }.flatten
 
-puts "Full:"
-puts "\tNodes: #{nodes.size}"
-puts "\tLines: #{lines.size}"
+  puts "Full:"
+  puts "\tTotal nodes: #{lines.sum {|l| l['geometry']["coordinates"].size }}"
+  puts "\tDeduped nodes: #{lines.sum {|l| l[:nodes].size }}"
+  puts "\tLines: #{lines.size}"
+
+  lines
+end
+
+##########################################################
+##########################################################
+##########################################################
+##########################################################
+##########################################################
+##########################################################
+##########################################################
+##########################################################
+##########################################################
+##########################################################
+
+#lines = download_overpass
+lines = read_geojson "/Users/ari/src/ideal_grid/Transmission_Lines.geojson"
 
 lines.each do |line|
-  line[:nodes]   = line[:nodes].map {|id| nodes[id] }
   line[:polygon] = Polygon.new line[:nodes]
   line[:color] = COLORS.sample
 
@@ -152,27 +194,6 @@ puts "\tLines: #{lines.size}"
 
 show_plot
 
-# Find overlapping points and join them
-#   This should be done with a Union-Find
-# And then plot that
-lines.each {|l| l[:raw] = l[:nodes].map(&:to_a) }
-
-uf = UnionF.new lines
-(0..lines.size - 1).each do |i|
-  lines[i][:raw] ||= lines[i][:nodes].map(&:to_a)
-
-  (i..lines.size - 1).each do |j|
-    lines[j][:raw] ||= lines[j][:nodes].map(&:to_a)
-
-    mut = lines[i][:raw] & lines[j][:raw]
-    if lines[i][:raw] & lines[j][:raw] != []
-      #p mut.size
-      uf.union lines[i], lines[j]
-    end
-  end
-end
-
-p uf.disjoint_sets.size
 
 # Make connected lines have the same color
 # (instead of actually joining the polygons, we've merely joined them
@@ -190,17 +211,43 @@ lines.each do |line|
   end
 end.flatten
 
+# Find overlapping points and join them
+#   This should be done with a Union-Find
+# And then plot that
+lines.each {|l| l[:raw] = l[:nodes].map(&:to_a) }
+
+uf = UnionF.new lines
+(0..lines.size - 1).each do |i|
+  #lines[i][:raw] ||= lines[i][:nodes].map(&:to_a)
+
+  (i..lines.size - 1).each do |j|
+    #lines[j][:raw] ||= lines[j][:nodes].map(&:to_a)
+
+    mut = lines[i][:raw] & lines[j][:raw]
+    if lines[i][:raw] & lines[j][:raw] != []
+      #p mut.size
+      uf.union lines[i], lines[j]
+    end
+  end
+end
+
+p uf.disjoint_sets.size
+
 $plot = Gnuplot::Plot.new
 
 lines.each do |line|
   plot_edges line[:edges]
 end
 
-lines.each do |line|
-  plot_points line[:smooth].points, :color => "black"
+uf.disjoint_sets.each do |set|
+  color = set[0][:color]
+  set.each do |line|
+    plot_points line[:smooth].points, :color => color
+  end
 end
 
 show_plot
+
 
 
 

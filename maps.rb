@@ -155,12 +155,14 @@ show_plot
 # And then plot that
 uf = UnionF.new lines
 (0..lines.size - 1).each do |i|
-  #lines[i][:raw] ||= lines[i][:nodes].map(&:to_a)
+  lines[i][:raw] ||= lines[i][:nodes].map(&:to_a)
 
   (i..lines.size - 1).each do |j|
-    #lines[j][:raw] ||= lines[j][:nodes].map(&:to_a)
+    lines[j][:raw] ||= lines[j][:nodes].map(&:to_a)
 
+    mut = lines[i][:raw] & lines[j][:raw]
     if lines[i][:raw] & lines[j][:raw] != []
+      p mut.size
       uf.union lines[i], lines[j]
     end
   end

@@ -77,6 +77,8 @@ query = "way['power'='line'];(._;>;);out body;"
 
 options = {:bbox => {:n =>  45.01, :s =>  42.71,
                      :e => -71.01, :w => -73.25}}
+#options = {:bbox => {:n =>  45.3154, :s =>  44.6424,
+#                     :e => -71.9248, :w => -72.627}}
 
 overpass = OverpassAPI::QL.new options
 response = overpass.query query
@@ -100,7 +102,7 @@ lines.each do |line|
   plot_points line[:polygon].points, :color => line[:color]
 end
 
-#show_plot
+show_plot
 
 start = Time.now
 
@@ -153,6 +155,8 @@ show_plot
 # Find overlapping points and join them
 #   This should be done with a Union-Find
 # And then plot that
+lines.each {|l| l[:raw] = l[:nodes].map(&:to_a) }
+
 uf = UnionF.new lines
 (0..lines.size - 1).each do |i|
   lines[i][:raw] ||= lines[i][:nodes].map(&:to_a)
@@ -162,7 +166,7 @@ uf = UnionF.new lines
 
     mut = lines[i][:raw] & lines[j][:raw]
     if lines[i][:raw] & lines[j][:raw] != []
-      p mut.size
+      #p mut.size
       uf.union lines[i], lines[j]
     end
   end
@@ -173,18 +177,32 @@ p uf.disjoint_sets.size
 # Make connected lines have the same color
 # (instead of actually joining the polygons, we've merely joined them
 # in the U-F)
-uf.disjoint_sets.each do |set|
-  clr = COLORS.sample
-  set.each {|l| l[:color] = clr }
-end
+
+# mess = [lines[36], lines[10], lines[11], lines[12]]
+
+# Mark all the points on the smoothed lines
+# This should also take care of lines that use the same nodes
+lines.each do |line|
+  line[:edges] = line[:smooth].points.each_cons(2).map do |left, right|
+    e = Edge.new(left, right) # deal with the length later
+    e.mark_nodes!
+    e
+  end
+end.flatten
 
 $plot = Gnuplot::Plot.new
 
 lines.each do |line|
-  plot_points line[:smooth].points, :color => line[:color]
+  plot_edges line[:edges]
+end
+
+lines.each do |line|
+  plot_points line[:smooth].points, :color => "black"
 end
 
 show_plot
+
+
 
 require 'pry'
 binding.pry

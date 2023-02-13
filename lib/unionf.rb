@@ -8,7 +8,7 @@ class UnionF
     @id = {}
     @sz = {}
     @el = []
-    elements.each {|n| @id[n] = n; @sz[n] = 1; @el << n}
+    elements.each {|n| @id[n] = n; @sz[n] = 1; @el << n }
   end
 
   def roots

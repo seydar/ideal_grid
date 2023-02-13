@@ -1,5 +1,4 @@
 #!/usr/bin/env ruby
-require 'gnuplot'
 require 'optimist'
 require_relative 'kmeans-clusterer.rb'
 require_relative 'plotting.rb'

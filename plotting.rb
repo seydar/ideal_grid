@@ -1,3 +1,4 @@
+require 'gnuplot'
 $plot = Gnuplot::Plot.new
 
 def resize_plot(x=750, y=600)

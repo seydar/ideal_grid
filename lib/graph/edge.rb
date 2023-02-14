@@ -1,9 +1,7 @@
 class Edge
   attr_accessor :nodes # guaranteed to be #size == 2
   attr_accessor :length
-  attr_accessor :explored
   attr_accessor :id
-  
   attr_accessor :flow
 
   # literally just pulling this out of my ass

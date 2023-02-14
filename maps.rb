@@ -90,10 +90,7 @@ def download_overpass
   end.to_h
   
   $nodes = nodes.values
-  
-  puts "Full:"
-  puts "\tNodes: #{nodes.size}"
-  puts "\tLines: #{lines.size}"
+  $nodes.each {|n| n.load = 0 }
   
   lines.each do |line|
     line[:nodes]   = line[:nodes].map {|id| nodes[id] }
@@ -102,7 +99,14 @@ def download_overpass
   lines
 end
 
-def read_geojson(path)
+def within(box, pt)
+  pt.y < box[:n] &&
+    pt.y > box[:s] &&
+    pt.x < box[:e] &&
+    pt.x > box[:w]
+end
+
+def read_geojson(path, box=nil)
   dedup = {}
   json  = JSON.load File.read(path)
   lines = json["features"]
@@ -110,147 +114,186 @@ def read_geojson(path)
   lines.each do |line|
     line[:nodes] = line['geometry']["coordinates"].map do |coord|
       dedup[coord] ||= Node.new(coord[0], coord[1], :id => dedup.size)
+      dedup[coord].load = 0
+      dedup[coord]
     end
+  end
+
+  if box
+    lines.each do |line|
+      line[:nodes] = line[:nodes].filter {|n| within box, n }
+    end
+
+    lines = lines.filter {|l| not l[:nodes].empty? }
   end
 
   $nodes = lines.map {|l| l[:nodes] }.flatten
 
-  puts "Full:"
-  puts "\tTotal nodes: #{lines.sum {|l| l['geometry']["coordinates"].size }}"
-  puts "\tDeduped nodes: #{lines.sum {|l| l[:nodes].size }}"
-  puts "\tLines: #{lines.size}"
-
-  lines
-end
-
-##########################################################
-##########################################################
-##########################################################
-##########################################################
-##########################################################
-##########################################################
-##########################################################
-##########################################################
-##########################################################
-##########################################################
-
-#lines = download_overpass
-lines = read_geojson "/Users/ari/src/ideal_grid/Transmission_Lines.geojson"
-
-lines.each do |line|
-  line[:polygon] = Polygon.new line[:nodes]
-  line[:color] = COLORS.sample
-
-  plot_points line[:polygon].points, :color => line[:color]
-end
-
-show_plot
-
-start = Time.now
-
-# Okay, we know there are a lot of duplicates, but we don't know how they
-# interrelate, so I think it's too soon to deduplicate them now
-
-# Track the nodes that are joints between lines
-# so that we can pass those in to the polygon simplification algorithm
-# to preserve those nodes
-#
-# R-D-P algorithm only works on a line, which means that each node can only
-# have a max of 2 edges (forward and backward)
-#
-# So we have to do the simplification on the lines *before* we join them
-
-# So. Every line is duplicated, which means every node needs to
-# be "preserved"... but we know that's not true.
-# We can combine all of the points in the polygons and look at which
-# points are duplicated: THOSE are the ones we need to preserve
-full  = lines.map {|l| l[:nodes] }.flatten
-singles  = Set.new
-preserve = Set.new
-pres_nodes = []
-full.each.with_index do |n, i|
-  if singles.include? n.to_a
-    preserve << n.to_a
-    pres_nodes << n
-  else
-    singles << n.to_a
+  lines.each do |line|
+    line[:polygon] = Polygon.new line[:nodes]
+    line[:color] = COLORS.sample
   end
 end
 
-puts "#{Time.now - start} seconds"
-
-
-$plot = Gnuplot::Plot.new
-
-lines.each do |line|
-  line[:smooth] = line[:polygon].smooth 2e-4, pres_nodes
-  plot_points line[:smooth].points, :color => line[:color]
+def simplify(lines)
+  # Track the nodes that are joints between lines
+  # so that we can pass those in to the polygon simplification algorithm
+  # to preserve those nodes
+  #
+  # R-D-P algorithm only works on a line, which means that each node can only
+  # 
+  # We can combine all of the points in the polygons and look at which
+  # points are duplicated: THOSE are the ones we need to preserve
+  full  = lines.map {|l| l[:nodes] }.flatten
+  singles  = Set.new # This will make the `include?` call faster
+  preserve = []
+  full.each.with_index do |n, i|
+    if singles.include? n.to_a
+      preserve << n
+    else
+      singles << n.to_a
+    end
+  end
+  
+  
+  lines.each do |line|
+    line[:smooth] = line[:polygon].smooth 2e-4, preserve
+  end
 end
 
-ns = lines.sum {|l| l[:smooth].points.size }
-puts "Smoothed:"
-puts "\tNodes: #{ns}"
-puts "\tLines: #{lines.size}"
+def super_simplify(lines)
+  # Ugh have to recalculate this
+  full  = lines.map {|l| l[:nodes] }.flatten
+  singles  = Set.new # This will make the `include?` call faster
+  preserve = Set.new
+  full.each.with_index do |n, i|
+    if singles.include? n.to_a
+      preserve << n.to_a
+    else
+      singles << n.to_a
+    end
+  end
 
-show_plot
+  # Need to add edge length into this somehow
+  lines.each do |line|
+    line[:save] = line[:nodes].filter.with_index do |pt, i|
+      # first, last, or a junction node
+      i == 0 or
+        i == line[:nodes].size - 1 or
+        preserve.include? pt.to_a
+    end
 
+    line[:super] = Polygon.new line[:save]
+  end
+end
 
-# Make connected lines have the same color
-# (instead of actually joining the polygons, we've merely joined them
-# in the U-F)
-
-# mess = [lines[36], lines[10], lines[11], lines[12]]
-
-# Mark all the points on the smoothed lines
-# This should also take care of lines that use the same nodes
-lines.each do |line|
-  line[:edges] = line[:smooth].points.each_cons(2).map do |left, right|
-    e = Edge.new(left, right) # deal with the length later
+def build_edges(poly)
+  poly.points.each_cons(2).map do |left, right|
+    e = Edge.new left, right # deal with the length later
     e.mark_nodes!
     e
   end
-end.flatten
+end
 
-# Find overlapping points and join them
-#   This should be done with a Union-Find
-# And then plot that
-lines.each {|l| l[:raw] = l[:nodes].map(&:to_a) }
+def show_poly(lines, poly)
+  $plot = Gnuplot::Plot.new
 
-uf = UnionF.new lines
-(0..lines.size - 1).each do |i|
-  #lines[i][:raw] ||= lines[i][:nodes].map(&:to_a)
+  # Make connected lines have the same color
+  # (instead of actually joining the polygons, we've merely joined them
+  # in the U-F)
+  lines.each {|l| l[:raw] = l[:nodes].map(&:to_a) }
+  
+  uf = UnionF.new lines
+  #(0..lines.size - 1).each do |i|
+  #  (i..lines.size - 1).each do |j|
+  #    if lines[i][:raw] & lines[j][:raw] != []
+  #      uf.union lines[i], lines[j]
+  #    end
+  #  end
+  #end
 
-  (i..lines.size - 1).each do |j|
-    #lines[j][:raw] ||= lines[j][:nodes].map(&:to_a)
-
-    mut = lines[i][:raw] & lines[j][:raw]
-    if lines[i][:raw] & lines[j][:raw] != []
-      #p mut.size
-      uf.union lines[i], lines[j]
+  lines.each do |line|
+    plot_edges line[:edges]
+  end
+  
+  uf.disjoint_sets.each do |set|
+    color = set[0][:color]
+    set.each do |line|
+      plot_points line[poly].points, :color => color
     end
   end
+
+  show_plot
 end
 
-p uf.disjoint_sets.size
-
-$plot = Gnuplot::Plot.new
-
-lines.each do |line|
-  plot_edges line[:edges]
+def time(desc, &block)
+  puts desc
+  start = Time.now
+  res = block.call
+  puts " => #{Time.now - start}"
+  res
 end
 
-uf.disjoint_sets.each do |set|
-  color = set[0][:color]
-  set.each do |line|
-    plot_points line[:smooth].points, :color => color
-  end
+##########################################################
+##########################################################
+##########################################################
+##########################################################
+##########################################################
+##########################################################
+##########################################################
+##########################################################
+##########################################################
+
+box = {:n =>  44.1793, :s =>  43.8583,
+       :e => -71.8985, :w => -72.2598}
+
+lines = nil
+time "Loading" do
+  #lines = download_overpass
+  lines = read_geojson "/Users/ari/src/ideal_grid/Transmission_Lines.geojson", box
+  
+  puts "Lines: #{lines.size}"
+  
+  puts "Full:"
+  puts "\tTotal nodes: #{lines.sum {|l| l['geometry']["coordinates"].size }}"
+  puts "\tDeduped nodes: #{lines.sum {|l| l[:nodes].size }}"
 end
 
-show_plot
+time "Simplify" do
+  simplify lines
+  
+  ns = lines.sum {|l| l[:smooth].points.size }
+  puts "Smoothed:"
+  puts "\tNodes: #{ns}"
+end
 
+time "Super simplify" do
+  super_simplify lines
+  
+  ns = lines.sum {|l| l[:super].points.size }
+  puts "Supered:"
+  puts "\tNodes: #{ns}"
+end
 
+type = :super
 
+time "Building edges" do
+  # Mark all the points on the smoothed lines
+  # This should also take care of lines that use the same nodes
+  lines.each {|l| l[:edges] = build_edges(l[type]) }
+end
 
-require 'pry'
-binding.pry
+############################
+# Plotting
+# ##########################
+
+# mess = [lines[36], lines[10], lines[11], lines[12]]
+
+#require 'pry'
+#binding.pry
+
+time "plotting" do
+  show_poly lines, type
+end
+
 

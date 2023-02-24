@@ -6,6 +6,16 @@ require_relative 'monkey_patch.rb'
 Dir['./lib/**/*.rb'].each {|f| require_relative f }
 require_relative 'filter_kruskal.rb'
 
+def circle(nodes)
+  nodes.size.times do |i|
+    e = Edge.new nodes[i],
+                 nodes[(i + 1) % nodes.size],
+                 nodes[i].euclidean_distance(nodes[(i + 1) % nodes.size])
+    nodes[i].edges << e
+    nodes[(i + 1) % nodes.size].edges << e
+  end
+end
+
 opts = Optimist::options do
   banner <<-EOS
 Pretend a minimal electric grid is a minimum spanning tree across a bunch of nodes.
@@ -57,16 +67,6 @@ end
 
 $nodes = nodes
 update_ranges $nodes
-
-def circle(nodes)
-  nodes.size.times do |i|
-    e = Edge.new nodes[i],
-                 nodes[(i + 1) % nodes.size],
-                 nodes[i].euclidean_distance(nodes[(i + 1) % nodes.size])
-    nodes[i].edges << e
-    nodes[(i + 1) % nodes.size].edges << e
-  end
-end
 
 time "Tree production" do
   mst = []

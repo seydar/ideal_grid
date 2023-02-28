@@ -1,16 +1,17 @@
 class Node
   attr_accessor :x
   attr_accessor :y
-  attr_accessor :visited
   attr_accessor :edges
   attr_accessor :load
   attr_accessor :id
+  attr_accessor :sources
 
   def initialize(x, y, id: nil)
     @x, @y = x, y
     @edges = []
     @load  = 1
     @id    = id
+    @sources = []
   end
 
   def inspect

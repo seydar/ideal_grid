@@ -40,6 +40,7 @@ time "Loading" do
   puts "Full:"
   puts "\tTotal nodes: #{lines.sum {|l| l['geometry']["coordinates"].size }}"
   puts "\tDeduped nodes: #{lines.sum {|l| l[:nodes].size }}"
+  $nodes = lines.map {|l| l[:nodes] }.flatten
 end
 
 time "Simplify" do
@@ -60,13 +61,24 @@ end
 
 pts = nil
 time "Join points" do
-  points = lines.map {|l| l[:smooth].points }.flatten.uniq
-  pts = join_points points, 0.002
+  poly = :smooth
+  # Build these while the points are duplicated
+  lines.each {|l| l[:edges] = build_edges(l[poly]) }
+
+  # Now eliminate duplicates
+  points = lines.map {|l| l[poly].points }.flatten.uniq
+
+  # Now eliminate nearby points
+  pts = join_points points, 0.005
+
+  # something to show off our work
   plot_points pts, :color => "blue"
   show_plot
 
-  $plot = Gnuplot::Plot.new
-  plot_points points, :color => "blue"
+  #$plot = Gnuplot::Plot.new
+  es = pts.map {|p| p.edges }.flatten
+  plot_edges es
+  plot_points pts, :color => "blue"
   show_plot
 
   require 'pry'

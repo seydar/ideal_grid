@@ -67,6 +67,13 @@ class Edge
     (nodes - [node])[0]
   end
 
+  def replace(old, new)
+    return unless @nodes.include? old
+    @nodes.delete(old)
+    @nodes << new
+    @nodes
+  end
+
   def inspect
     n1 = nodes[0].to_a.map {|v| v.round 3 }
     n2 = nodes[1].to_a.map {|v| v.round 3 }

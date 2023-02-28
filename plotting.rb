@@ -19,7 +19,8 @@ def buffered_range_int(points, buffer=0.1)
 end
 
 def read_buffered_range(range)
-  range ||= [nil, nil, "[0:0]"]
+  #range ||= [nil, nil, "[0:0]"]
+  return nil unless range
   range[2][1..-2].split(":").map {|p| p.to_f }
 end
 
@@ -29,6 +30,10 @@ def update_ranges(nodes)
 
   xprev = read_buffered_range($plot.settings.find {|e| e[1] == "xrange" })
   yprev = read_buffered_range($plot.settings.find {|e| e[1] == "yrange" })
+
+  xprev ||= xr
+  yprev ||= yr
+
   $plot.xrange "[#{[xprev[0], xr[0]].min}:#{[xprev[1], xr[1]].max}]"
   $plot.yrange "[#{[yprev[0], yr[0]].min}:#{[yprev[1], yr[1]].max}]"
 end
@@ -141,7 +146,7 @@ def plot_flows(grid, n: 10, focus: :unreached, labels: false)
 end
 
 def show_plot
-  resize_plot 750, 600
+  resize_plot
   $plot, plot = Gnuplot::Plot.new, $plot
 
   Gnuplot.open do |gp|
@@ -150,7 +155,7 @@ def show_plot
   end
 
   update_ranges $nodes
-  resize_plot 750, 600
+  resize_plot
 end
 
 def save_plot(fname)

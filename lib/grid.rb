@@ -17,7 +17,7 @@ class Grid
   #   For modeling NH, call it 990 nodes, LNG 25, nuclear 100
 
   # Constraints, in one place
-  MAX_BUILD_POWER = 100 # units of power
+  MAX_BUILD_POWER = 120 # units of power
   MAX_GROW_POWER  = 100
   THRESHOLD_FOR_BUILD = 20
 

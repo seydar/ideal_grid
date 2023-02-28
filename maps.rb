@@ -24,8 +24,8 @@ end
 
 box = {:n =>  44.1793, :s =>  43.8583,
        :e => -71.8985, :w => -72.2598}
-#box = {:n =>  45.01, :s =>  42.71,
-#       :e => -71.01, :w => -73.25}
+box = {:n =>  45.01, :s =>  42.71,
+       :e => -71.01, :w => -73.25}
 
 PRNG = Random.new 1337
 
@@ -43,25 +43,25 @@ time "Loading" do
   $nodes = lines.map {|l| l[:nodes] }.flatten
 end
 
-time "Simplify" do
-  simplify lines
-  
-  ns = lines.sum {|l| l[:smooth].points.size }
-  puts "Smoothed:"
-  puts "\tNodes: #{ns}"
-end
-
-time "Super simplify" do
-  super_simplify lines
-  
-  ns = lines.sum {|l| l[:super].points.size }
-  puts "Supered:"
-  puts "\tNodes: #{ns}"
-end
+#time "Simplify" do
+#  simplify lines
+#  
+#  ns = lines.sum {|l| l[:smooth].points.size }
+#  puts "Smoothed:"
+#  puts "\tNodes: #{ns}"
+#end
+#
+#time "Super simplify" do
+#  super_simplify lines
+#  
+#  ns = lines.sum {|l| l[:super].points.size }
+#  puts "Supered:"
+#  puts "\tNodes: #{ns}"
+#end
 
 pts = nil
 time "Join points" do
-  poly = :smooth
+  poly = :polygon
   # Build these while the points are duplicated
   lines.each {|l| l[:edges] = build_edges(l[poly]) }
 
@@ -69,16 +69,18 @@ time "Join points" do
   points = lines.map {|l| l[poly].points }.flatten.uniq
 
   # Now eliminate nearby points
-  pts = join_points points, 0.005
+  pts = join_points points, 0.03
+  puts "\tJoined points: #{pts.size}"
+
+  groups = group_by_connected pts
 
   # something to show off our work
-  plot_points pts, :color => "blue"
-  show_plot
-
-  #$plot = Gnuplot::Plot.new
   es = pts.map {|p| p.edges }.flatten
   plot_edges es
-  plot_points pts, :color => "blue"
+
+  groups.disjoint_sets.each.with_index do |set, i|
+    plot_points set, :color => COLORS.sample(:random => PRNG)
+  end
   show_plot
 
   require 'pry'

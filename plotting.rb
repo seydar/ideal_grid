@@ -39,6 +39,8 @@ def update_ranges(nodes)
 end
 
 def plot_edges(edges, color: "black", width: 1, labels: [])
+  return if edges.empty?
+
   $plot.data += edges.zip(labels).map do |edge, label|
     xs = edge.nodes.map(&:x)
     ys = edge.nodes.map(&:y)
@@ -154,7 +156,7 @@ def show_plot
     gp << plot.store_datasets
   end
 
-  update_ranges $nodes
+  update_ranges $nodes unless $nodes.empty?
   resize_plot
 end
 

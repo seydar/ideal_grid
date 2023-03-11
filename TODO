@@ -8,8 +8,6 @@ TODO
     to their originals based on IDs/returning IDs instead of modifying
     objects) across parallelization boundaries
 
-* How do we add edges between nodes?
-  * How do we do it smartly?
 * How do we decide whether to enlarge a generator or build a new one?
   * there is currently no method to this madness
 
@@ -17,15 +15,11 @@ TODO
 * Randić index could be useful?
   * https://www.sciencedirect.com/science/article/pii/S0972860017301408
 
-* When constructing an edge between two nodes, see if part of the edge can be
-  shortened by going through already-created edges that pass nearby it
-  * boom almost done
-
-* Instead of looking for high-flow edges to connect to, look for nodes that are
-  drawing power from far-away generators. the distances are calculated during the
-  flow calculations, and we just have to beat that number.
-
 * Why aren't unreached nodes being highlighted during plotting?
+
+* **BUILD A DB FOR TRACKING NODES AND TRANSMISSION LINES**
+  * at the very least, just for nodes, since those come from disparate resources
+  * but yeah, lines too
 
 DONE
 ----------------------------
@@ -35,6 +29,13 @@ DONE
 * Easy way to get the total load of a node
   * given node and path and *where it is on its journey*, calculate how
     much load is passing through that part of the trip
+* Instead of looking for high-flow edges to connect to, look for nodes that are
+  drawing power from far-away generators. the distances are calculated during the
+  flow calculations, and we just have to beat that number.
+* When constructing an edge between two nodes, see if part of the edge can be
+  shortened by going through already-created edges that pass nearby it
+* How do we add edges between nodes?
+  * How do we do it smartly?
 
 BUGGY RUNS
 ---------------------------------

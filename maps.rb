@@ -23,31 +23,37 @@ end
 # daylight between my model and reality.
 
 # NH/Vt
-#box = {:n =>  44.1793, :s =>  43.8583,
-#       :e => -71.8985, :w => -72.2598}
+box = {:n =>  44.1793, :s =>  43.8583,
+       :e => -71.8985, :w => -72.2598}
 
 # New England
-#box = {:n =>  45.01, :s =>  42.71,
-#       :e => -71.01, :w => -73.25}
+box = {:n =>  45.01, :s =>  42.71,
+       :e => -71.01, :w => -73.25}
 
 # Michigan
-box = {:n =>  45.82, :s =>  41.80,
-       :e => -82.72, :w => -86.12}
+#box = {:n =>  45.82, :s =>  41.80,
+#       :e => -82.72, :w => -86.12}
 
 PRNG = Random.new 1337
 
 lines = nil
 time "Loading" do
-  #lines = read_geojson "/Users/ari/src/ideal_grid/data/new_england_lines.geojson", box
-  lines = read_geojson "/Users/ari/src/ideal_grid/data/michigan_lines.geojson", box
+  lines = read_geojson "/Users/ari/src/ideal_grid/data/new_england_lines.geojson", box
+  #lines = read_geojson "/Users/ari/src/ideal_grid/data/michigan_lines.geojson", box
+
+  #nas = read_nodes '/Users/ari/src/ideal_grid/data/miso_nodes.json', box
+
+  require 'pry'
+  binding.pry
 
   $nodes = lines.map {|l| l[:nodes] }.flatten
 end
 
 groups = nil
 pts = nil
+points = nil
 time "joining" do
-  poly = :polygon
+  poly = :smooth
   # Build these while the points are duplicated
   lines.each {|l| l[:edges] = build_edges(l[poly]) }
 
@@ -62,6 +68,14 @@ time "joining" do
 end
 
 time "coloring" do
+  es = points.map {|p| p.edges }.flatten
+  plot_edges es
+
+  group_by_connected(points).disjoint_sets.each.with_index do |set, i|
+    plot_points set, :color => COLORS.sample(:random => PRNG)
+  end
+  show_plot
+
   # something to show off our work
   es = pts.map {|p| p.edges }.flatten
   plot_edges es

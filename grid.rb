@@ -1,20 +1,7 @@
 #!/usr/bin/env ruby
 require 'optimist'
-require_relative 'kmeans-clusterer.rb'
-require_relative 'plotting.rb'
-require_relative 'monkey_patch.rb'
+require_relative 'lib/monkey_patch.rb'
 Dir['./lib/**/*.rb'].each {|f| require_relative f }
-require_relative 'filter_kruskal.rb'
-
-def circle(nodes)
-  nodes.size.times do |i|
-    e = Edge.new nodes[i],
-                 nodes[(i + 1) % nodes.size],
-                 nodes[i].euclidean_distance(nodes[(i + 1) % nodes.size])
-    nodes[i].edges << e
-    nodes[(i + 1) % nodes.size].edges << e
-  end
-end
 
 opts = Optimist::options do
   banner <<-EOS

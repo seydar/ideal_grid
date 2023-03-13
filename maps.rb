@@ -23,8 +23,8 @@ end
 # daylight between my model and reality.
 
 # NH/Vt
-box = {:n =>  44.1793, :s =>  43.8583,
-       :e => -71.8985, :w => -72.2598}
+#box = {:n =>  44.1793, :s =>  43.8583,
+#       :e => -71.8985, :w => -72.2598}
 
 # New England
 box = {:n =>  45.01, :s =>  42.71,
@@ -33,6 +33,7 @@ box = {:n =>  45.01, :s =>  42.71,
 # Michigan
 #box = {:n =>  45.82, :s =>  41.80,
 #       :e => -82.72, :w => -86.12}
+
 
 PRNG = Random.new 1337
 
@@ -43,17 +44,15 @@ time "Loading" do
 
   #nas = read_nodes '/Users/ari/src/ideal_grid/data/miso_nodes.json', box
 
-  require 'pry'
-  binding.pry
-
   $nodes = lines.map {|l| l[:nodes] }.flatten
+  p $nodes.size
 end
 
 groups = nil
 pts = nil
 points = nil
 time "joining" do
-  poly = :smooth
+  poly = :polygon
   # Build these while the points are duplicated
   lines.each {|l| l[:edges] = build_edges(l[poly]) }
 

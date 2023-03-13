@@ -85,6 +85,12 @@ def plot_point(point, color: nil, point_type: 6)
   plot_points [point], :color => color, :point_type => point_type
 end
 
+def plot_group(points, color: nil, point_type: 6)
+  es = points.map(&:edges).flatten.uniq
+  plot_edges es, :color => "black"
+  plot_points points, :color => color, :point_type => point_type
+end
+
 def plot_graph(graph, color: "blue", edge_color: "black", point_type: 6)
   update_ranges graph.nodes
 

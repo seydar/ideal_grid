@@ -140,7 +140,7 @@ end
 
 def read_nodes(path, box)
   json = JSON.load File.read(path)
-  points = json['f'].map {|f| f['g']['g'] }
+  points = json['f'].map {|f| f['g']['c'] }
   
   # Points are in some stupid format
   crs   = Proj::PjObject.new json['proj']
@@ -158,6 +158,8 @@ def simplify(lines)
   # to preserve those nodes
   #
   # R-D-P algorithm only works on a line, which means that each node can only
+  #
+  # "can only" what? I seem to have stopped in the middle of a sentence.
   # 
   # We can combine all of the points in the polygons and look at which
   # points are duplicated: THOSE are the ones we need to preserve
@@ -278,6 +280,9 @@ end
 # How do I transfer over the edges?
 #
 # Edges need to be built for the unjoined lines first
+#
+# Edges are good to go, but since points get replaced, you end up with a _LOT_
+# of duplicate edges in the end product. Gotta reduce those somehow.
 def join_points(points, dist=0)
   joined = [] # return a list of all points 
   taken  = Set.new
@@ -326,5 +331,41 @@ def join_points(points, dist=0)
   end
 
   joined
+end
+
+# Ugh. This isn't clean, but it'll do for now. Eventually I need to clean
+# this up and do something that's not a hack.
+#
+# TODO Why do I need the call to #uniq? An edge is getting duplicated at
+# some point and I cannot for the life of me figure out where or why. Frankly,
+# I just don't care anymore. This code is trying its best to not work, and I'm
+# not going to let it get away with that.
+#
+# God dammit.
+#
+# I *also* need to get rid of edges that skip over other nodes. This is a weird
+# edge case that is apparently not too uncommon. Two lines are overlaid, but
+# their points are not *quite* so. So when they get joined, you end up having a
+# point that has too many edges and skips over another, more proximate point.
+def deduplicate_edges(points)
+  es = points.map {|p| p.edges }.flatten
+
+  # Only unique edges
+  es = es.uniq {|e| e.nodes.sort_by {|n| n.id } }
+
+  # No loopbacks
+  es = es.reject {|e| e.nodes[0] == e.nodes[1] }
+
+  deduped = Set.new es
+
+  # Restrict to only the approved edges
+  points.each do |pt|
+    pt.edges = pt.edges.filter {|e| deduped.include? e }.uniq
+  end
+
+  # Get rid of edges that skip over other nodes
+  # We can plan for it and say that any node that is within a certain distance
+  # of a line should be merged into the ege.
+  
 end
 

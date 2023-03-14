@@ -265,6 +265,10 @@ class ConnectedGraph < Graph
     adjacencies.values.flatten(1).uniq.map {|n, e| e.length }.sum
   end
 
+  # Distances are calculated per edge based on `blk`. By default, blk
+  # is `proc {|e| e.length }`, which computes distance based on the length
+  # of the edge. If you were to do `proc { 1 }`, then it would be the number of
+  # edges that you have to pass through.
   def farthest_node_from(source, &blk)
     blk ||= proc {|e| e.length }
 
@@ -290,6 +294,45 @@ class ConnectedGraph < Graph
                         data,
                         :labels => nodes,
                         :runs => 1
+  end
+
+  # I don't care enough to come up with this myself. I prolly wouldn't do a
+  # good job anyways.
+  #
+  # https://www.geeksforgeeks.org/shortest-cycle-in-an-undirected-unweighted-graph/
+  def shortest_cycle
+    ans = [nil, 9e9]
+
+    nodes.each do |node|
+      dist = {}
+      par  = {}
+      visited = Set.new
+
+      dist[node] = 0 # source to source is 0
+      visited << node
+      q = [node]
+
+      until q.empty?
+        x = q.shift
+
+        @adjacencies[x].each do |child, edge|
+
+          # If unvisited
+          if not visited.include?(child)
+            dist[child] = dist[x] + 1
+            par[child]  = x
+            visited << child
+            q << child
+          elsif par[x] != child && par[child] != x
+            ans = [ans,
+                   [child, dist[x] + dist[child] + 1]]
+                  .min_by {|v| v[1] }
+          end
+        end
+      end
+    end
+
+    ans
   end
 end
 

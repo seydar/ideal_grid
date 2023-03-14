@@ -1,4 +1,5 @@
 require_relative 'polygon.rb'
+require_relative './lib/db.rb'
 
 def time(desc, &block)
   puts desc
@@ -35,14 +36,12 @@ box = {:n =>  45.01, :s =>  42.71,
 #       :e => -82.72, :w => -86.12}
 
 
-PRNG = Random.new 1337
+PRNG = Random.new 1138
 
 lines = nil
 time "Loading" do
   lines = read_geojson "/Users/ari/src/ideal_grid/data/new_england_lines.geojson", box
   #lines = read_geojson "/Users/ari/src/ideal_grid/data/michigan_lines.geojson", box
-
-  #nas = read_nodes '/Users/ari/src/ideal_grid/data/miso_nodes.json', box
 
   $nodes = lines.map {|l| l[:nodes] }.flatten
   p $nodes.size
@@ -67,21 +66,26 @@ time "joining" do
 end
 
 time "coloring" do
-  es = points.map {|p| p.edges }.flatten
-  plot_edges es
-
-  group_by_connected(points).disjoint_sets.each.with_index do |set, i|
-    plot_points set, :color => COLORS.sample(:random => PRNG)
-  end
-  show_plot
-
   # something to show off our work
   es = pts.map {|p| p.edges }.flatten
   plot_edges es
 
-  groups.disjoint_sets.each.with_index do |set, i|
-    plot_points set, :color => COLORS.sample(:random => PRNG)
-  end
+  #groups.disjoint_sets.each.with_index do |set, i|
+  #  plot_points set, :color => COLORS.sample(:random => PRNG)
+  #end
+  plot_points points, :color => "gray"
+
+  # Loads
+  loads = Load.all.filter {|l| within box, l }
+  p "#{loads.size} loads"
+  plot_points loads, :color => "red"
+
+  # Generators
+  gens = Source.all.filter {|s| within box, s }
+  p "#{gens.size} gens"
+  plot_points gens, :color => "green"
+
+
   show_plot
 end
 

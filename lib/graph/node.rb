@@ -7,6 +7,8 @@ class Node
   attr_accessor :sources
 
   def initialize(x, y, id: nil)
+    raise "Don't be a fool — supply an ID" unless id
+
     @x, @y = x, y
     @edges = []
     @load  = 1

@@ -1,5 +1,6 @@
 require_relative "../lib/db.rb"
 require_relative "../polygon.rb"
+require_relative "../lib/graph/graph.rb"
 
 PRNG = Random.new 1337
 
@@ -16,7 +17,7 @@ points = lines.map {|l| l[poly].points }.flatten.uniq
 # Turns out a lot of the points have 3 or 4 edges when they should only have 2.
 # This appears to be because they have edges that bypass the more proximate nodes.
 box = {:n=>44, :s=>43.7, :w=>-72, :e=>-71}
-goal = Node.new -71.96, 43.8739
+goal = Node.new -71.96, 43.8739, :id => PRNG.rand
 
 msub = points.filter {|p| within box, p }
 morg = msub.sort_by {|p| p.euclidean_distance(goal) }
@@ -37,6 +38,8 @@ show_plot
 
 # How do we know that we should drop edge #3 in `q.edges`?
 q = sub.sort_by(&:x)[3]
+
+cycles = DisjointGraph.new(sub).connected_subgraphs.map {|cg| cg.shortest_cycle }
 
 require 'pry'
 binding.pry

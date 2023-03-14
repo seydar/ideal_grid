@@ -26,6 +26,9 @@ end
 
 class Load < Sequel::Model
   many_to_many :lines
+
+  alias_method :x, :lon
+  alias_method :y, :lat
 end
 
 DB.create_table? :lines do
@@ -53,5 +56,7 @@ DB.create_table? :sources do
 end
 
 class Source < Sequel::Model
+  alias_method :x, :lon
+  alias_method :y, :lat
 end
 

@@ -71,6 +71,13 @@ class Graph
     until queue.empty?
       from = queue.shift
 
+      unless adjacencies[from]
+        p from
+        p source
+        p queue
+        pp caller
+      end
+
       adjacencies[from].each do |to, edge|
         unless visited.include? edge
         i += 1
@@ -306,6 +313,10 @@ class ConnectedGraph < Graph
   # I don't care enough to come up with this myself. I prolly wouldn't do a
   # good job anyways.
   #
+  # How do I parallelize this?
+  #
+  # Easy: parallelize `nodes.each` and then just pick the minimum of the answers.
+  #
   # https://www.geeksforgeeks.org/shortest-cycle-in-an-undirected-unweighted-graph/
   def shortest_cycle
     ans = nil
@@ -331,9 +342,6 @@ class ConnectedGraph < Graph
             visited << child
             q << child
           elsif par[x] != child && par[child] != x
-            #puts "CYCLE from #{node.inspect} to #{child.inspect}"
-            #puts "\t#{path[x].size + path[child].size}"
-
             if ans
               ans = [ans,
                      path[x] + path[child]]

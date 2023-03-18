@@ -36,24 +36,35 @@ class Grid
     from :lines => lines, :loads => loads, :sources => sources
   end
 
+  # FIXME
+  # The whole shitshow here is a disjoint graph, with transmission lines being
+  # disjoint, and thus sources and loads being disjoint. If we are able to take
+  # all of the transmission lines and identify the largest connected subgraph,
+  # we need to then restrict our sources and loads to only be those that are on
+  # that connected subgraph.
+  #
+  # Currently, I do no such restriction.
+  #
+  # This, as you might imagine, is bad. Errors abound. Code refuses to run.
+  # Nobody wants to work these days!
+  #
+  # Any changes I make here can be removed once I get Grid to work with 
   def self.from(lines: [], loads: [], sources: [])
+
+    # So.
+    #
+    # Because edges already exist between all the loads and sources and the
+    # infrastructure, `t_nodes` will already contain all of the points as
+    # `Point` instances for both loads and sources.
+    #
+    # However, when we turn them into instances of `Node`, we want to make sure
+    # the loads are correct for the loads, so we need to specifically generate
+    # those nodes and merge them into our list.
     # Get the nodes
-    l_points = loads.map do |l|
-      pt = l.point
-      [pt, Node.new(pt.x, pt.y, :id => pt.id, :draws => (l.max_peak_load || 1))]
-    end.to_h
-
-    # I know this is the same as for transmission line points, but
-    # for the sake of rhetorical parallelism, I'm splitting it out
-    s_points = sources.map(&:point).map do |p|
+    points = lines.map {|l| [l.left, l.right] }.flatten
+    nodes  = points.map do |p|
       [p, Node.new(p.x, p.y, :id => p.id, :draws => 0)]
     end.to_h
-
-    t_points = lines.map {|l| [l.left, l.right] }.flatten.map do |p|
-      [p, Node.new(p.x, p.y, :id => p.id, :draws => 0)]
-    end.to_h
-
-    nodes = t_points.merge(s_points).merge(l_points)
 
     # Build edges from the lines
     edges = lines.map do |line|
@@ -64,22 +75,42 @@ class Grid
     end
     edges.each {|e| e.mark_nodes! }
 
-    # oh boy. plugging this in when it's expecting a connected graph?
-    # what could go wrong?
-    grid = new nodes.values, []
+    # The nodes are likely disjoint, and we can only operate on a connected
+    # graph, so we're going to use our tooling to find the largest connected
+    # graph and base the grid on that and that alone.
+    dg = DisjointGraph.new nodes.values
+    cg = dg.connected_subgraphs.max_by {|cg| cg.nodes.size }
 
-    grid.generators = sources.map do |s|
-      Generator.new grid, s.point, s.oper_cap
+    # Now that we have our connected graph, let's figure out which loads and
+    # sources are found along it.
+    #
+    # Eager loading because there's no need to be wasteful in our DB calls
+    loads   = Load.eager(:point).filter(:point => points).all
+    sources = Source.eager(:point).filter(:point => points).all
+
+    loads.each do |l|
+      nodes[l.point].load = l.max_peak_load || 1
     end
 
-    grid
+    gens = sources.map do |s|
+      Generator.new cg, nodes[s.point], s.oper_cap
+    end
+
+    # Our grid!
+    new cg, gens
   end
 
   def initialize(nodes, generators)
-    @nodes      = nodes
     @generators = generators
-    @graph      = ConnectedGraph.new nodes
     @reach      = DisjointGraph.new []
+
+    if ConnectedGraph === nodes
+      @nodes = nodes.nodes
+      @graph = nodes
+    else
+      @nodes = nodes
+      @graph = ConnectedGraph.new nodes
+    end
   end
 
   def unreached

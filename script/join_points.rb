@@ -4,6 +4,12 @@ require_relative "../lib/db.rb"
 NEW_ENGLAND = {:n =>  47.45, :s =>  40.94,
                :e => -66.85, :w => -73.45}
 
+# Michigan
+MICHIGAN = {:n =>  45.82, :s =>  41.80,
+            :e => -82.72, :w => -86.12}
+
+region = MICHIGAN
+
 # Take all the loads and sources and build an edge that connects them to the
 # nearest point from a line.
 
@@ -23,7 +29,7 @@ def connect(infra, pts)
      :length   => dist}
   end
 
-  DB[:lines].multi_insert inserts
+  #DB[:lines].multi_insert inserts
   inserts
 end
 
@@ -37,11 +43,14 @@ end
 # I'm willing to connect loads to other nearby nodes instead of each of them
 # having their own separate connection to the infrastructure (that'd be
 # ridiculous)
+#
+# lol @ me, it's currently doing exactly what i didn't want to have happen,
+# just look at cape cod
 lines = Line.eager(:left, :right).all
 infra = lines.map {|l| [l.left, l.right] }.flatten
 
-discon_ls = disconnected infra, Load.within(NEW_ENGLAND)
-discon_ss = disconnected infra, Source.within(NEW_ENGLAND)
+discon_ls = disconnected infra, Load.within(region)
+discon_ss = disconnected infra, Source.within(region)
 
 puts "#{discon_ls.size} disconnected loads"
 puts "#{discon_ss.size} disconnected sources"

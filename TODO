@@ -21,10 +21,22 @@ TODO
 * Split out the grid.rb interface from interacting with the DB and
   having all relevant classes be available
 * Add DB caching via memcache
-* Drop and rebuild the lines table
-  * i accidentally created edges between nodes (of which we have a ton) and
-    transmission lines (of which we don't have many), so we have lines that span
-    hundreds of miles
+* Plot a choropleth of the US as a background
+* Download the trx line data using the precise region of the ISOs/RTOs
+  * programmatically. somehow. i dunno yet.
+* `Grid` only works with a ConnectedGraph. Is there a way to make it work with
+  a DisjointGraph?
+* PARALLELIZE THE SHORTEST CYCLE ALGORITHM
+  * easy. parallelize the cycle from each node.
+
+TASKS
+-------------------------
+* fix #calculate_flows! on NEW_ENGLAND
+* verify #reduce_congestion works on NEW_ENGLAND
+* parallelize #shortest_cycle
+* import "miso_north_tx_lines.geosjon"
+  * needs the parallelization first
+  * memory does not appear to be a problem, thank god for pointers
 
 DONE
 ----------------------------

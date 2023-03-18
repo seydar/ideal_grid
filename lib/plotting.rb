@@ -97,26 +97,21 @@ def plot_graph(graph, color: "blue", edge_color: "black", point_type: 6)
   edges = graph.nodes.map {|n| n.edges }.flatten
 
   plot_edges edges, :color => edge_color
-  plot_points graph.nodes, :color => color, :point_type => point_type
+
+  ns = graph.nodes.filter {|n| n.load == 0 }
+  plot_points ns, :color => "gray", :point_type => 6
+
+  ns = graph.nodes.filter {|n| n.load != 0 }
+  plot_points ns, :color => color, :point_type => 6
 end
 
-def plot_grid(grid, focus=:unreached)
+def plot_grid(grid, focus=:reached)
   # Do we want to draw attention to the unreached or the reached?
   c1, c2 = "blue", "gray"
   c1, c2 = c2, c1 if focus == :unreached
 
-  #plot_graph grid.graph, :color => c1
-
-  update_ranges grid.graph.nodes
-
-  edges = grid.graph.nodes.map {|n| n.edges }.flatten
-  plot_edges edges, :color => "black"
-
-  ns = grid.graph.nodes.filter {|n| n.load == 0 }
-  plot_points ns, :color => "gray", :point_type => 6
-
-  ns = grid.graph.nodes.filter {|n| n.load != 0 }
-  plot_points ns, :color => "blue", :point_type => 6
+  plot_graph grid.graph, :color => c1
+  #plot_graph grid.reach, :color => c2
 
   grid.generators.each {|g| plot_generator g }
 

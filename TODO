@@ -28,6 +28,7 @@ TODO
   a DisjointGraph?
 * PARALLELIZE THE SHORTEST CYCLE ALGORITHM
   * easy. parallelize the cycle from each node.
+* switch pry to IRB
 
 TASKS
 -------------------------

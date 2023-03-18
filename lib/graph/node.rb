@@ -5,8 +5,9 @@ class Node
   attr_accessor :load
   attr_accessor :id
   attr_accessor :sources
+  attr_accessor :point
 
-  def initialize(x, y, id: nil, draws: 1)
+  def initialize(x, y, id: nil, draws: 1, point: nil)
     raise "Don't be a fool — supply an ID" unless id
 
     @x, @y = x, y
@@ -14,6 +15,7 @@ class Node
     @load  = draws
     @id    = id
     @sources = []
+    @point = point
   end
 
   def inspect

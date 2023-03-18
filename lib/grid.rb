@@ -63,7 +63,7 @@ class Grid
     # Get the nodes
     points = lines.map {|l| [l.left, l.right] }.flatten
     nodes  = points.map do |p|
-      [p, Node.new(p.x, p.y, :id => p.id, :draws => 0)]
+      [p, Node.new(p.x, p.y, :id => p.id, :draws => 0, :point => p)]
     end.to_h
 
     # Build edges from the lines
@@ -80,13 +80,14 @@ class Grid
     # graph and base the grid on that and that alone.
     dg = DisjointGraph.new nodes.values
     cg = dg.connected_subgraphs.max_by {|cg| cg.nodes.size }
+    cg_points = cg.nodes.map {|n| n.point }
 
     # Now that we have our connected graph, let's figure out which loads and
     # sources are found along it.
     #
     # Eager loading because there's no need to be wasteful in our DB calls
-    loads   = Load.eager(:point).filter(:point => points).all
-    sources = Source.eager(:point).filter(:point => points).all
+    loads   = Load.eager(:point).filter(:point => cg_points).all
+    sources = Source.eager(:point).filter(:point => cg_points).all
 
     loads.each do |l|
       nodes[l.point].load = l.max_peak_load || 1

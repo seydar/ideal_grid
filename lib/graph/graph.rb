@@ -15,6 +15,13 @@ class Graph
     fill_adjacencies!
   end
 
+  def reset!
+    @edges = nil
+    @adjacencies = nil
+
+    fill_adjacencies!
+  end
+
   def edges
     @edges ||= nodes.map {|n| n.edges.filter {|e| e.nodes - nodes == [] } }.flatten.uniq
   end
@@ -301,14 +308,14 @@ class ConnectedGraph < Graph
   #
   # https://www.geeksforgeeks.org/shortest-cycle-in-an-undirected-unweighted-graph/
   def shortest_cycle
-    ans = [nil, 9e9]
+    ans = nil
 
     nodes.each do |node|
-      dist = {}
+      path = {}
       par  = {}
       visited = Set.new
 
-      dist[node] = 0 # source to source is 0
+      path[node] = [node]
       visited << node
       q = [node]
 
@@ -319,14 +326,21 @@ class ConnectedGraph < Graph
 
           # If unvisited
           if not visited.include?(child)
-            dist[child] = dist[x] + 1
+            path[child] = path[x] + [child]
             par[child]  = x
             visited << child
             q << child
           elsif par[x] != child && par[child] != x
-            ans = [ans,
-                   [child, dist[x] + dist[child] + 1]]
-                  .min_by {|v| v[1] }
+            #puts "CYCLE from #{node.inspect} to #{child.inspect}"
+            #puts "\t#{path[x].size + path[child].size}"
+
+            if ans
+              ans = [ans,
+                     path[x] + path[child]]
+                    .min_by {|v| v.size }
+            else
+              ans = path[x] + path[child]
+            end
           end
         end
       end

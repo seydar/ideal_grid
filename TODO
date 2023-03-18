@@ -2,7 +2,6 @@ TODO
 -----------------------------
 * move filter_kruskal.rb into graph.rb
 * also integrate k_means_pp.rb et al into graph.rb
-* make edge/node more specific to line/load
 * **ADD PARALLELIZATION SERIALIZATION METHOD TO EASE PARALLELIZATION**
   * for when dealing with the serialization of objects (mapping the copies
     to their originals based on IDs/returning IDs instead of modifying
@@ -17,9 +16,15 @@ TODO
 
 * Why aren't unreached nodes being highlighted during plotting?
 
-* **BUILD A DB FOR TRACKING NODES AND TRANSMISSION LINES**
-  * at the very least, just for nodes, since those come from disparate resources
-  * but yeah, lines too
+* Are the MISO and ISO-NE lists complete? There's no way. They're so few! CAISO is 10k nodes!!!
+
+* Split out the grid.rb interface from interacting with the DB and
+  having all relevant classes be available
+* Add DB caching via memcache
+* Drop and rebuild the lines table
+  * i accidentally created edges between nodes (of which we have a ton) and
+    transmission lines (of which we don't have many), so we have lines that span
+    hundreds of miles
 
 DONE
 ----------------------------
@@ -36,13 +41,17 @@ DONE
   shortened by going through already-created edges that pass nearby it
 * How do we add edges between nodes?
   * How do we do it smartly?
+* **BUILD A DB FOR TRACKING NODES AND TRANSMISSION LINES**
+  * at the very least, just for nodes, since those come from disparate resources
+  * but yeah, lines too
+* make edge/node more specific to line/load
+  * in the DB, it'll be line/load, but when doing graph operations, it'll be node/edge
+* Identifying the shortest cycle isn't working the way it should... but once we can
+  identify the shortest cycles, we can delete an edge from them and restore balance to
+  the graph. Only looking at cycles <= 4
 
 BUGGY RUNS
 ---------------------------------
-./grid.rb -n 1000 -c 60
-./grid.rb -n 1000 -c 80
-./grid.rb -n 25 -c 3
-./grid.rb -n 1000 -c 400
 
 
 DATA

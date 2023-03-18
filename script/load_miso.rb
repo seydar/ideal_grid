@@ -25,7 +25,8 @@ names = json['f'].map {|f| f['p'][0] }
 pairs = names.zip converted
 
 pairs.each do |name, (lon, lat)|
-  Load.create :name => name, :region => "MISO", :lon => lon, :lat => lat
+  loc = Point.create :lon => lon, :lat => lat
+  Load.create :name => name, :region => "MISO", :point => loc
 end
 
 require 'pry'

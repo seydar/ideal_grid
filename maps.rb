@@ -40,18 +40,17 @@ PRNG = Random.new 1138
 
 lines = nil
 time "Loading" do
-  lines = read_geojson "/Users/ari/src/ideal_grid/data/new_england_lines.geojson", box
-  #lines = read_geojson "/Users/ari/src/ideal_grid/data/michigan_lines.geojson", box
+  #lines = read_geojson "/Users/ari/src/ideal_grid/data/new_england_lines.geojson", box
+  lines = read_geojson "/Users/ari/src/ideal_grid/data/michigan_lines.geojson", box
 
   $nodes = lines.map {|l| l[:nodes] }.flatten
   p $nodes.size
 end
 
-groups = nil
 pts = nil
 points = nil
 time "joining" do
-  poly = :polygon
+  poly = :smooth
   # Build these while the points are duplicated
   lines.each {|l| l[:edges] = build_edges(l[poly]) }
 
@@ -61,8 +60,6 @@ time "joining" do
   # Now eliminate nearby points
   pts = join_points points, 0.03
   puts "\tJoined points: #{pts.size}"
-
-  groups = group_by_connected pts
 end
 
 time "coloring" do
@@ -70,10 +67,7 @@ time "coloring" do
   es = pts.map {|p| p.edges }.flatten
   plot_edges es
 
-  #groups.disjoint_sets.each.with_index do |set, i|
-  #  plot_points set, :color => COLORS.sample(:random => PRNG)
-  #end
-  plot_points points, :color => "gray"
+  plot_points pts, :color => "gray"
 
   # Loads
   loads = Load.all.filter {|l| within box, l }
@@ -84,7 +78,6 @@ time "coloring" do
   gens = Source.all.filter {|s| within box, s }
   p "#{gens.size} gens"
   plot_points gens, :color => "green"
-
 
   show_plot
 end

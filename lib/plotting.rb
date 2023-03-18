@@ -105,10 +105,22 @@ def plot_grid(grid, focus=:unreached)
   c1, c2 = "blue", "gray"
   c1, c2 = c2, c1 if focus == :unreached
 
-  plot_graph grid.graph, :color => c1
-  #plot_graph grid.reach, :color => c2
+  #plot_graph grid.graph, :color => c1
+
+  update_ranges grid.graph.nodes
+
+  edges = grid.graph.nodes.map {|n| n.edges }.flatten
+  plot_edges edges, :color => "black"
+
+  ns = grid.graph.nodes.filter {|n| n.load == 0 }
+  plot_points ns, :color => "gray", :point_type => 6
+
+  ns = grid.graph.nodes.filter {|n| n.load != 0 }
+  plot_points ns, :color => "blue", :point_type => 6
 
   grid.generators.each {|g| plot_generator g }
+
+  nil
 end
 
 def plot_path(path, color: nil)
@@ -162,7 +174,7 @@ def show_plot
     gp << plot.store_datasets
   end
 
-  update_ranges $nodes unless $nodes.empty?
+  update_ranges $nodes unless $nodes.nil? || $nodes.empty?
   resize_plot
 end
 

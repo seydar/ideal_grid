@@ -28,6 +28,53 @@ class Grid
   attr_accessor :flows
   attr_accessor :losses
 
+  def self.within(box)
+    lines   = Line.within box
+    loads   = Load.within box
+    sources = Source.within box
+
+    from :lines => lines, :loads => loads, :sources => sources
+  end
+
+  def self.from(lines: [], loads: [], sources: [])
+    # Get the nodes
+    l_points = loads.map do |l|
+      pt = l.point
+      [pt, Node.new(pt.x, pt.y, :id => pt.id, :draws => (l.max_peak_load || 1))]
+    end.to_h
+
+    # I know this is the same as for transmission line points, but
+    # for the sake of rhetorical parallelism, I'm splitting it out
+    s_points = sources.map(&:point).map do |p|
+      [p, Node.new(p.x, p.y, :id => p.id, :draws => 0)]
+    end.to_h
+
+    t_points = lines.map {|l| [l.left, l.right] }.flatten.map do |p|
+      [p, Node.new(p.x, p.y, :id => p.id, :draws => 0)]
+    end.to_h
+
+    nodes = t_points.merge(s_points).merge(l_points)
+
+    # Build edges from the lines
+    edges = lines.map do |line|
+      Edge.new nodes[line.left],
+               nodes[line.right],
+               line.length,
+               :id => line.id
+    end
+    edges.each {|e| e.mark_nodes! }
+
+    # oh boy. plugging this in when it's expecting a connected graph?
+    # what could go wrong?
+    grid = new nodes.values, []
+
+    grid.generators = sources.map do |s|
+      Generator.new grid, s.point, s.oper_cap
+    end
+
+    grid
+  end
+
   def initialize(nodes, generators)
     @nodes      = nodes
     @generators = generators

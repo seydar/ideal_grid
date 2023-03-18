@@ -14,7 +14,9 @@ class Edge
   # I will pretend that each edge length is in km
   R_I_a = 0.4247 # Ohm / km
 
+  # TODO Make this all named parameters
   def initialize(to, from, length=0, id: nil)
+    raise "Don't be a fool! Use an ID!" unless id
     @length = length
     @nodes  = [to, from]
     @id     = id
@@ -50,6 +52,12 @@ class Edge
 
   def mark_nodes!
     nodes.each {|n| n.edges << self unless n.edges.include?(self) }
+  end
+
+  def destroy!
+    nodes.each do |node|
+      node.edges = node.edges.reject {|e| e == self }
+    end
   end
 
   # mistakenly created an edge from a node to itself

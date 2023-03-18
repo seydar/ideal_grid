@@ -5,9 +5,10 @@ path = '/Users/ari/src/ideal_grid/data/power_plants_simple.csv'
 points = CSV.read(open(path))[1..-1]
 
 points.each do |gen|
+  loc = Point.create :lat  => gen[1].to_f,
+                     :lon  => gen[2].to_f
   Source.create :name => gen[0],
-                :lat  => gen[1].to_f,
-                :lon  => gen[2].to_f,
+                :point => loc,
                 :naics_desc => gen[3],
                 :oper_cap => gen[4].to_f,
                 :summer_cap => gen[5].to_f,

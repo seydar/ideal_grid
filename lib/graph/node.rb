@@ -6,12 +6,12 @@ class Node
   attr_accessor :id
   attr_accessor :sources
 
-  def initialize(x, y, id: nil)
+  def initialize(x, y, id: nil, draws: 1)
     raise "Don't be a fool — supply an ID" unless id
 
     @x, @y = x, y
     @edges = []
-    @load  = 1
+    @load  = draws
     @id    = id
     @sources = []
   end

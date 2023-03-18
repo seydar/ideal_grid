@@ -208,7 +208,8 @@ end
 
 def build_edges(poly)
   poly.points.each_cons(2).map.with_index do |(left, right), i|
-    e = Edge.new left, right, :id => PRNG.rand # deal with the length later
+    l = left.euclidean_distance right
+    e = Edge.new left, right, l, :id => PRNG.rand # deal with the length later
     e.mark_nodes!
     e
   end
@@ -362,10 +363,5 @@ def deduplicate_edges(points)
   points.each do |pt|
     pt.edges = pt.edges.filter {|e| deduped.include? e }.uniq
   end
-
-  # Get rid of edges that skip over other nodes
-  # We can plan for it and say that any node that is within a certain distance
-  # of a line should be merged into the ege.
-  
 end
 

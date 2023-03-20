@@ -5,6 +5,8 @@
 * MISO
   * https://api.misoenergy.org/MISORTWDDataBroker/DataBrokerServices.asmx?messageType=getvectorsource&nodeTypes=GEN,INT,LZN
 * ISO-NE
+  * external sources: https://www.iso-ne.com/isoexpress/web/reports/grid/-/tree/external-interface-metered-data
+  * node weights: https://www.iso-ne.com/isoexpress/web/reports/load-and-demand/-/tree/nodal-load-weights
 * NYISO
 * HIFLD
   * https://hifld-geoplatform.opendata.arcgis.com/datasets/geoplatform::transmission-lines/explore?location=44.098241%2C-72.184173%2C8.55

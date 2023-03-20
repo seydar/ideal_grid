@@ -16,6 +16,11 @@ NEW_ENGLAND = {:n =>  47.45, :s =>  40.94,
 MICHIGAN = {:n =>  45.82, :s =>  41.80,
             :e => -82.72, :w => -86.12}
 
+#grid = Grid.within NEW_ENGLAND
+#grid.calculate_flows!
+#es = grid.reduce_congestion
+#pp es
+
 require 'pry'
 binding.pry
 

@@ -28,7 +28,14 @@ TODO
   a DisjointGraph?
 * PARALLELIZE THE SHORTEST CYCLE ALGORITHM
   * easy. parallelize the cycle from each node.
-* switch pry to IRB
+* parallelize calculate flows
+  * each thread does its own subset of nodes and then the partial tallies are summed
+  * no, that wouldn't work, because they have interdependence on when a generator
+    can support more load
+  * maybe i can copy parallelization of the MST algorithm? does such a parallelization
+    exist?
+    * that wouldn't even work, because it's just fundamentally different and i don't think
+      MST can be parallelized
 
 TASKS
 -------------------------

@@ -26,8 +26,6 @@ TODO
   * programmatically. somehow. i dunno yet.
 * `Grid` only works with a ConnectedGraph. Is there a way to make it work with
   a DisjointGraph?
-* PARALLELIZE THE SHORTEST CYCLE ALGORITHM
-  * easy. parallelize the cycle from each node.
 * parallelize calculate flows
   * each thread does its own subset of nodes and then the partial tallies are summed
   * no, that wouldn't work, because they have interdependence on when a generator
@@ -36,15 +34,17 @@ TODO
     exist?
     * that wouldn't even work, because it's just fundamentally different and i don't think
       MST can be parallelized
+* wow this bad boy uses a lot of RAM
+  * gonna have to parallelize #reduce_congestion as well
+* do we need to be looking at all *nodes*? or can we just be looking at *loads*?
 
 TASKS
 -------------------------
-* fix #calculate_flows! on NEW_ENGLAND
 * verify #reduce_congestion works on NEW_ENGLAND
-* parallelize #shortest_cycle
 * import "miso_north_tx_lines.geosjon"
   * needs the parallelization first
   * memory does not appear to be a problem, thank god for pointers
+    * I'm about to eat my hat
 
 DONE
 ----------------------------
@@ -69,6 +69,8 @@ DONE
 * Identifying the shortest cycle isn't working the way it should... but once we can
   identify the shortest cycles, we can delete an edge from them and restore balance to
   the graph. Only looking at cycles <= 4
+* PARALLELIZE THE SHORTEST CYCLE ALGORITHM
+  * easy. parallelize the cycle from each node.
 
 BUGGY RUNS
 ---------------------------------

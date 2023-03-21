@@ -109,6 +109,7 @@ class Source < Sequel::Model
 
   def self.within(box)
     pts = Point.within box
+    #eager(:point).filter{ (oper_cap > 0) | {:point => pts} }.all
     eager(:point).filter(:point => pts).all
   end
 

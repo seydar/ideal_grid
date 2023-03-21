@@ -1,3 +1,5 @@
+PRNG = Random.new 1138
+
 class Grid
   # According to the EIA:
   #   DC consumed 37 trillion BTU in 2020
@@ -28,12 +30,11 @@ class Grid
   attr_accessor :flows
   attr_accessor :losses
 
+  # This method used to make more sense, I promise, but now it's pretty useless
   def self.within(box)
     lines   = Line.within box
-    loads   = Load.within box
-    sources = Source.within box
 
-    from :lines => lines, :loads => loads, :sources => sources
+    from :lines => lines#, :loads => loads, :sources => sources
   end
 
   # FIXME
@@ -48,8 +49,9 @@ class Grid
   # This, as you might imagine, is bad. Errors abound. Code refuses to run.
   # Nobody wants to work these days!
   #
-  # Any changes I make here can be removed once I get Grid to work with 
-  def self.from(lines: [], loads: [], sources: [])
+  # Any changes I make here can be removed once I get Grid to work with disjoint
+  # graphs.
+  def self.from(lines: [])#, loads: [], sources: [])
 
     # So.
     #
@@ -87,7 +89,7 @@ class Grid
     #
     # Eager loading because there's no need to be wasteful in our DB calls
     loads   = Load.eager(:point).filter(:point => cg_points).all
-    sources = Source.eager(:point).filter(:point => cg_points).all
+    sources = Source.eager(:point).filter{ (oper_cap > 0) & {:point => cg_points} }.all
 
     loads.each do |l|
       nodes[l.point].load = l.max_peak_load || 1
@@ -104,6 +106,7 @@ class Grid
   def initialize(nodes, generators)
     @generators = generators
     @reach      = DisjointGraph.new []
+    @losses     = {}
 
     if ConnectedGraph === nodes
       @nodes = nodes.nodes
@@ -112,10 +115,13 @@ class Grid
       @nodes = nodes
       @graph = ConnectedGraph.new nodes
     end
+
+    @loads = @nodes.filter {|n| n.load > 0 }
   end
 
   def unreached
-    DisjointGraph.new(nodes - reach.nodes)
+    #DisjointGraph.new(nodes - reach.nodes)
+    DisjointGraph.new(@loads - reach.nodes)
   end
 
   def power
@@ -123,7 +129,8 @@ class Grid
   end
 
   def inspect
-    "#<Grid: @nodes=[#{nodes.size} nodes] @generators=[#{generators.size} generators]>"
+    loads = nodes.filter {|n| n.load > 0 }
+    "#<Grid: @nodes=[#{nodes.size} nodes, #{loads.size} loads] @generators=[#{generators.size} generators]>"
   end
 
   def reset!
@@ -350,7 +357,8 @@ class Grid
     #
     # Actually, this is going to be a lot like the MST algorithm
     neighbors = []
-    nodes.each do |node|
+    #nodes.each do |node|
+    @loads.each do |node|
       generators.each do |gen|
         neighbors << [node, gen, gen.path_to(node)]
       end

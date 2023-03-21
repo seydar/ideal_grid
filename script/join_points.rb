@@ -8,7 +8,7 @@ NEW_ENGLAND = {:n =>  47.45, :s =>  40.94,
 MICHIGAN = {:n =>  45.82, :s =>  41.80,
             :e => -82.72, :w => -86.12}
 
-region = MICHIGAN
+region = NEW_ENGLAND
 
 # Take all the loads and sources and build an edge that connects them to the
 # nearest point from a line.

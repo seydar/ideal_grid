@@ -313,15 +313,16 @@ class ConnectedGraph < Graph
   # I don't care enough to come up with this myself. I prolly wouldn't do a
   # good job anyways.
   #
-  # How do I parallelize this?
-  #
-  # Easy: parallelize `nodes.each` and then just pick the minimum of the answers.
+  # Now it's parallelized, but it can sometimes get overwhelmed with datasets
+  # that are too large. How can I split a graph up into smaller partitioned chunks?
+  # FIXME ^^^
   #
   # https://www.geeksforgeeks.org/shortest-cycle-in-an-undirected-unweighted-graph/
   def shortest_cycle
-    ans = nil
-
-    nodes.each do |node|
+    id_map = nodes.map {|n| [n.id, n] }.to_h
+    #answers = nodes.parallel_map(:cores => 8) do |node|
+    answers = nodes.map do |node|
+      ans = nil
       path = {}
       par  = {}
       visited = Set.new
@@ -352,9 +353,12 @@ class ConnectedGraph < Graph
           end
         end
       end
+
+      ans
     end
 
-    ans
+    ans = answers.compact.min_by {|v| v.size }
+    ans && ans.map {|n| id_map[n.id] }.uniq # make everything use the original same set of nodes
   end
 end
 

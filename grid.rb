@@ -23,7 +23,6 @@ EOS
 end
 
 grid, nodes, edges = nil
-PRNG = Random.new 1138
 $elapsed = 0
 $intermediate = opts[:intermediate]
 

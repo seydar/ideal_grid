@@ -19,8 +19,8 @@ class Grid
   #   For modeling NH, call it 990 nodes, LNG 25, nuclear 100
 
   # Constraints, in one place
-  MAX_BUILD_POWER = 120 # units of power
-  MAX_GROW_POWER  = 100
+  MAX_BUILD_POWER = 300 # units of power
+  MAX_GROW_POWER  = 200
   THRESHOLD_FOR_BUILD = 20
 
   attr_accessor :nodes
@@ -31,10 +31,10 @@ class Grid
   attr_accessor :losses
 
   # This method used to make more sense, I promise, but now it's pretty useless
-  def self.within(box)
+  def self.within(box, fuel: {})
     lines   = Line.within box
 
-    from :lines => lines#, :loads => loads, :sources => sources
+    from :lines => lines, :fuel => fuel
   end
 
   # FIXME
@@ -51,7 +51,7 @@ class Grid
   #
   # Any changes I make here can be removed once I get Grid to work with disjoint
   # graphs.
-  def self.from(lines: [])#, loads: [], sources: [])
+  def self.from(lines: [], fuel: {})
 
     # So.
     #
@@ -89,7 +89,8 @@ class Grid
     #
     # Eager loading because there's no need to be wasteful in our DB calls
     loads   = Load.eager(:point).filter(:point => cg_points).all
-    sources = Source.eager(:point).filter{ (oper_cap > 0) & {:point => cg_points} }.all
+    #sources = Source.eager(:point).filter{ (oper_cap > 0) & {:point => cg_points} }.all
+    sources = Source.by_fuel_mix(fuel) { (oper_cap > 0) & {:point => cg_points} }
 
     loads.each do |l|
       nodes[l.point].load = l.max_peak_load || 1
@@ -396,6 +397,17 @@ class Grid
       # take on this new node
       tx_losses = path.map {|e| [e, e.power_loss(@flows[e] + node.load) - @losses[e]] }
 
+      # TODO This is where we can allow a node to draw power from multiple generators.
+      # When a node is skipped, we can put it in a separate pile to revisit.
+      # Then, when it comes back up again, we can test to see if there is still space
+      # on the original generator to do partial load pulling. This should be
+      # proportioned by the distance between them.
+      #
+      # Actually, this should happen to every node, regardless.
+      #
+      # First, a node draws 100% of its load from a single generator.
+      # Then, it's a weighted average.
+      # Actually, it's always a weighted average between every reachable generator.
       next if remainder[gen] < (node.load + tx_losses.sum {|e, l| l })
 
       # Reuse the already-calculated transmission losses

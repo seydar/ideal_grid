@@ -4,6 +4,17 @@
 class UnionF
   attr_accessor :id
 
+  def self.mark(elts, &test)
+    uf = new elts
+    (0..elts.size - 1).each do |i|
+      (i + 1..elts.size - 1).each do |j|
+        uf.union elts[i], elts[j] if test.call(elts[i], elts[j])
+      end
+    end
+
+    uf
+  end
+
   def initialize elements
     @id = {}
     @sz = {}

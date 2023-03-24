@@ -318,9 +318,9 @@ class ConnectedGraph < Graph
   # FIXME ^^^
   #
   # https://www.geeksforgeeks.org/shortest-cycle-in-an-undirected-unweighted-graph/
-  def shortest_cycle
+  def separate_cycles
     id_map = nodes.map {|n| [n.id, n] }.to_h
-    #answers = nodes.parallel_map(:cores => 8) do |node|
+    #answers = nodes.parallel_map(:cores => 4) do |node|
     answers = nodes.map do |node|
       ans = nil
       path = {}
@@ -357,8 +357,29 @@ class ConnectedGraph < Graph
       ans
     end
 
-    ans = answers.compact.min_by {|v| v.size }
-    ans && ans.map {|n| id_map[n.id] }.uniq # make everything use the original same set of nodes
+    # Put everything into the same terms
+    # (preparing for bringing back multithreading)
+    res = answers.compact.map do |ans|
+      ans.map {|n| id_map[n.id] }.uniq # make everything use the original same set of nodes
+    end
+
+    # Filter to only the small ones
+    res = res.filter {|cyc| cyc.size <= 5 }
+
+    # Now that everything is normalized, we can actually identify the separate
+    # cycles, which means looking for cycles whose edges are fully unique among
+    # the rest of the set
+    uf = UnionF.mark res do |c1, c2|
+      es_i = c1.map(&:edges).flatten.uniq
+      es_j = c2.map(&:edges).flatten.uniq
+      es_i & es_j != []
+    end
+
+    uf.disjoint_sets.map {|c| c.min_by(&:size) }
+  end
+
+  def shortest_cycle
+    separate_cycles.min_by {|c| c.size }
   end
 end
 

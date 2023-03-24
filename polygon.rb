@@ -253,17 +253,7 @@ end
 
 # Group all of the points by whether they're connected or not
 def group_by_connected(points)
-  uf = UnionF.new points
-
-  (0..points.size - 1).each do |i|
-    (i..points.size - 1).each do |j|
-      if points[i].edge? points[j]
-        uf.union points[i], points[j]
-      end
-    end
-  end
-
-  uf
+  UnionF.mark point {|p1, p2| p1.edge? p2 }
 end
 
 # https://stackoverflow.com/a/19375910

@@ -34,9 +34,14 @@ TODO
     exist?
     * that wouldn't even work, because it's just fundamentally different and i don't think
       MST can be parallelized
-* wow this bad boy uses a lot of RAM
+* reduce_congestion - wow this bad boy uses a lot of RAM
   * gonna have to parallelize #reduce_congestion as well
 * do we need to be looking at all *nodes*? or can we just be looking at *loads*?
+* script/load_lines.rb
+  * 2.1k cycles for MISO
+  * 350 for ISO-NE
+  * we can remove edges from all of the unintersecting cycles (cycles with
+    unique nodes) at the same time
 
 TASKS
 -------------------------

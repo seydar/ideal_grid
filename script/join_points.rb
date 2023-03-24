@@ -29,7 +29,7 @@ def connect(infra, pts)
      :length   => dist}
   end
 
-  #DB[:lines].multi_insert inserts
+  DB[:lines].multi_insert inserts
   inserts
 end
 
@@ -61,7 +61,4 @@ src_es  = connect infra, discon_ss
 puts "#{load_es.size + src_es.size} new edges created"
 puts "\t#{load_es.size} for loads"
 puts "\t#{src_es.size} for sources"
-
-require 'pry'
-binding.pry
 

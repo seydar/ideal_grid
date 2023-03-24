@@ -1,4 +1,4 @@
-PRNG = Random.new 1138
+PRNG = Random.new 1337
 
 class Grid
   # According to the EIA:

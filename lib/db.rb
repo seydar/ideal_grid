@@ -113,30 +113,14 @@ class Source < Sequel::Model
     eager(:point).filter(:point => pts).all
   end
 
-  # `fuel` is the mix in MW (though wouldn't it be nice if it were in percentage
-  # of max capacity? TODO) 
-  def self.by_fuel_mix(fuel, &filt)
+  def self.by_fuel_mix(ratios, &filt)
     sources = eager(:point).filter(&filt).all
-
-    # Given the restrictions of `&filt`, how many MW are available in each type?
-    available = sources.group_by(&:naics_desc)
-      .map {|desc, gens| [desc, gens.sum(&:oper_cap)] }
-                       .to_h
-
-    # What is the ratio of what we're looking for?
-    # TODO what if we could pass in the ratio in the first place as opposed to
-    # the MW? The MW is the argument currently because that's what's available
-    # in the spreadsheet from ISO-NE.
-    ratios = fuel.map do |type, amt|
-      type = type.to_s.upcase
-      [type, amt / available[type]]
-    end
 
     # Turn those fractions into actual generators!
     # Take a random sampling.
     # There's gotta be a better way to do this.
     ratios.map do |type, perc|
-      srcs = sources.filter {|s| s.naics_desc == type }
+      srcs = sources.filter {|s| s.naics_desc == type.to_s.upcase }
       srcs.sample (perc * srcs.size).floor, :random => PRNG
     end.flatten
   end

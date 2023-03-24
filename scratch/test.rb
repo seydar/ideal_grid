@@ -24,19 +24,19 @@ MICHIGAN = {:n =>  45.82, :s =>  41.80,
 # and multiplied them by 1.11 to account for potential transmission loss.
 # I'll adjust these numbers as need be based on the transmission loss that
 # #calculate_flows! interprets.
-grid = Grid.within NEW_ENGLAND, :fuel => {:fossil => 15550,
-                                          :hydro => 1842,
-                                          :nuclear => 3700,
-                                          :solar => 48,
-                                          :biomass => 622,
-                                          :wind => 284}
+#grid = Grid.within NEW_ENGLAND, :fuel => {:fossil => 15550,
+#                                          :hydro => 1842,
+#                                          :nuclear => 3700,
+#                                          :solar => 48,
+#                                          :biomass => 622,
+#                                          :wind => 284}
 
-#grid = Grid.within NEW_ENGLAND_CENTRAL, :fuel => {:fossil  => 0.70,
-#                                                  :nuclear => 0.17,
-#                                                  :hydro   => 0.08,
-#                                                  :biomass => 0.03,
-#                                                  :solar   => 0.01,
-#                                                  :wind    => 0.01}
+grid = Grid.within NEW_ENGLAND, :fuel => {:fossil  => 0.70,
+                                                  :nuclear => 0.17,
+                                                  :hydro   => 0.08,
+                                                  :biomass => 0.03,
+                                                  :solar   => 0.01,
+                                                  :wind    => 0.01}
 
 puts "Grid: #{grid.inspect}"
 grid.calculate_flows!
@@ -44,27 +44,30 @@ grid.calculate_flows!
 puts grid.info
 puts grid.flow_info
 
-added = []
-new_edges = grid.reduce_congestion
-
-# TODO Are certain edges more effective than others? How do we know?
-added << []
-new_edges.each do |src, tgt, edge, dist|
-  if edge.length < 0.5
-    added[-1] << edge
-    edge.mark_nodes!
-  end
-end
-
-puts "New edges: #{added[-1].size}"
-
-grid.reset!
-
-puts grid.flow_info
-puts grid.info
-
 plot_flows grid, :n => 10, :focus => :reached
-#plot_edges added.flatten, :color => "green", :width => 3
 show_plot
+
+#added = []
+#new_edges = grid.reduce_congestion
+#
+## TODO Are certain edges more effective than others? How do we know?
+#added << []
+#new_edges.each do |src, tgt, edge, dist|
+#  if edge.length < 0.5
+#    added[-1] << edge
+#    edge.mark_nodes!
+#  end
+#end
+#
+#puts "New edges: #{added[-1].size}"
+#
+#grid.reset!
+#
+#puts grid.flow_info
+#puts grid.info
+#
+#plot_flows grid, :n => 10, :focus => :reached
+#plot_edges added.flatten, :color => "green", :width => 3
+#show_plot
 
 

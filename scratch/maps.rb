@@ -1,5 +1,5 @@
-require_relative 'polygon.rb'
-require_relative './lib/db.rb'
+require_relative "../electric_avenue.rb"
+require_relative "./polygon.rb"
 
 def time(desc, &block)
   puts desc
@@ -36,9 +36,6 @@ end
 #       :e => -82.72, :w => -86.12}
 
 box = nil
-
-
-PRNG = Random.new 1138
 
 lines = nil
 time "Loading" do

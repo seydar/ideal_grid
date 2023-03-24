@@ -1,11 +1,5 @@
 require "overpass_api_ruby"
 require 'json'
-require 'proj'
-
-require_relative 'lib/graph/edge.rb'
-require_relative 'lib/graph/node.rb'
-require_relative 'lib/plotting.rb'
-require_relative 'lib/unionf.rb'
 
 class Polygon
   attr_accessor :points

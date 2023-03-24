@@ -1,7 +1,5 @@
-require_relative "../lib/db.rb"
-require_relative "../polygon.rb"
-require_relative "../lib/graph/graph.rb"
-require_relative "../lib/monkey_patch.rb"
+require_relative "../electric_avenue.rb"
+require_relative "../scratch/polygon.rb"
 
 #####################################
 # How the fuck do I build a table piece-wise of all the transmission
@@ -15,8 +13,6 @@ require_relative "../lib/monkey_patch.rb"
 # Maybe a lil bit of parallelization in the `join_points` method would make
 # this palatable.
 #####################################
-
-PRNG = Random.new 1337
 
 def centroid(nodes)
   x = nodes.map {|n| n.x }.avg

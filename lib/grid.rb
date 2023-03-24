@@ -1,5 +1,3 @@
-PRNG = Random.new 1337
-
 class Grid
   # According to the EIA:
   #   DC consumed 37 trillion BTU in 2020

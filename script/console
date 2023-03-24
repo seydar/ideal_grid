@@ -1,6 +1,5 @@
 #!/usr/bin/env ruby
-require_relative '../lib/monkey_patch.rb'
-Dir['./lib/**/*.rb'].each {|f| require f }
+require_relative '../electric_avenue.rb'
 
 # NH/VT
 NH_VT = {:n =>  44.1793, :s =>  43.8583,
@@ -15,11 +14,6 @@ NEW_ENGLAND = {:n =>  47.45, :s =>  40.94,
 # Michigan
 MICHIGAN = {:n =>  45.82, :s =>  41.80,
             :e => -82.72, :w => -86.12}
-
-#grid = Grid.within NEW_ENGLAND
-#grid.calculate_flows!
-#es = grid.reduce_congestion
-#pp es
 
 require 'pry'
 binding.pry

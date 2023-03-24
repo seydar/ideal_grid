@@ -1,5 +1,25 @@
-require_relative '../lib/monkey_patch.rb'
-Dir['./lib/**/*.rb'].each {|f| require f }
+#!/usr/bin/env ruby
+require 'optimist'
+require_relative '../electric_avenue.rb'
+
+opts = Optimist::options do
+  banner <<-EOS
+Pretend a minimal electric grid is a minimum spanning tree across a bunch of nodes.
+Now cluster them to determine where to put your generators.
+Now add in extra edges to add resiliency.
+Now calculate the capacity of each of the lines.
+
+Usage:
+  model.rb [options]
+where [options] are:
+
+EOS
+
+  opt :nodes, "Number of nodes in the grid", :type => :integer, :default => 100
+  opt :clusters, "How many nodes per generator", :type => :integer, :default => 10
+  opt :intermediate, "Show intermediate graphics of flow calculation", :type => :integer
+  opt :reduce, "How many times should we try to reduce congestion", :type => :integer, :default => 1
+end
 
 # NH/VT
 NH_VT = {:n =>  44.1793, :s =>  43.8583,

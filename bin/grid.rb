@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 require 'optimist'
-require_relative 'lib/monkey_patch.rb'
-Dir['./lib/**/*.rb'].each {|f| require_relative f }
+require_relative '../electric_avenue.rb'
 
 opts = Optimist::options do
   banner <<-EOS
@@ -25,7 +24,6 @@ end
 grid, nodes, edges = nil
 $elapsed = 0
 $intermediate = opts[:intermediate]
-
 
 time "Edge production" do
 

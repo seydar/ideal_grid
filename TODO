@@ -42,6 +42,10 @@ TODO
   * 350 for ISO-NE
   * we can remove edges from all of the unintersecting cycles (cycles with
     unique nodes) at the same time
+* look at substations as well
+  * if nodes are within the same substation, join them all
+  * OSM data is sufficient for this since it's the basis of openinframap and
+    copies HIFLD
 
 TASKS
 -------------------------

@@ -18,12 +18,8 @@ TODO
 
 * Are the MISO and ISO-NE lists complete? There's no way. They're so few! CAISO is 10k nodes!!!
 
-* Split out the grid.rb interface from interacting with the DB and
-  having all relevant classes be available
 * Add DB caching via memcache
 * Plot a choropleth of the US as a background
-* Download the trx line data using the precise region of the ISOs/RTOs
-  * programmatically. somehow. i dunno yet.
 * `Grid` only works with a ConnectedGraph. Is there a way to make it work with
   a DisjointGraph?
 * parallelize calculate flows
@@ -36,24 +32,18 @@ TODO
       MST can be parallelized
 * reduce_congestion - wow this bad boy uses a lot of RAM
   * gonna have to parallelize #reduce_congestion as well
-* do we need to be looking at all *nodes*? or can we just be looking at *loads*?
-* script/load_lines.rb
-  * 2.1k cycles for MISO
-  * 350 for ISO-NE
-  * we can remove edges from all of the unintersecting cycles (cycles with
-    unique nodes) at the same time
-* look at substations as well
-  * if nodes are within the same substation, join them all
-  * OSM data is sufficient for this since it's the basis of openinframap and
-    copies HIFLD
+* producing DG connected subgraphs is slow
+* map all loads to OSM points so we can ensure that they connect to the grid
+* flow detection
+  * instead of having a load be entirely powered along the path to the closest
+    generator, have only a *proportion* be powered by that generator
+  * a true real-world sim would have some fraction of the voltage travel along
+    ALL possible paths to each generator, but this is close enough
 
 TASKS
 -------------------------
 * verify #reduce_congestion works on NEW_ENGLAND
 * import "miso_north_tx_lines.geosjon"
-  * needs the parallelization first
-  * memory does not appear to be a problem, thank god for pointers
-    * I'm about to eat my hat
 
 DONE
 ----------------------------
@@ -80,6 +70,13 @@ DONE
   the graph. Only looking at cycles <= 4
 * PARALLELIZE THE SHORTEST CYCLE ALGORITHM
   * easy. parallelize the cycle from each node.
+* Okay, we have all of the data we need. HIFLD already join lines at substations.
+  * and if you look at the plotting, you'll see that 99% of new england is already
+    connected!
+  * so how do we turn those lines into simplified edges?
+    * rebuild the line simplification algorithms
+* Split out the grid.rb interface from interacting with the DB and
+  having all relevant classes be available
 
 BUGGY RUNS
 ---------------------------------

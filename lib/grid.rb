@@ -50,7 +50,6 @@ class Grid
   # Any changes I make here can be removed once I get Grid to work with disjoint
   # graphs.
   def self.from(lines: [], fuel: {})
-
     # So.
     #
     # Because edges already exist between all the loads and sources and the
@@ -61,9 +60,9 @@ class Grid
     # the loads are correct for the loads, so we need to specifically generate
     # those nodes and merge them into our list.
     # Get the nodes
-    points = lines.map {|l| [l.left, l.right] }.flatten
-    nodes  = points.map do |p|
-      [p, Node.new(p.x, p.y, :id => p.id, :draws => 0, :point => p)]
+    points = lines.map {|l| [l.left, l.right] }.flatten.uniq
+    nodes  = points.map do |pt|
+      [pt, Node.new(pt.x, pt.y, :id => pt.id, :draws => 0, :point => pt)]
     end.to_h
 
     # Build edges from the lines
@@ -71,13 +70,19 @@ class Grid
       Edge.new nodes[line.left],
                nodes[line.right],
                line.length,
-               :id => line.id
+               :id => line.id,
+               :voltage => line.voltage
     end
     edges.each {|e| e.mark_nodes! }
 
     # The nodes are likely disjoint, and we can only operate on a connected
     # graph, so we're going to use our tooling to find the largest connected
     # graph and base the grid on that and that alone.
+    #
+    # NB: since 4/21/23, the graph I'm using is connected, so this is
+    # *technically* wasteful, but I'm not sure I want to get rid of it just yet,
+    # since it'll force me to always have connected graphs for regions
+    # TODO evaluate then make a decision
     dg = DisjointGraph.new nodes.values
     cg = dg.connected_subgraphs.max_by {|cg| cg.nodes.size }
     cg_points = cg.nodes.map {|n| n.point }
@@ -322,14 +327,15 @@ class Grid
         # Then, connect that subgraphs
         e2, _, dst_n = connect_graphs *subgraphs
 
-        #plot_grid self
-        #plot_points src.nodes, :color => "red"
-        #plot_points tgt.nodes, :color => "blue"
-        #plot_points ns, :color => "yellow"
-        #plot_edge e, :color => "orange"
-        #plot_edge e2, :color => "orange"
-        #show_plot
-        #gets
+        if e2.length < 0.5
+          plot_grid self
+          plot_points src.nodes, :color => "red"
+          plot_points tgt.nodes, :color => "blue"
+          plot_points ns, :color => "yellow"
+          plot_edge e, :color => "orange"
+          plot_edge e2, :color => "orange"
+          show_plot
+        end
 
         # Find the distance from the destination node to the generator
         new_d = graph.manhattan_distance :from => dst_n, :to => gen.node

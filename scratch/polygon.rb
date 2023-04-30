@@ -3,17 +3,19 @@ require 'json'
 
 class Polygon
   attr_accessor :points
+  attr_accessor :voltage
 
-  def initialize(pts)
-    @points = pts
+  def initialize(pts, voltage=nil)
+    @points  = pts
+    @voltage = voltage
   end
 
   def inspect
-    "#<Polygon: #{points.size} points>"
+    "#<Polygon: #{voltage ? voltage.to_s + "V " : ""}#{points.size} points>"
   end
 
   def smooth(epsilon=2e-4, preserve=[])
-    Polygon.new r_d_p(points, epsilon, preserve)
+    Polygon.new r_d_p(points, epsilon, preserve), @voltage
   end
 
   # Ramer-Douglas-Peucker algorithm
@@ -126,7 +128,7 @@ def read_geojson(path, box=nil)
   $nodes = lines.map {|l| l[:nodes] }.flatten
 
   lines.each do |line|
-    line[:polygon] = Polygon.new line[:nodes]
+    line[:polygon] = Polygon.new line[:nodes], line['properties']['VOLTAGE']
     line[:smooth] = line[:polygon].smooth
     line[:color] = COLORS.sample :random => PRNG
   end
@@ -170,7 +172,7 @@ def simplify(lines)
   
   
   lines.each do |line|
-    line[:smooth] = line[:polygon].smooth 2e-4, preserve
+    line[:smooth] = line[:polygon].smooth 2e-3, preserve
   end
 end
 
@@ -205,6 +207,7 @@ def build_edges(poly)
     l = left.euclidean_distance right
     e = Edge.new left, right, l, :id => PRNG.rand # deal with the length later
     e.mark_nodes!
+    e.voltage = poly.voltage
     e
   end
 end
@@ -223,7 +226,7 @@ def show_poly(lines, poly)
   (0..lines.size - 1).each do |i|
     (i..lines.size - 1).each do |j|
       if lines[i][:raw] & lines[j][:raw] != []
-        #uf.union lines[i], lines[j]
+        uf.union lines[i], lines[j]
       end
     end
   end

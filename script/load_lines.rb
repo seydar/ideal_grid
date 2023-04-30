@@ -21,89 +21,24 @@ def centroid(nodes)
 end
 
 points = nil
+lines = nil
 time "Making lines" do
   lines = read_geojson ARGV[0]
-  poly = :polygon
+  poly = :smooth
   lines.each {|l| l[:edges] = build_edges(l[poly]) }
   points = lines.map {|l| l[poly].points }.flatten.uniq
+  puts "\t#{points.size} points"
 end
+
+#show_poly lines, :polygon
 
 pts = nil
-time "Joining points" do
-  pts = join_points points, 0.03
+time "Getting the CG" do
+  # This is the largest CG
+  cg = DisjointGraph.new(points).connected_subgraphs.max_by {|cg| cg.size }
+  pts = cg.nodes
+  p pts.size
 end
-
-time "Deduplicating edges" do
-  deduplicate_edges pts
-end
-
-# Ugh.
-# Turns out a lot of the points have 3 or 4 edges when they should only have 2.
-# This appears to be because they have edges that bypass the more proximate nodes.
-# Get all the cycles
-# Should probably filter them to make sure they're <= 5 edges long
-cycles = nil
-time "calculating cycles" do
-  cycles = DisjointGraph.new(pts).connected_subgraphs.map {|cg| [cg, cg.separate_cycles] }
-end
-
-until cycles.all? {|cg, c| c.empty? }
-  leave = false
-  
-  # Drop the longest edge
-  # It's the connected graph and then the disjoint sets of the cycles
-  # (`cycs` is the list of disjoint representatives)
-  cycles.each do |cg, cycs|
-    puts "Disjoint sets: #{cycs.size}"
-
-    # so now for each disjoint representative
-    cycs.each do |cyc|
-      # 5 was arbitrarily chosen because the cycles looked less weird
-      if cyc.size >= 5 
-        leave = true
-        break
-      end
-
-      puts "\tcycle length #{cyc.size}"
-      print "\t"
-      pp centroid(cyc)
-      #pp cyc
-
-      # Only nodes that are >= 3 edges, because otherwise they don't introduce
-      # a cycle (unless it's an island, but I don't care about those)
-      reduced = cyc.filter {|n| n.edges.size >= 3 }
-
-      e = reduced.map(&:edges).flatten.uniq.max_by {|e| e.length }
-
-      if e
-        puts "\tdestroying #{e.inspect}"
-        e.destroy! # detach it from the nodes
-
-        # this is to balance out the `leave = true` below
-        # If there's an island of 3 nodes that connect to each other, we
-        # want to exit -- but what if there are other cycles in other CGs?
-        # If we're here, then there was a cycle in another CG, so we want to
-        # make sure we keep running and really prune out all of the cycles.
-        leave = false 
-      else
-        # we've got an island — close out of this
-        leave = true
-      end
-    end
-  end
-
-  break if leave
-
-  time "calculating new cycles" do
-    cycles = cycles.map do |cg, _|
-      cg.reset!
-      [cg, cg.separate_cycles]
-    end
-  end
-end
-
-puts "we did it!"
-exit
 
 # okay
 # 1. save the points that make up the lines
@@ -115,11 +50,16 @@ made = pts.map do |point|
                           :lat => point.y)]
 end.to_h
 
+puts "#{pts.size} points created"
+
 # Part 2
-pts.map {|p| p.edges }.flatten.uniq.each do |edge|
+new_lines = pts.map {|p| p.edges }.flatten.uniq.map do |edge|
   nodes = edge.nodes.map {|n| made[n.id] }
-  Line.create :left   => nodes[0],
-              :right  => nodes[1],
-              :length => edge.length
+  Line.create :left    => nodes[0],
+              :right   => nodes[1],
+              :length  => edge.length,
+              :voltage => edge.voltage
 end
+
+puts "#{new_lines.size} lines created"
 

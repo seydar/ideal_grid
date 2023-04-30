@@ -3,6 +3,7 @@ class Edge
   attr_accessor :length
   attr_accessor :id
   attr_accessor :flow
+  attr_accessor :voltage
 
   # literally just pulling this out of my ass
   # https://skm-eleksys.com/2011/03/transmission-line-parameters-resistance.html
@@ -15,12 +16,13 @@ class Edge
   R_I_a = 0.4247 # Ohm / km
 
   # TODO Make this all named parameters
-  def initialize(to, from, length=0, id: nil)
+  def initialize(to, from, length=0, id: nil, voltage: nil)
     raise "Don't be a fool! Use an ID!" unless id
-    @length = length
-    @nodes  = [to, from]
-    @id     = id
-    @flow   = {}
+    @length  = length
+    @nodes   = [to, from]
+    @id      = id
+    @flow    = {}
+    @voltage = voltage
   end
 
   # Joule's effect (in reference to Joule heating,

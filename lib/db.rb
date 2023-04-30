@@ -39,6 +39,15 @@ class Point < Sequel::Model
   def euclidean_distance(p_2)
     Math.sqrt((self.x - p_2.x) ** 2 + (self.y - p_2.y) ** 2)
   end
+
+  def buffer(miles)
+    dg = miles / 60.0
+
+    {:n => y + dg,
+     :s => y - dg,
+     :e => x + dg,
+     :w => x - dg}
+  end
 end
 
 DB.create_table? :loads do
@@ -67,6 +76,7 @@ DB.create_table? :lines do
   foreign_key :left_id,  :class => Point
   foreign_key :right_id, :class => Point
   Float :length # calculable, but prolly worth storing
+  Float :voltage
 end
 
 # This tracks edges

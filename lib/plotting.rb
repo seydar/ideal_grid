@@ -62,14 +62,21 @@ def plot_edges(edges, color: "black", width: 1, labels: [])
 end
 
 def plot_edge(edge, color: "black", width: 1, label: nil)
-  plot_edges [edge], :color => color, :width => width, :labels => [label]
+  plot_edges [edge], :color => color, :width => width, :labels => [*label]
 end
 
-def plot_points(nodes, color: nil, point_type: 6)
+def plot_points(nodes, color: nil, point_type: 6, labels: [])
   return if nodes.empty?
 
   xs = nodes.map {|p| p.x }
   ys = nodes.map {|p| p.y }
+
+  if labels && !labels.empty?
+    nodes.zip(labels).each do |node, label|
+      center = [node.x, node.y]
+      $plot.arbitrary_lines << "set label \"#{label}\" at #{center.join(",")} offset 2"
+    end
+  end
   
   ds = Gnuplot::DataSet.new([xs, ys]) do |ds|
     ds.with = "points pointtype #{point_type}"
@@ -81,8 +88,8 @@ def plot_points(nodes, color: nil, point_type: 6)
   nil
 end
 
-def plot_point(point, color: nil, point_type: 6)
-  plot_points [point], :color => color, :point_type => point_type
+def plot_point(point, color: nil, point_type: 6, label: nil)
+  plot_points [point], :color => color, :point_type => point_type, :labels => [*label]
 end
 
 def plot_group(points, color: nil, point_type: 6)

@@ -320,22 +320,29 @@ class Grid
         # Then, add all of those nodes and the nodes of the two base CGs into
         #   a DisjointGraph.
         dj = DisjointGraph.new(ns + src.nodes + tgt.nodes)
+
         # Then, get the two largest connected subgraphs.
-        subgraphs = dj.connected_subgraphs.sort_by {|cg| -cg.size }[0..1]
-        # Skip the cases where the src and tgt CGs are already connected
+        #subgraphs = dj.connected_subgraphs.sort_by {|cg| -cg.size }[0..1]
+
+        # Then, get the two subgraphs that contact our targets
+        subgraphs = dj.connected_subgraphs.filter do |cg|
+          cg.nodes & src.nodes != [] or
+            cg.nodes & tgt.nodes != []
+        end
+
         next if subgraphs.size == 1
         # Then, connect that subgraphs
         e2, _, dst_n = connect_graphs *subgraphs
 
-        if e2.length < 0.5
-          plot_grid self
-          plot_points src.nodes, :color => "red"
-          plot_points tgt.nodes, :color => "blue"
-          plot_points ns, :color => "yellow"
-          plot_edge e, :color => "orange"
-          plot_edge e2, :color => "orange"
-          show_plot
-        end
+        #if e2.length < 0.5
+        #  plot_grid self
+        #  plot_points src.nodes, :color => "red"
+        #  plot_points tgt.nodes, :color => "blue"
+        #  plot_points ns, :color => "yellow"
+        #  plot_edge e, :color => "orange"
+        #  plot_edge e2, :color => "orange"
+        #  show_plot
+        #end
 
         # Find the distance from the destination node to the generator
         new_d = graph.manhattan_distance :from => dst_n, :to => gen.node

@@ -39,6 +39,8 @@ TODO
     generator, have only a *proportion* be powered by that generator
   * a true real-world sim would have some fraction of the voltage travel along
     ALL possible paths to each generator, but this is close enough
+* reduce congestion:
+  * need to take the two biggest CGs that contain the sources, not simply the two biggest CGs
 
 TASKS
 -------------------------

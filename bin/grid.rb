@@ -61,6 +61,10 @@ time "Tree production" do
   $algorithm = "Kruskal (since edges are too few)" if edges.size <= SEQ_THRESHOLD
   puts "Using #{$algorithm}"
   puts "\t#{mst.size} edges in MST"
+
+  # Give edges new IDs so that they are 0..|edges|
+  edges = nodes.map(&:edges).flatten.uniq
+  edges.each.with_index {|e, i| e.id = i }
 end
 
 time "Add initial generators [#{opts[:clusters]} nodes/generator]" do
@@ -108,8 +112,6 @@ end
 
 time "Reduce congestion" do
 
-  # How do I find the generators that have the heaviest flows?
-
   added = []
   opts[:reduce].times do |i|
     new_edges = grid.reduce_congestion
@@ -123,12 +125,21 @@ time "Reduce congestion" do
       end
     end
 
-    puts "New edges: #{added[-1].size}"
-
     grid.reset!
 
     puts grid.flow_info
     puts grid.info
+
+    added[-1].each do |edge|
+      edge.detach! if grid.flows[edge] == 0
+    end
+
+    qual    = added[-1].size
+    no_flow = added[-1].count {|e| grid.flows[e] == 0 }
+
+    puts "Qualifying edges: #{qual}"
+    puts "No-flow edges: #{no_flow}"
+    puts "New edges: #{qual - no_flow}"
   end
 
   plot_flows grid, :n => 10, :focus => :unreached
@@ -138,6 +149,8 @@ end
 
 g2 = nil
 time "Fresh map", :run => false do
+  # Edges are preserved — now we're going to see about placing the
+  # generators elsewhere
   g2 = Grid.new grid.nodes, []
   g2.build_generators_for_unreached opts[:clusters]
   g2.grow_generators_for_unreached

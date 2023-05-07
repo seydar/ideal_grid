@@ -1,0 +1,122 @@
+\documentclass{article}
+\usepackage{hyperref}
+
+\title{Electric Grid Modeling}
+\author{Ari Brown}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\section{Introduction}
+In my personal time, I have been developing a model of the US electric grid that
+allows for modeling all transmission lines, generators, and substation loads at
+the level of the RTO/ISO. I currently only have the data for New England
+(ISO-NE), but I am hoping to get data for other regions as well.
+
+\section{Heilmeier Questions}
+\begin{enumerate}
+  \item
+  \textbf{What are you trying to do? Articulate your objectives using absolutely
+  no jargon.} \\
+
+  I am trying to do four things:
+  \begin{enumerate}
+    \item Deduce the best location to build new electrical generators
+    \item Deduce the transmission lines that have the most electricity flowing
+    through them
+    \item Deduce the best location to build new transmission lines to reduce the
+    load borne by high-flow transmission lines
+    \item Mathematically define the resilience of an area and assess a given
+    area for its resiliency
+  \end{enumerate}
+
+  \item
+  \textbf{How is it done today, and what are the limits of current practice?} \\
+  Sandia National Laboraties (SNL) has built their Resilience Analysis Process
+  (RAP), which is a qualitative assessment of a given area. The SNL evaluation
+  does not appear to use graph theory to determine resilience. Their process is
+  labor-intensive and restricted to only those who work with SNL. The SNL RAP is
+  about the structural integrity of individual elements, as opposed to an
+  assumption that key lines can and will fail.
+
+  Breakthrough Energy offers the ability to model the US at a very high level
+  (whole country, Eastern Interconnection, Western Interconnection, and Texas).
+  As a consequence of their high level, they do not have the ability to model
+  regional-level details. In addition, their solution to grid congestion is to
+  simply upgrade those congested lines, as opposed to building new lines
+  elsewhere.
+
+  \item
+  \textbf{What is new in your approach and why do you think it will be
+  successful?} \\
+  My approach is to use graph theory to determine the resilience of an area
+  based on excess capacity in the lines and a calculation of inflowing and
+  outflowing lines to an area. I think it will be successful because it will
+  allow for easy analysis of smaller areas, as well as a graph-theory-based
+  approached to identify the best ways to improve reliability.
+
+  \item
+  \textbf{Who cares? If you are successful, what difference will it make?} \\
+  There are two discussions surrounding the construction of transmission lines:
+  grid resiliency and grid congestion.
+
+  If I am successful, I will offer an analysis of grid resiliency that the
+  Department of Energy and the Department of Defense does not (as far as I know)
+  appear to have. This will encourage and enable DoE's and DoD's national
+  security discussions as they push for government funding to develop new
+  transmission lines.
+
+  In addition, if I am successful, my analyses of grid congestion will enable
+  small energy generation companies and Think Tanks to shift their demands
+  away from building bigger transmission lines to handle more congestion and
+  towards small lines in order to reduce congestion.
+
+  The major benefit will be to convince the government to provide financial
+  subsidies for construction of certain lines based on the analyses from my
+  model.
+
+  \item
+  \textbf{What are the risks?} \\
+  I do not have access to the 15-minute generator data, which would tell me
+  which generators are producing how much energy -- this is crucial for
+  determining the impact of congestion.
+
+  The model currently does not support having a single load partially supported
+  by multiple generators. I do not know how big of an impact this has, given
+  other facets of the flow calculation algorithm.
+
+  I do not have the political in-roads built to find costumers who could use
+  this.
+
+  Many of the battles are political; I need to map political land ownership in
+  order to assess feasibility of new construction. Alternatively, my model can
+  offer 10 suggestions, and a human can then independently assess those.
+
+  I do not have access to a map of the fully connected grid. All of the data
+  available appears to be limited in some capacity, which means my analyses
+  would have reduced accuracy in the prediction of the effects of new
+  construction.
+
+  \item
+  \textbf{How much will it cost?} \\
+  More work needs to be done on the model to make it usable, and more work will
+  be required in order to meet specific customer needs. The only costs are
+  personnel.
+
+  \item
+  \textbf{How long will it take?} \\
+  I need 3 months of full-time work to make the model initially usable to
+  customers and to reduce the computation costs involved.
+
+  \item
+  \textbf{What are the mid-term and final ``exams'' to check for success?} \\
+  Mid-term ``exams'' will be modeling individual RTOs/ISOs and checking that the
+  transmission loss predicted by the model matches the transmission loss
+  reported by the Energy Information Administration. The final ``exam'' would be
+  testing that the level of the entire US.
+
+\end{enumerate}
+
+\end{document}
+

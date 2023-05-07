@@ -56,7 +56,7 @@ class Edge
     nodes.each {|n| n.edges << self unless n.edges.include?(self) }
   end
 
-  def destroy!
+  def detach!
     nodes.each do |node|
       node.edges = node.edges.reject {|e| e == self }
     end

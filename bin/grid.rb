@@ -137,9 +137,9 @@ time "Reduce congestion" do
     qual    = added[-1].size
     no_flow = added[-1].count {|e| grid.flows[e] == 0 }
 
-    puts "Qualifying edges: #{qual}"
-    puts "No-flow edges: #{no_flow}"
-    puts "New edges: #{qual - no_flow}"
+    puts "\tQualifying edges: #{qual}"
+    puts "\tNo-flow edges: #{no_flow}"
+    puts "\tNew edges: #{qual - no_flow}"
   end
 
   plot_flows grid, :n => 10, :focus => :unreached

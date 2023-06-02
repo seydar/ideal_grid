@@ -511,6 +511,8 @@ class Grid
       already_seen[node] << gen
     end
   
+    # Reach is always total
+    @reach = DisjointGraph.new @loads
   end
 
   def flow_info(n=5)

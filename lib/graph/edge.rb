@@ -52,6 +52,11 @@ class Edge
     flow ** 2 * R_I_a * length * 1e-3 # 1e-3 because our flow is in units of kA
   end
 
+  # Calculate flow given a loss
+  def inverse_loss(loss)
+    Math.sqrt(loss / (R_I_a * length * 1e-3))
+  end
+
   def mark_nodes!
     nodes.each {|n| n.edges << self unless n.edges.include?(self) }
   end

@@ -362,82 +362,155 @@ class Grid
     graph.manhattan_distance :from => cg1.median_node, :to => cg2.median_node
   end
 
+  # The `node` we're connecting to (we need to know the paths)
+  # The `gens` that still have available capacity
+  def fractional_share(node, gens)
+    options   = gens.map {|g| g.path_to node }
+  
+    # This is to get the proper ratios
+    # derived from the formula for parallel resistors
+    fractions = options.map {|p| 1.0 / p.length }
+    fractions = fractions.map {|f| f / fractions.sum }
+  
+    # {gen => [path, frac]}
+    gens.zip(options.zip(fractions)).to_h
+  end
+
+  def transmission_losses(path, demand)
+    path.map do |e|
+      [e, e.power_loss(@flows[e] + demand) - @losses[e]]
+    end
+  end
+
+  # One thing to remember: I've been struggling with the order problem. How do
+  # I know which node should get power first?
+  #
+  # There is no ordering power. If the connected load exceeds the supply of the
+  # source, Bad Things happen.
+  #
+  # That said, there is a *balancing* problem:
+  #
+  #   0.5 S        0.5 S         0.5 S ---- 0.5 S
+  #      \          / \         /
+  #       \       /     \      /
+  #          1 L           1 L
+  #
+  # (S is source, L is load)
+  #
+  # How do we know which line gets what amount of flow?
   def calculate_flows!
-    # Now that we know that everyone is connected (because we're dealing with
-    # `grid.reach`), we get to sorta sort everyone by the generator that they're
-    # closest to
-    #
-    # Actually, this is going to be a lot like the MST algorithm
-    neighbors = []
-    #nodes.each do |node|
+    paths = []
     @loads.each do |node|
       generators.each do |gen|
-        neighbors << [node, gen, gen.path_to(node)]
+        paths << [node, gen, gen.path_to(node)]
       end
     end
-
-    # Now -- just like in the MST algorithm -- we're going to sort them
-    # and put them into the tree, provided two conditions are met:
-    #   1. we haven't already added a path for that node
-    #   2. the generator still has some juice left
-    #
-    # Remember: we already know this graph is going to be connected, so we
-    # don't have to worry about revisiting nodes in case we can suddenly reach them
-    #
-    # Also: since we're visiting all of the nodes, we *don't* need to start off
-    # by subtracting the generator's self-load from their power. This is contrary
-    # to (the now-deleted) `#calculate_reach!`, which uses
-    # `#traverse_edges_in_phases`, which won't visit the sources (generators'
-    # nodes).
-    #
-    # Damn. I really gotta have faith that this made-up algorithm is correct.
-    visited   = Set.new # could reasonably be a [] since we check for doubles
+  
+    # Since now we're going to track the flow through EVERY node-gen path,
+    # we don't need to do any checks.
+    # 
+    # Since we're visiting all of the loads, we *don't* need to subtract the
+    # generator's self-load from their power -- it'll happen.
+    # 
+    # Hm. There needs to be something dynamic here that will allow us to deal
+    # with the case when a generator no longer has power. What happens to the
+    # fractions that were calculated /assuming/ that generator had capacity?
+  
+    # => {edge => flow}
     @flows    = Hash.new {|h, k| h[k] = 0 }
-
-    # {edge => transmission losses}, so we only recalculate the ones we need
+  
+    # => {edge => transmission losses}, so we only recalculate the ones we need
     @losses   = Hash.new {|h, k| h[k] = 0 }
-    remainder = generators.map {|g| [g, g.power] }.to_h
 
-    neighbors.sort_by {|n, g, p| p.size }.each do |node, gen, path|
-      next if visited.include? node
+    # Generator remainder
+    g_remainder = generators.map {|g| [g, g.power] }.to_h
 
-      # Now, we're dealing with a node that has a path to its nearest generator
-      # If the node *is* the generator, then the path is empty and its sum is 0.
-      
+    # Load remainder
+    l_remainder = @loads.map {|l| [l, l.load] }.to_h
+
+    already_seen = Hash.new {|h, k| h[k] = [] }
+
+    # Given a load, the list of generators, and the paths to
+    # those generators, what is the fractional share carried by *this* generator?
+    #
+    # Wait. How do I know if a generator has available capacity until I know its
+    # fractional share?
+    #
+    # Track the remaining laod for each node. Each generator gives what it can
+    # (gens have even voltage because that's how the paralleling on the grid works)
+    #
+    # All models are wrong; some models are useful.
+    paths.sort_by {|n, g, p| p.size }.each do |node, gen, path|
+      # Given a load and a generator, what's the fractional share of *this*
+      # generator?
+  
+      # Instead of assigning each load in its entirety to the nearest available
+      # generator (which was v1 of this algorithm), we're going to make the
+      # demand proportional to the path length to all the other generators
+      options  = g_remainder.filter {|g, r| r > 0 }.keys - already_seen[node]
+      _, share = fractional_share(node, options)[gen]
+
+      # This means that this generator doesn't have capacity
+      if share == nil
+        next
+      end
+
+      # Deal with edge case of the node being *at* the generator (path length of 0)
+      share = 1 if gen.node == node
+  
+      # So this is contentious (in my head).
+      # What happens when a generator dries up before others do? How
+      # do you then reassign the untaken load to another generator?
+      # What is the best generator for reassignment?
+      # Again: how do I know if a generator has available capacity until after I
+      # cacluate the share?
+      #
+      # Fuck it: we take from a generator (closest first) until there's
+      # nothing left. Then we no longer draw from it! And if it happens to go a
+      # little under...
+      #
+      # FIXME this allows generators to go negative
+      # TODO figure out what to do if a generator reaches capacity and how to
+      #   distribute the requisite load to other generators (what if the last
+      #   generator to be checked goes negative? how do you reach back to the other
+      #   gens? how do you distribute that load appropriately?)
+      # Answer: probably change this to be a while loop, and you just keep cycling
+      # through the generators (from closest to farthest) until the node's load
+      # has been distributed
+
+      demand = l_remainder[node] * share
+  
       # Compute the power losses here so we can decide if we can even afford to
-      # take on this new node
-      tx_losses = path.map {|e| [e, e.power_loss(@flows[e] + node.load) - @losses[e]] }
-
-      # TODO This is where we can allow a node to draw power from multiple generators.
-      # When a node is skipped, we can put it in a separate pile to revisit.
-      # Then, when it comes back up again, we can test to see if there is still space
-      # on the original generator to do partial load pulling. This should be
-      # proportioned by the distance between them.
+      # take on this new node (`@losses[e] == e.power_loss(@flows[e]`)
       #
-      # Actually, this should happen to every node, regardless.
+      # => [edge, extra energy required for this edge to carry this load]
+      tx_losses = transmission_losses path, demand
+  
+      # If gen doesn't have the capacity, trim our demand down to what the
+      # generator can support.
       #
-      # First, a node draws 100% of its load from a single generator.
-      # Then, it's a weighted average.
-      # Actually, it's always a weighted average between every reachable generator.
-      next if remainder[gen] < (node.load + tx_losses.sum {|e, l| l })
+      # ALL MODELS ARE WRONG, SOME MODELS ARE USEFUL
+      #
+      # Since it's hard to actually calculate the true demand given a limit,
+      # we're going to guess an upper limit based on the fractional tx loss
+      # at the higher demand (`demand`, or `l_remainder[node] * share`)
+      if g_remainder[gen] < demand + tx_losses.sum {|e, l| l }
+        frac      = tx_losses.sum {|e, l| l } / demand
+        demand    = g_remainder[gen] * (1 - frac)
+        tx_losses = transmission_losses path, demand
+      end
 
-      # Reuse the already-calculated transmission losses
-      remainder[gen] -= node.load + tx_losses.sum {|e, l| l }
+      g_remainder[gen]   -= demand + tx_losses.sum {|e, l| l }
+      l_remainder[node]  -= demand
+
       tx_losses.each do |edge, loss_delta|
-        # This line isn't in use right now, but I'm pretty sure it's wrong.
-        # `loss_delta` is just the delta for a given edge, but it should be
-        # looking at the total node load (noad.load + tx_losses_delta.sum),
-        # and after each edge, we subtract that edge's contribution and pass
-        # the rest down the line, because a line has to carry all of the load
-        # for those downstream (including *their* loss deltas)
-        @flows[edge]  += node.load + loss_delta
+        @flows[edge]  += demand + loss_delta
         @losses[edge] += loss_delta
       end
 
-      visited << node
+      already_seen[node] << gen
     end
-
-    @reach = DisjointGraph.new visited.to_a
+  
   end
 
   def flow_info(n=5)

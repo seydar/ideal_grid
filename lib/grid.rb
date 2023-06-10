@@ -433,6 +433,7 @@ class Grid
     # => {edge => flow}
     @flows    = Hash.new {|h, k| h[k] = 0 }
   
+    # TODO FIXME actually fill out these values
     # => {edge => transmission losses}, so we only recalculate the ones we need
     @losses   = Hash.new {|h, k| h[k] = 0 }
 

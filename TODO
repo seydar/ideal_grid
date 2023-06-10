@@ -14,10 +14,6 @@ TODO
 * Randić index could be useful?
   * https://www.sciencedirect.com/science/article/pii/S0972860017301408
 
-* Why aren't unreached nodes being highlighted during plotting?
-
-* Are the MISO and ISO-NE lists complete? There's no way. They're so few! CAISO is 10k nodes!!!
-
 * Add DB caching via memcache
 * Plot a choropleth of the US as a background
 * `Grid` only works with a ConnectedGraph. Is there a way to make it work with
@@ -25,14 +21,9 @@ TODO
 * reduce_congestion - wow this bad boy uses a lot of RAM
   * gonna have to parallelize #reduce_congestion as well
 * producing DG connected subgraphs is slow
-* flow detection
-  * instead of having a load be entirely powered along the path to the closest
-    generator, have only a *proportion* be powered by that generator
-  * a true real-world sim would have some fraction of the voltage travel along
-    ALL possible paths to each generator, but this is close enough
-* reduce congestion:
-  * need to take the two biggest CGs that contain the sources, not simply the two biggest CGs
-* get rid of the concept of reach
+* No longer have the algorithm to build new generators. Where do we build new sources if
+  there are already generators on the map?
+* How do we decide which generators to grow?
 
 TASKS
 -------------------------
@@ -82,6 +73,14 @@ DONE
     * that wouldn't even work, because it's just fundamentally different and i don't think
       MST can be parallelized
   * fixed by rewriting it entirely
+* reduce congestion:
+  * need to take the two biggest CGs that contain the sources, not simply the two biggest CGs
+* flow detection
+  * instead of having a load be entirely powered along the path to the closest
+    generator, have only a *proportion* be powered by that generator
+  * a true real-world sim would have some fraction of the voltage travel along
+    ALL possible paths to each generator, but this is close enough
+* get rid of the concept of reach
 
 BUGGY RUNS
 ---------------------------------

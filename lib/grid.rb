@@ -20,6 +20,7 @@ class Grid
   MAX_BUILD_POWER = 300 # units of power
   MAX_GROW_POWER  = 200
   THRESHOLD_FOR_BUILD = 20
+  BASE_FREQ       = 60 # Hz
 
   attr_accessor :nodes
   attr_accessor :generators
@@ -472,7 +473,7 @@ class Grid
 
   # https://electronics.stackexchange.com/a/546988
   # No idea if I did this right
-  def freq_drop(p_l, p_r, droop=0.05, k_lr=0.02, f_s=60)
+  def freq_drop(p_l, p_r, droop=0.05, k_lr=0.02, f_s=BASE_FREQ)
     d_p = p_r - p_l.to_f # positive is load is less than generation
 
     d_f = d_p / ((p_r / (f_s * droop)) + p_l * k_lr)
@@ -514,7 +515,7 @@ class Grid
     str << "\t\tNodes: #{node_load}\n"
     str << "\t\tTx losses: #{tx_loss.round(2)} "
     str <<      "(#{(100 * tx_loss / total_load.to_f).round 2}%)\n"
-    str << "\tFreq change: #{freq}\n"
+    str << "\tFrequency: #{BASE_FREQ + freq.round(2)} Hz (#{freq.round 2} Hz)\n"
     str << "\tPower: #{power} (#{generators.size} gens)\n"
     str << "\t\t#{generators.map {|g| g.power }}\n"
   end

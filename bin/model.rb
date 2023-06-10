@@ -40,6 +40,7 @@ end
 # and multiplied them by 1.11 to account for potential transmission loss.
 # I'll adjust these numbers as need be based on the transmission loss that
 # #calculate_flows! interprets.
+opts[:region] = opts[:region].upcase
 grid = Grid.within REGIONS[opts[:region]], :fuel => {:fossil  => 0.70,
                                                      :nuclear => 0.17,
                                                      :hydro   => 0.08,

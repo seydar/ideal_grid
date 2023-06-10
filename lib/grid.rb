@@ -376,9 +376,12 @@ class Grid
     gens.zip(options.zip(fractions)).to_h
   end
 
+  # the `#max` is for FP errors
+  # I'm relying on my knowledge of math and the system to claim the invariant
+  # that the value will always be >= 0, and anything less is a FP error
   def transmission_losses(path, demand)
     path.map do |e|
-      [e, e.power_loss(@flows[e] + demand) - @losses[e]]
+      [e, [e.power_loss(@flows[e] + demand) - @losses[e], 0].max]
     end
   end
 
@@ -485,6 +488,12 @@ class Grid
       #
       # => [edge, extra energy required for this edge to carry this load]
       tx_losses = transmission_losses path, demand
+
+      a = tx_losses.filter {|e, l| l < 0 }
+      unless a.empty?
+        require 'pry'
+        binding.pry
+      end
   
       # If gen doesn't have the capacity, trim our demand down to what the
       # generator can support.
@@ -494,25 +503,39 @@ class Grid
       # Since it's hard to actually calculate the true demand given a limit,
       # we're going to guess an upper limit based on the fractional tx loss
       # at the higher demand (`demand`, or `l_remainder[node] * share`)
-      if g_remainder[gen] < demand + tx_losses.sum {|e, l| l }
-        frac      = tx_losses.sum {|e, l| l } / demand
-        demand    = g_remainder[gen] * (1 - frac)
+      total_req = demand + tx_losses.sum {|e, l| l }
+      if g_remainder[gen] < total_req
+        # We need to reduce out demand by `ratio`
+        # Since the tx losses are proportional to the square, we know that
+        # we'll have some extra margin here: we reduce demand linearly, but tx
+        # losses will be reduced 1/x^2-ly.
+        ratio     = total_req / g_remainder[gen]
+        demand    = demand / ratio
         tx_losses = transmission_losses path, demand
       end
 
-      g_remainder[gen]   -= demand + tx_losses.sum {|e, l| l }
-      l_remainder[node]  -= demand
+      g_remainder[gen]  -= demand + tx_losses.sum {|e, l| l }
+      l_remainder[node] -= demand
 
+      # TODO get a slightly more accurate way to calculate losses and the load
+      # traveling over lines
       tx_losses.each do |edge, loss_delta|
-        @flows[edge]  += demand + loss_delta
-        @losses[edge] += loss_delta
+        @flows[edge]  += demand
+        # oof. this leads to floating-point errors, but we use this variable in `#transmission_losses`
+        #@losses[edge] += loss_delta 
+        @losses[edge]  = edge.power_loss @flows[edge] # inefficient, but we're dodging FP quirks
       end
 
       already_seen[node] << gen
     end
-  
-    # Reach is always total
-    @reach = DisjointGraph.new @loads
+
+    # Reach is always total. If there is too much load on an AC system, then the
+    # frequency will drop.
+    #
+    # But this is candy land, so we're going to say that the reach is just
+    # those nodes that have been "fully fed".
+    fully_fed = l_remainder.filter {|n, l| l >= 0 }.keys
+    @reach = DisjointGraph.new fully_fed
   end
 
   def flow_info(n=5)

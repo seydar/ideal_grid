@@ -83,12 +83,7 @@ time "Add initial generators [#{opts[:clusters]} nodes/generator]" do
 end
 
 time "Adding new generators via clustering" do
-  connected_graphs = grid.unreached.connected_subgraphs
-  puts ("\tUnreached: #{grid.unreached.size} " +
-        "(#{connected_graphs.size} subgraphs)")
-  puts "\t\t#{connected_graphs.map {|cg| cg.size }}"
-
-  built = grid.build_generators_for_unreached opts[:clusters]
+  built = [] #grid.build_generators_for_unreached opts[:clusters]
   grown = grid.grow_generators_for_unreached
 
   puts "\tBuilt: #{built}"
@@ -142,7 +137,7 @@ time "Reduce congestion" do
     puts "\tNew edges: #{qual - no_flow}"
   end
 
-  plot_flows grid, :n => 10, :focus => :unreached
+  plot_flows grid, :n => 10
   plot_edges added.flatten, :color => "green", :width => 3
   show_plot
 end

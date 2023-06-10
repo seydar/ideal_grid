@@ -112,13 +112,8 @@ def plot_graph(graph, color: "blue", edge_color: "black", point_type: 6)
   plot_points ns, :color => color, :point_type => 6
 end
 
-def plot_grid(grid, focus=:reached)
-  # Do we want to draw attention to the unreached or the reached?
-  c1, c2 = "blue", "gray"
-  c1, c2 = c2, c1 if focus == :unreached
-
-  plot_graph grid.graph, :color => c1
-  #plot_graph grid.reach, :color => c2
+def plot_grid(grid)
+  plot_graph grid.graph, :color => "gray"
 
   grid.generators.each {|g| plot_generator g }
 
@@ -139,7 +134,7 @@ def plot_cluster(cluster, gen)
   plot_generator gen
 end
 
-def plot_flows(grid, n: 10, focus: :unreached, labels: false)
+def plot_flows(grid, n: 10, labels: false)
   flows = grid.flows
   max, min = flows.values.max || 0, flows.values.min || 0
   #max, min = ($nodes.size / 6).round(1), 1
@@ -151,7 +146,7 @@ def plot_flows(grid, n: 10, focus: :unreached, labels: false)
     flows.filter {|e, f| f >= bottom && f < top }.map {|e, f| e }
   end
 
-  plot_grid grid, focus
+  plot_grid grid
 
   colors = BLUES.reverse + REDS
   percentiles.each.with_index do |pc, i|

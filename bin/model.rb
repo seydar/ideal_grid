@@ -54,7 +54,7 @@ grid.calculate_flows!
 puts grid.info
 puts grid.flow_info
 
-plot_flows grid, :n => 10, :focus => :reached
+plot_flows grid, :n => 10
 show_plot
 
 added = []
@@ -79,7 +79,7 @@ opts[:reduce].times do
   puts grid.info
 end
 
-plot_flows grid, :n => 10, :focus => :reached
+plot_flows grid, :n => 10
 plot_edges added.flatten, :color => "green", :width => 3
 show_plot
 

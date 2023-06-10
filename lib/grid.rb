@@ -24,7 +24,7 @@ class Grid
   attr_accessor :nodes
   attr_accessor :generators
   attr_accessor :graph
-  attr_accessor :reach
+  attr_accessor :freq
   attr_accessor :flows
   attr_accessor :losses
 
@@ -109,7 +109,7 @@ class Grid
 
   def initialize(nodes, generators)
     @generators = generators
-    @reach      = DisjointGraph.new []
+    @freq       = 0
     @losses     = {}
 
     if ConnectedGraph === nodes
@@ -121,11 +121,6 @@ class Grid
     end
 
     @loads = @nodes.filter {|n| n.load > 0 }
-  end
-
-  def unreached
-    #DisjointGraph.new(nodes - reach.nodes)
-    DisjointGraph.new(@loads - reach.nodes)
   end
 
   def power
@@ -146,8 +141,12 @@ class Grid
     generators.min_by {|g| graph.manhattan_distance :from => node, :to => g.node }
   end
 
+  def build_generators_for_underfrequency(nodes_per_cluster)
+    @flows
+  end
+
   def build_generators_for_unreached(nodes_per_cluster)
-    connected_graphs = unreached.connected_subgraphs
+    connected_graphs = [graph]
 
     biguns = connected_graphs.filter {|cg| cg.size > THRESHOLD_FOR_BUILD }
 
@@ -174,7 +173,7 @@ class Grid
   end
 
   def grow_generators_for_unreached
-    connected_graphs = unreached.connected_subgraphs
+    connected_graphs = [graph]
 
     liluns = connected_graphs.filter {|cg| cg.size <= THRESHOLD_FOR_BUILD }
 
@@ -455,18 +454,13 @@ class Grid
       end
     end
 
-    puts "Extra (-)/Needed (+): #{l_remainder.sum {|_, l| l }}"
-
     # power of the load
     p_l = groups.sum {|g, ds| ds.sum {|_, l, _| l } }
 
     # rated power (of the generators)
     p_r = generators.sum {|g| g.power }
 
-    puts freq_drop(p_l, p_r)
-
-    # FIXME Need to get rid of this concept
-    @reach = DisjointGraph.new @loads
+    @freq = freq_drop(p_l, p_r)
   end
 
   # https://electronics.stackexchange.com/a/546988
@@ -507,18 +501,15 @@ class Grid
   def info
     str = ""
     str << "\tPower required: #{nodes.sum {|n| n.load }}\n"
-    total_load = reach.load + losses.values.sum
-    str << "\tReach load: #{total_load.round 2}\n"
-    str << "\t\tNodes: #{reach.load}\n"
+    total_load = @loads.sum(&:load) + losses.values.sum
+    str << "\tTotal load: #{total_load.round 2}\n"
+    str << "\tFreq change: #{freq}"
+    str << "\t\tNodes: #{total_load}\n"
     str << "\t\tTx losses: #{losses.values.sum.round(2)} "
-    str <<      "(#{(100 * losses.values.sum / reach.load.to_f).round 2}%)\n"
+    str <<      "(#{(100 * losses.values.sum / total_load.to_f).round 2}%)\n"
     efficiency = total_load / power.to_f
     str << "\tEfficiency: #{efficiency}\n"
     str << "\tPower: #{power} (#{generators.size} gens)\n"
     str << "\t\t#{generators.map {|g| g.power }}\n"
-    str << "\tReached: #{reach.size}\n"
-    str << ("\tUnreached: #{unreached.size} " +
-            "(#{unreached.connected_subgraphs.size} subgraphs)\n")
-    str << "\t\t#{unreached.connected_subgraphs.map {|cg| cg.size }}"
   end
 end

@@ -16,15 +16,10 @@ class Generator
     true
   end
 
-  def total_line_length
-    ConnectedGraph.new(reach[:nodes]).total_edge_length
-  end
-
   def info
     str = ""
     str << "\tCluster #{node.inspect}\n"
     str << "\t\tPower: #{power}\n"
-    str << "\t\tTotal nodes: #{reach.size}"
     str
   end
 

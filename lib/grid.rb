@@ -410,14 +410,14 @@ class Grid
   # calculate the frequency drop on the system (https://electronics.stackexchange.com/a/546988)
   def calculate_flows!
     # Grouping the generator info.
-    # {gen => [node, demand]}
+    # {gen => [node, demand, path]}
     groups = Hash.new {|h, k| h[k] = [] }
 
     @loads.each do |node|
       # {gen => [path, frac]}
       fracs = fractional_share node, generators
       fracs.each do |gen, (path, frac)|
-        groups[gen] << [node, node.load * frac]
+        groups[gen] << [node, node.load * frac, path]
       end
     end
   
@@ -441,35 +441,38 @@ class Grid
     l_remainder = @loads.map {|l| [l, l.load] }.to_h
 
     groups.each do |gen, demands|
-      total_demand = demands.sum {|n, l| l }
+      total_demand = demands.sum {|n, l, p| l }
 
       # grow or shrink factor (if the load is insufficient, then the frequency
       # will increase)
       ratio = gen.power / total_demand
 
-      demands.each do |node, demand|
+      demands.each do |node, demand, path|
         l_remainder[node] -= demand * ratio
+        path.each do |edge|
+          @flows[edge] += demand * ratio
+        end
       end
     end
 
     puts "Extra (-)/Needed (+): #{l_remainder.sum {|_, l| l }}"
 
     # power of the load
-    p_l = groups.sum {|g, ds| ds.sum {|_, l| l } }
+    p_l = groups.sum {|g, ds| ds.sum {|_, l, _| l } }
 
     # rated power (of the generators)
     p_r = generators.sum {|g| g.power }
 
     puts freq_drop(p_l, p_r)
-    exit
 
     # FIXME Need to get rid of this concept
     @reach = DisjointGraph.new @loads
   end
 
   # https://electronics.stackexchange.com/a/546988
+  # No idea if I did this right
   def freq_drop(p_l, p_r, droop=0.05, k_lr=0.02, f_s=60)
-    d_p = p_l.to_f - p_r
+    d_p = p_r - p_l.to_f # positive is load is less than generation
 
     d_f = d_p / ((p_r / (f_s * droop)) + p_l * k_lr)
     d_f

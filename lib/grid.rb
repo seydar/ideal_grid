@@ -160,6 +160,14 @@ class Grid
       end
     end
 
+    # It doesn't make sense to have a generator *also* have a load, especially
+    # because that distance would be 0, which would really screw with the math
+    # in `#calculate_flows!`
+    @generators.each do |g|
+      g.node.load = 0
+      @loads.delete g.node
+    end
+
     calculate_flows!
 
     generators.size - old_size
@@ -385,27 +393,31 @@ class Grid
     end
   end
 
-  # One thing to remember: I've been struggling with the order problem. How do
-  # I know which node should get power first?
+  # Okay, take 3 or 4 or whatever.
   #
-  # There is no ordering power. If the connected load exceeds the supply of the
-  # source, Bad Things happen.
+  # Each laod makes a demand for power from each generator based on the
+  # resistance of each path (using the length of the line as an analog -- should
+  # prolly make a wrapper method for this calculation so that in the future I can
+  # alter it if need be).
   #
-  # That said, there is a *balancing* problem:
+  # Each generator looks at the total demands placed against it and then
+  # responds with the proportional amount based on how much power it can supply.
   #
-  #   0.5 S        0.5 S         0.5 S ---- 0.5 S
-  #      \          / \         /
-  #       \       /     \      /
-  #          1 L           1 L
+  # Thus, in an uneven system, EVERY load will not be fully fed, and thus have
+  # some remainder of unsatisfied demand.
   #
-  # (S is source, L is load)
-  #
-  # How do we know which line gets what amount of flow?
+  # This total unsatisfied demand is then pumped into an equation that will
+  # calculate the frequency drop on the system (https://electronics.stackexchange.com/a/546988)
   def calculate_flows!
-    paths = []
+    # Grouping the generator info.
+    # {gen => [node, demand]}
+    groups = Hash.new {|h, k| h[k] = [] }
+
     @loads.each do |node|
-      generators.each do |gen|
-        paths << [node, gen, gen.path_to(node)]
+      # {gen => [path, frac]}
+      fracs = fractional_share node, generators
+      fracs.each do |gen, (path, frac)|
+        groups[gen] << [node, node.load * frac]
       end
     end
   
@@ -415,9 +427,8 @@ class Grid
     # Since we're visiting all of the loads, we *don't* need to subtract the
     # generator's self-load from their power -- it'll happen.
     # 
-    # Hm. There needs to be something dynamic here that will allow us to deal
-    # with the case when a generator no longer has power. What happens to the
-    # fractions that were calculated /assuming/ that generator had capacity?
+    # When a generator doesn't have power... that's too bad, it still supplies it,
+    # but the overall frequency of the system will drop
   
     # => {edge => flow}
     @flows    = Hash.new {|h, k| h[k] = 0 }
@@ -425,117 +436,42 @@ class Grid
     # => {edge => transmission losses}, so we only recalculate the ones we need
     @losses   = Hash.new {|h, k| h[k] = 0 }
 
-    # Generator remainder
-    g_remainder = generators.map {|g| [g, g.power] }.to_h
-
     # Load remainder
     l_remainder = @loads.map {|l| [l, l.load] }.to_h
 
-    already_seen = Hash.new {|h, k| h[k] = [] }
+    groups.each do |gen, demands|
+      total_demand = demands.sum {|n, l| l }
 
-    # Given a load, the list of generators, and the paths to
-    # those generators, what is the fractional share carried by *this* generator?
-    #
-    # Wait. How do I know if a generator has available capacity until I know its
-    # fractional share?
-    #
-    # Track the remaining laod for each node. Each generator gives what it can
-    # (gens have even voltage because that's how the paralleling on the grid works)
-    #
-    # All models are wrong; some models are useful.
-    paths.sort_by {|n, g, p| p.size }.each do |node, gen, path|
-      # Given a load and a generator, what's the fractional share of *this*
-      # generator?
-  
-      # Instead of assigning each load in its entirety to the nearest available
-      # generator (which was v1 of this algorithm), we're going to make the
-      # demand proportional to the path length to all the other generators
-      options  = g_remainder.filter {|g, r| r > 0 }.keys - already_seen[node]
-      _, share = fractional_share(node, options)[gen]
+      # grow or shrink factor (if the load is insufficient, then the frequency
+      # will increase)
+      ratio = gen.power / total_demand
 
-      # This means that this generator doesn't have capacity
-      if share == nil
-        next
+      demands.each do |node, demand|
+        l_remainder[node] -= demand * ratio
       end
-
-      # Deal with edge case of the node being *at* the generator (path length of 0)
-      share = 1 if gen.node == node
-  
-      # So this is contentious (in my head).
-      # What happens when a generator dries up before others do? How
-      # do you then reassign the untaken load to another generator?
-      # What is the best generator for reassignment?
-      # Again: how do I know if a generator has available capacity until after I
-      # cacluate the share?
-      #
-      # Fuck it: we take from a generator (closest first) until there's
-      # nothing left. Then we no longer draw from it! And if it happens to go a
-      # little under...
-      #
-      # FIXME this allows generators to go negative
-      # TODO figure out what to do if a generator reaches capacity and how to
-      #   distribute the requisite load to other generators (what if the last
-      #   generator to be checked goes negative? how do you reach back to the other
-      #   gens? how do you distribute that load appropriately?)
-      # Answer: probably change this to be a while loop, and you just keep cycling
-      # through the generators (from closest to farthest) until the node's load
-      # has been distributed
-
-      demand = l_remainder[node] * share
-  
-      # Compute the power losses here so we can decide if we can even afford to
-      # take on this new node (`@losses[e] == e.power_loss(@flows[e]`)
-      #
-      # => [edge, extra energy required for this edge to carry this load]
-      tx_losses = transmission_losses path, demand
-
-      a = tx_losses.filter {|e, l| l < 0 }
-      unless a.empty?
-        require 'pry'
-        binding.pry
-      end
-  
-      # If gen doesn't have the capacity, trim our demand down to what the
-      # generator can support.
-      #
-      # ALL MODELS ARE WRONG, SOME MODELS ARE USEFUL
-      #
-      # Since it's hard to actually calculate the true demand given a limit,
-      # we're going to guess an upper limit based on the fractional tx loss
-      # at the higher demand (`demand`, or `l_remainder[node] * share`)
-      total_req = demand + tx_losses.sum {|e, l| l }
-      if g_remainder[gen] < total_req
-        # We need to reduce out demand by `ratio`
-        # Since the tx losses are proportional to the square, we know that
-        # we'll have some extra margin here: we reduce demand linearly, but tx
-        # losses will be reduced 1/x^2-ly.
-        ratio     = total_req / g_remainder[gen]
-        demand    = demand / ratio
-        tx_losses = transmission_losses path, demand
-      end
-
-      g_remainder[gen]  -= demand + tx_losses.sum {|e, l| l }
-      l_remainder[node] -= demand
-
-      # TODO get a slightly more accurate way to calculate losses and the load
-      # traveling over lines
-      tx_losses.each do |edge, loss_delta|
-        @flows[edge]  += demand
-        # oof. this leads to floating-point errors, but we use this variable in `#transmission_losses`
-        #@losses[edge] += loss_delta 
-        @losses[edge]  = edge.power_loss @flows[edge] # inefficient, but we're dodging FP quirks
-      end
-
-      already_seen[node] << gen
     end
 
-    # Reach is always total. If there is too much load on an AC system, then the
-    # frequency will drop.
-    #
-    # But this is candy land, so we're going to say that the reach is just
-    # those nodes that have been "fully fed".
-    fully_fed = l_remainder.filter {|n, l| l >= 0 }.keys
-    @reach = DisjointGraph.new fully_fed
+    puts "Extra (-)/Needed (+): #{l_remainder.sum {|_, l| l }}"
+
+    # power of the load
+    p_l = groups.sum {|g, ds| ds.sum {|_, l| l } }
+
+    # rated power (of the generators)
+    p_r = generators.sum {|g| g.power }
+
+    puts freq_drop(p_l, p_r)
+    exit
+
+    # FIXME Need to get rid of this concept
+    @reach = DisjointGraph.new @loads
+  end
+
+  # https://electronics.stackexchange.com/a/546988
+  def freq_drop(p_l, p_r, droop=0.05, k_lr=0.02, f_s=60)
+    d_p = p_l.to_f - p_r
+
+    d_f = d_p / ((p_r / (f_s * droop)) + p_l * k_lr)
+    d_f
   end
 
   def flow_info(n=5)

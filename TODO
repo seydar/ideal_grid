@@ -22,18 +22,9 @@ TODO
 * Plot a choropleth of the US as a background
 * `Grid` only works with a ConnectedGraph. Is there a way to make it work with
   a DisjointGraph?
-* parallelize calculate flows
-  * each thread does its own subset of nodes and then the partial tallies are summed
-  * no, that wouldn't work, because they have interdependence on when a generator
-    can support more load
-  * maybe i can copy parallelization of the MST algorithm? does such a parallelization
-    exist?
-    * that wouldn't even work, because it's just fundamentally different and i don't think
-      MST can be parallelized
 * reduce_congestion - wow this bad boy uses a lot of RAM
   * gonna have to parallelize #reduce_congestion as well
 * producing DG connected subgraphs is slow
-* map all loads to OSM points so we can ensure that they connect to the grid
 * flow detection
   * instead of having a load be entirely powered along the path to the closest
     generator, have only a *proportion* be powered by that generator
@@ -41,6 +32,7 @@ TODO
     ALL possible paths to each generator, but this is close enough
 * reduce congestion:
   * need to take the two biggest CGs that contain the sources, not simply the two biggest CGs
+* get rid of the concept of reach
 
 TASKS
 -------------------------
@@ -79,6 +71,17 @@ DONE
     * rebuild the line simplification algorithms
 * Split out the grid.rb interface from interacting with the DB and
   having all relevant classes be available
+* map all loads to OSM points so we can ensure that they connect to the grid
+  * done for New England, at least. the data is so shitty that it doesn't even matter
+* parallelize calculate flows
+  * each thread does its own subset of nodes and then the partial tallies are summed
+  * no, that wouldn't work, because they have interdependence on when a generator
+    can support more load
+  * maybe i can copy parallelization of the MST algorithm? does such a parallelization
+    exist?
+    * that wouldn't even work, because it's just fundamentally different and i don't think
+      MST can be parallelized
+  * fixed by rewriting it entirely
 
 BUGGY RUNS
 ---------------------------------

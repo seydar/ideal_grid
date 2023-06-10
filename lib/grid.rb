@@ -448,14 +448,21 @@ class Grid
 
       demands.each do |node, demand, path|
         l_remainder[node] -= demand * ratio
+
+        # Update the flow
         path.each do |edge|
           @flows[edge] += demand * ratio
         end
       end
     end
 
-    # power of the load
-    p_l = groups.sum {|g, ds| ds.sum {|_, l, _| l } }
+    # Transmission loss is a price that *will* be paid.
+    @flows.each do |edge, flow|
+      @losses[edge] = edge.power_loss flow
+    end
+
+    # power of the load is the nodes plus tx loss
+    p_l = @loads.sum(&:load) + @losses.values.sum
 
     # rated power (of the generators)
     p_r = generators.sum {|g| g.power }
@@ -500,15 +507,14 @@ class Grid
 
   def info
     str = ""
-    str << "\tPower required: #{nodes.sum {|n| n.load }}\n"
-    total_load = @loads.sum(&:load) + losses.values.sum
+    node_load = @loads.sum(&:load)
+    tx_loss = losses.values.sum
+    total_load = node_load + tx_loss
     str << "\tTotal load: #{total_load.round 2}\n"
-    str << "\tFreq change: #{freq}"
-    str << "\t\tNodes: #{total_load}\n"
-    str << "\t\tTx losses: #{losses.values.sum.round(2)} "
-    str <<      "(#{(100 * losses.values.sum / total_load.to_f).round 2}%)\n"
-    efficiency = total_load / power.to_f
-    str << "\tEfficiency: #{efficiency}\n"
+    str << "\t\tNodes: #{node_load}\n"
+    str << "\t\tTx losses: #{tx_loss.round(2)} "
+    str <<      "(#{(100 * tx_loss / total_load.to_f).round 2}%)\n"
+    str << "\tFreq change: #{freq}\n"
     str << "\tPower: #{power} (#{generators.size} gens)\n"
     str << "\t\t#{generators.map {|g| g.power }}\n"
   end

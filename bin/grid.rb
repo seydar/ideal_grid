@@ -97,6 +97,7 @@ end
 
 time "Calculate flow" do 
 
+  # 0.12s on 1000 nodes and 13 generators
   grid.calculate_flows! # redundant; already done in `#grow_generators_for_unreached`
 
   puts grid.flow_info

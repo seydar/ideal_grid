@@ -23,6 +23,7 @@ class Grid
   BASE_FREQ       = 60 # Hz
 
   attr_accessor :nodes
+  attr_accessor :loads
   attr_accessor :generators
   attr_accessor :graph
   attr_accessor :freq
@@ -93,7 +94,6 @@ class Grid
     #
     # Eager loading because there's no need to be wasteful in our DB calls
     loads   = Load.eager(:point).filter(:point => cg_points).all
-    #sources = Source.eager(:point).filter{ (oper_cap > 0) & {:point => cg_points} }.all
     sources = Source.by_fuel_mix(fuel) { (oper_cap > 0) & {:point => cg_points} }
 
     loads.each do |l|
@@ -101,6 +101,7 @@ class Grid
     end
 
     gens = sources.map do |s|
+      nodes[s.point].load = 0
       Generator.new cg, nodes[s.point], s.oper_cap
     end
 

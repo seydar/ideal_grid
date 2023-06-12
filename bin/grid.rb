@@ -110,7 +110,17 @@ time "Reduce congestion" do
 
   added = []
   opts[:reduce].times do |i|
+    require 'ruby-prof'
+    RubyProf.start
+
     new_edges = grid.reduce_congestion
+
+    result = RubyProf.stop
+    printer = RubyProf::GraphHtmlPrinter.new result
+    open("prof.html", "w") do |f|
+      printer.print f
+    end
+
 
     # TODO Are certain edges more effective than others? How do we know?
     added << []

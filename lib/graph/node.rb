@@ -59,6 +59,7 @@ class Node
   # 
   # Edit: turns out it's not that much slower than an adjacency matrix
   def path_to(p_2, history=[])
+    raise "wow didn't realize this method was still used"
     return [] if p_2 == self
 
     p edges.size

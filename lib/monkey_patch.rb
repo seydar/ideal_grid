@@ -1,4 +1,5 @@
 require 'parallel'
+require 'matrix_boost'
 
 module Enumerable
   def parallel_map(cores: 3, &block)
@@ -47,6 +48,29 @@ end
 class Array
   def avg
     sum / size.to_f
+  end
+end
+
+
+class Matrix
+  def *(m)
+    MatrixBoost.multiply self, m
+  end
+
+  def **(n)
+    res = self
+    n.times { res = self * res }
+    res
+  end
+
+  # Reminder: there's no good reason to ever invert a matrix.
+  #
+  # Sparse matrix? Inversion will be dense.
+  #
+  # Solving a system of equations? Use Gauss-Jordan elimination to compute
+  # the reduced row echelon form (RREF).
+  def inverse
+    MatrixBoost.inverse self
   end
 end
 

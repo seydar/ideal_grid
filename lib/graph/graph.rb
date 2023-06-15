@@ -54,6 +54,7 @@ class Graph
 
   # BFS
   # Gets all edges. Some nodes will be reached twice in a cyclic graph.
+  # Args to the block: edge, from, to
   def traverse_edges(source, &block)
     visited = Set.new
 
@@ -67,20 +68,11 @@ class Graph
       queue << source
     end
 
-    i = 0
     until queue.empty?
       from = queue.shift
 
-      unless adjacencies[from]
-        p from
-        p source
-        p queue
-        pp caller
-      end
-
       adjacencies[from].each do |to, edge|
         unless visited.include? edge
-        i += 1
           block.call edge, from, to
           queue   << to
           visited << edge
@@ -95,6 +87,7 @@ class Graph
   # This traverses all edges and nodes in an acyclic graph
   # This traverses all nodes but does NOT traverse all edges in a cyclic
   # graph
+  # Args to the block: edge, from, to
   def traverse_nodes(source, &block)
     visited = Set.new
 

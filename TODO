@@ -24,6 +24,8 @@ TODO
 * No longer have the algorithm to build new generators. Where do we build new sources if
   there are already generators on the map?
 * How do we decide which generators to grow?
+* estrada index is standard for graph resilience
+* randic index? maybe? somehow?
 
 TASKS
 -------------------------

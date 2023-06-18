@@ -145,25 +145,14 @@ time "Reduce congestion" do
   show_plot unless opts[:quiet]
 end
 
-g2 = nil
-time "Fresh map", :run => false do
-  # Edges are preserved — now we're going to see about placing the
-  # generators elsewhere
-  g2 = Grid.new grid.nodes, []
-  g2.build_generators_for_unreached opts[:clusters]
-  g2.grow_generators_for_unreached
-  g2.build_generators_for_unreached opts[:clusters]
-  g2.grow_generators_for_unreached
-
-  puts g2.flow_info
-  puts g2.info
-
-  plot_flows g2, :n => 10
-  show_plot unless opts[:quiet]
+# Estrada takes too long
+time "Drakos resiliency" do
+  drak = grid.resiliency :drakos, 0.4
+  puts "\tDrakos: #{drak}"
 end
 
 ############################
 
-require 'irb'
-IRB.start
+#require 'irb'
+#IRB.start
 

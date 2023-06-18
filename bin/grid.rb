@@ -98,18 +98,12 @@ end
 
 time "Calculate flow" do 
 
-  require 'ruby-prof'
-  prof = RubyProf::Profile.new
-  prof.start
 
-  # 0.12s on 1000 nodes and 13 generators
-  grid.calculate_flows! # redundant; already done in `#grow_generators_for_unreached`
-
-  result = prof.stop
-  printer = RubyProf::GraphHtmlPrinter.new result
-  open("prof.html", "w") do |f|
-    printer.print f
+  profile do
+    # 0.12s on 1000 nodes and 13 generators
+    grid.calculate_flows! # redundant; already done in `#grow_generators_for_unreached`
   end
+
 
   puts grid.flow_info
 

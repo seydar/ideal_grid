@@ -80,3 +80,15 @@ class Matrix
   end
 end
 
+def profile(output="prof.html", &block)
+  require 'ruby-prof'
+  prof = RubyProf::Profile.new
+
+  result = prof.start do
+    block.call
+  end
+
+  printer = RubyProf::MultiPrinter.new result, [:graph_html, :tree]
+  printer.print :path => "profiling", :profile => "prof"
+end
+

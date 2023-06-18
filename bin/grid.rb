@@ -110,11 +110,12 @@ time "Reduce congestion" do
   added = []
   opts[:reduce].times do |i|
     require 'ruby-prof'
-    RubyProf.start
+    prof = RubyProf::Profile.new
+    prof.start
 
     new_edges = grid.reduce_congestion
 
-    result = RubyProf.stop
+    result = prof.stop
     printer = RubyProf::GraphHtmlPrinter.new result
     open("prof.html", "w") do |f|
       printer.print f

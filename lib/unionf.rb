@@ -1,7 +1,6 @@
 # https://github.com/schweigert/Unionf/blob/master/lib/unionf.rb
 # from schweigert (Marlon Henry Schweigert)
 
-# 6/18/23 I am now officially making this specific to nodes
 class UnionF
   attr_accessor :id
 
@@ -19,8 +18,8 @@ class UnionF
   def initialize elements
     @id = {}
     @sz = {}
-    @el = {}
-    elements.each {|n| @id[n.id] = n; @sz[n.id] = 1; @el[n.id] = n }
+    @el = []
+    elements.each {|n| @id[n] = n; @sz[n] = 1; @el << n }
   end
 
   def roots
@@ -30,7 +29,7 @@ class UnionF
   def disjoint_sets
     #@id.keys.group_by {|a| @id[a] }.values
     hash = {}
-    @id.keys.each {|k| (hash[find(@el[k]).id] ||= []) << @el[k] }
+    @id.keys.each {|k| (hash[find k] ||= []) << k }
     hash.values
   end
   alias_method :connected_subgraphs, :disjoint_sets
@@ -45,19 +44,19 @@ class UnionF
 
     return if a == b or a.nil? or b.nil?
 
-    a, b = b, a if @sz[a.id] >= @sz[b.id]
+    a, b = b, a if @sz[a] >= @sz[b]
 
-    @id[a.id]  = b
-    @sz[a.id] += @sz[b.id]
-    @sz[b.id]  = @sz[a.id]
+    @id[a]  = b
+    @sz[a] += @sz[b]
+    @sz[b]  = @sz[a]
   end
 
   # I think the path compression is not great here. I have to look up
   # every element again in order to do full path compression in order to get
   # the disjoint sets
   def find a
-    return a if @id[a.id] == a
-    @id[a.id] = find @id[a.id]
+    return a if @id[a] == a
+    @id[a] = find @id[a]
   end
 
   def size
@@ -66,11 +65,11 @@ class UnionF
 
   def size? a
     a = find a
-    @sz[a.id]
+    @sz[a]
   end
 
   def elements
-    @el.values
+    @el
   end
 
   def pair_search a, b

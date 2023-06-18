@@ -207,8 +207,8 @@ module Flow
 
     # For each CG, find another CG from another generator (outwardly expanding)
     # that can beat the current distance to a generator
-    new_edges = bounds.parallel_map(:cores => 8) do |src, dist|
-    #new_edges = bounds.map do |src, dist|
+    #new_edges = bounds.parallel_map(:cores => 8) do |src, dist|
+    new_edges = bounds.map do |src, dist|
       new_edges = generators.map do |gen|
         # fuck it, dist - 1 is made up
         # How do we *actually* know whether we've sufficiently expanded a group

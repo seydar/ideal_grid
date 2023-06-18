@@ -16,7 +16,7 @@ module Resilience
 
     # Now we can actually do the parallelization and have `@paths` be copied
     # to the child processes
-    sigmas = nodes.parallel_map(:cores => 4) {|v| sigma(v, mu) }
+    sigmas = nodes.parallel_map {|v| sigma(v, mu) }
 
     if sigmas.min == 0
       0

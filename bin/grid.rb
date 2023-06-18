@@ -19,10 +19,12 @@ EOS
   opt :clusters, "How many nodes per generator", :type => :integer, :default => 10
   opt :reduce, "How many times should we try to reduce congestion", :type => :integer, :default => 1
   opt :quiet, "Don't show the graphs", :type => :boolean
+  opt :parallel, "How many cores to use", :type => :integer, :default => 4
 end
 
 grid, nodes, edges = nil
-$elapsed = 0
+$elapsed  = 0
+$parallel = opts[:parallel] == 0 ? false : opts[:parallel]
 
 time "Edge production" do
 
@@ -96,8 +98,18 @@ end
 
 time "Calculate flow" do 
 
+  require 'ruby-prof'
+  prof = RubyProf::Profile.new
+  prof.start
+
   # 0.12s on 1000 nodes and 13 generators
   grid.calculate_flows! # redundant; already done in `#grow_generators_for_unreached`
+
+  result = prof.stop
+  printer = RubyProf::GraphHtmlPrinter.new result
+  open("prof.html", "w") do |f|
+    printer.print f
+  end
 
   puts grid.flow_info
 
@@ -109,18 +121,8 @@ time "Reduce congestion" do
 
   added = []
   opts[:reduce].times do |i|
-    require 'ruby-prof'
-    prof = RubyProf::Profile.new
-    prof.start
 
     new_edges = grid.reduce_congestion
-
-    result = prof.stop
-    printer = RubyProf::GraphHtmlPrinter.new result
-    open("prof.html", "w") do |f|
-      printer.print f
-    end
-
 
     # TODO Are certain edges more effective than others? How do we know?
     added << []

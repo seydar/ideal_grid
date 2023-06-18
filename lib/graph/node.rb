@@ -1,4 +1,7 @@
 class Node
+  @@distances = {}
+  def self.distances; @@distances; end
+
   attr_accessor :x
   attr_accessor :y
   attr_accessor :edges
@@ -48,7 +51,8 @@ class Node
   end
 
   def euclidean_distance(p_2)
-    Math.sqrt((self.x - p_2.x) ** 2 + (self.y - p_2.y) ** 2)
+    key = [self.id, p_2.id].sort
+    @@distances[key] ||= Math.sqrt((self.x - p_2.x) ** 2 + (self.y - p_2.y) ** 2)
   end
 
   # No guarantee that path is shortest

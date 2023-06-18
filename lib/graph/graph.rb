@@ -31,21 +31,22 @@ class Graph
   def adjacencies
     return @adjacencies if @adjacencies
 
+    set = Set.new nodes
     @adjacencies = {}
     nodes.each do |node|
 
-      @adjacencies[node]  = []
+      @adjacencies[node] = []
       node.edges.each do |edge|
         other = edge.not_node node
 
         # We use the edge length later on, so we might as well store it here
         # The `if` statement here is because these nodes are otherwise
-        # completely connected, so we want to make sure that this graph is
-        # restricted to the subset of nodes that we pass in.
+        # connected, so we want to make sure that this graph is restricted to
+        # the subset of nodes that we pass in.
         #
         # You are correct in thinking that I did not myself remember this
         # for many hours.
-        @adjacencies[node] << [other, edge] if nodes.include? other
+        @adjacencies[node] << [other, edge] if set.include? other
       end
     end
 

@@ -111,22 +111,6 @@ module Flow
     d_f
   end
 
-  # grow a CG by a certain number of steps
-  # could prolly be moved into the CG class
-  def expand(cg, steps: 5)
-    handful = cg.nodes
-
-    steps.times do
-      border_nodes = handful.map do |node|
-        node.edges.map {|e| e.not_node node }
-      end.flatten
-      new_nodes = border_nodes - handful
-      handful += new_nodes
-    end
-
-    ConnectedGraph.new handful
-  end
-
   def nodes_near(edge: nil, distance: 0)
     p1, p2 = *edge.nodes
     min_x, max_x = [p1.x, p2.x].min, [p1.x, p2.x].max
@@ -146,23 +130,18 @@ module Flow
 
   # Find the two closest nodes between the two CGs and draw a straight line
   # between them
-  #
-  # TODO make this use `#min` instead of `#sort_by`
-  # TODO maybe make this parallel?
-  # TODO oh interesting -- the `#product` call usually only ends up being on
-  # the order of several thousand. Not enough to warrant too much work.
   def connect_graphs(cg1, cg2)
     # Get the list of possible edges
     # Sort with the shortest distance first
     # (we check later on to see if the edge already exists)
-    rankings = cg1.nodes.product(cg2.nodes).map do |a, b|
+    closest = cg1.nodes.product(cg2.nodes).map do |a, b|
       [a, b, a.euclidean_distance(b)]
-    end.sort_by {|_, _, v| v }
+    end.min_by {|_, _, v| v }
 
     # DON'T mark the nodes -- simply provide the edge that accomplishes the mission.
-    [Edge.new(rankings[0][0], rankings[0][1], rankings[0][2], :id => PRNG.rand),
-     rankings[0][0],
-     rankings[0][1]]
+    [Edge.new(closest[0], closest[1], closest[2], :id => PRNG.rand),
+     closest[0],
+     closest[1]]
   end
 
   def reduce_congestion
@@ -228,12 +207,13 @@ module Flow
 
     # For each CG, find another CG from another generator (outwardly expanding)
     # that can beat the current distance to a generator
-    new_edges = bounds.map do |src, dist|
+    new_edges = bounds.parallel_map(:cores => 8) do |src, dist|
+    #new_edges = bounds.map do |src, dist|
       new_edges = generators.map do |gen|
         # fuck it, dist - 1 is made up
         # How do we *actually* know whether we've sufficiently expanded a group
         # in our attempts to connect to it?
-        tgt = expand ConnectedGraph.new([gen.node]), :steps => (dist - 3)
+        tgt = ConnectedGraph.new([gen.node]).expand :steps => (dist - 3)
 
         # Find the ideal edge to connect these graphs
         e, _, _ = connect_graphs src, tgt

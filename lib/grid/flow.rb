@@ -112,6 +112,7 @@ module Flow
   end
 
   # grow a CG by a certain number of steps
+  # could prolly be moved into the CG class
   def expand(cg, steps: 5)
     handful = cg.nodes
 
@@ -145,13 +146,17 @@ module Flow
 
   # Find the two closest nodes between the two CGs and draw a straight line
   # between them
+  #
+  # TODO make this use `#min` instead of `#sort_by`
+  # TODO maybe make this parallel?
+  # TODO oh interesting -- the `#product` call usually only ends up being on
+  # the order of several thousand. Not enough to warrant too much work.
   def connect_graphs(cg1, cg2)
     # Get the list of possible edges
-    # Filter to only include those that don't currently exist
     # Sort with the shortest distance first
+    # (we check later on to see if the edge already exists)
     rankings = cg1.nodes.product(cg2.nodes).map do |a, b|
       [a, b, a.euclidean_distance(b)]
-    #end.filter {|a, b, d| not a.edge?(b) }.sort_by {|_, _, v| v }
     end.sort_by {|_, _, v| v }
 
     # DON'T mark the nodes -- simply provide the edge that accomplishes the mission.

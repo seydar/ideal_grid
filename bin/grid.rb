@@ -17,13 +17,12 @@ EOS
 
   opt :nodes, "Number of nodes in the grid", :type => :integer, :default => 100
   opt :clusters, "How many nodes per generator", :type => :integer, :default => 10
-  opt :intermediate, "Show intermediate graphics of flow calculation", :type => :integer
   opt :reduce, "How many times should we try to reduce congestion", :type => :integer, :default => 1
+  opt :quiet, "Don't show the graphs", :type => :boolean
 end
 
 grid, nodes, edges = nil
 $elapsed = 0
-$intermediate = opts[:intermediate]
 
 time "Edge production" do
 
@@ -103,7 +102,7 @@ time "Calculate flow" do
   puts grid.flow_info
 
   plot_flows grid, :n => 100
-  show_plot
+  show_plot unless opts[:quiet]
 end
 
 time "Reduce congestion" do
@@ -150,7 +149,7 @@ time "Reduce congestion" do
 
   plot_flows grid, :n => 10
   plot_edges added.flatten, :color => "green", :width => 3
-  show_plot
+  show_plot unless opts[:quiet]
 end
 
 g2 = nil
@@ -167,11 +166,11 @@ time "Fresh map", :run => false do
   puts g2.info
 
   plot_flows g2, :n => 10
-  show_plot
+  show_plot unless opts[:quiet]
 end
 
 ############################
 
-#require 'pry'
-#binding.pry
+require 'irb'
+IRB.start
 

@@ -1,7 +1,10 @@
 require 'set'
 require_relative "../siting.rb"
+require_relative "resilience.rb"
 
 class Graph
+  include Resilience
+
   attr_accessor :nodes
 
   # Need to specify the nodes, and then restrict the edges to only those
@@ -50,6 +53,20 @@ class Graph
         @adjacencies[node] << [other, edge] if nodes.include? other
       end
     end
+  end
+
+  def adjacency_matrix
+    return @adj if @adj
+
+    adj = nodes.size.times.map { [0] * nodes.size }
+
+    nodes.each do |node|
+      @adjacencies[node].each do |other, edge|
+        adj[node.id][other.id] = 1
+      end
+    end
+
+    @adj = Matrix[*adj]
   end
 
   # BFS

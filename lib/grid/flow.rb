@@ -261,9 +261,20 @@ module Flow
       [src, tgt, e, new_dist]
     end
 
+    convert_from_parallel new_edges
+
     new_edges
   end
 
+  # The nodes get copied across processes during parallelization, and so
+  # while all of their details may be correct, they'll refer to the wrong
+  # objects, so we need to ensure that the references point to the nodes in *this*
+  # process.
+  def convert_from_parallel(edges)
+    edges.each do |_, _, edge|
+      edge.nodes = edge.nodes.map {|n| @map[n.id] }
+    end
+  end
 
   def flow_info(n=5)
     str = ""

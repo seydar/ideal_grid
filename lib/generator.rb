@@ -1,7 +1,6 @@
 class Generator
-  attr_reader :node
-  attr_reader :graph
-
+  attr_accessor :graph
+  attr_accessor :node
   attr_accessor :power
   
   def initialize(graph, node, power=0)

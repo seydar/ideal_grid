@@ -4,15 +4,21 @@ module Flow
   # The `node` we're connecting to (we need to know the paths)
   # The `gens` that still have available capacity
   def fractional_share(node, gens)
+    raise if node.edges.size == 0
     options   = gens.map {|g| g.path_to node }
   
     # This is to get the proper ratios
     # derived from the formula for parallel resistors
-    fractions = options.map {|p| 1.0 / p.length }
+    fractions = options.map {|p| 1.0 / total_resistance(p) }
     fractions = fractions.map {|f| f / fractions.sum }
   
     # {gen => [path, frac]}
     gens.zip(options.zip(fractions)).to_h
+  end
+
+  # one day this will have more meaning
+  def total_resistance(edges)
+    edges.sum(&:resistance)
   end
 
   # the `#max` is for FP errors

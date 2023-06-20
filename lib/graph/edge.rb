@@ -25,6 +25,11 @@ class Edge
     @voltage = voltage
   end
 
+  # one day this will have more meaning
+  def resistance
+    length * R_I_a
+  end
+
   # Joule's effect (in reference to Joule heating,
   # https://en.wikipedia.org/wiki/Joule_heating) says that we're going to lose
   # power to heating, since transmission lines will have non-zero resistance.

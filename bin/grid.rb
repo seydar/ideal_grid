@@ -24,7 +24,7 @@ end
 
 grid, nodes, edges = nil
 $elapsed  = 0
-$parallel = opts[:parallel] == 0 ? false : opts[:parallel]
+$parallel = opts[:parallel] <= 1 ? false : opts[:parallel]
 
 time "Edge production" do
 

@@ -71,7 +71,7 @@ module Resilience
   # P_v[n] = paths of length n starting from v
   def count_paths_from(v, length: P_0)
     return 0 if length <= 0
-    paths(:length => length).row_vectors[v.id].sum
+    paths(:length => length).row_vectors[@spots[v]].sum
   end
 
   # Only count the top-right diagonal half of the matrix
@@ -109,7 +109,7 @@ module Resilience
   end
 
   def count_triangles_from(v)
-    walk_matrix(3)[v.id, v.id]
+    walk_matrix(3)[@spots[v], @spots[v]]
   end
 
   def count_triangles

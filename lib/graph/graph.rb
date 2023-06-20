@@ -12,6 +12,7 @@ class Graph
     raise unless nodes[0] == nil ||
                  nodes[0].class == Node
     @nodes = nodes
+    @spots = nodes.map.with_index.to_h
     @adjacencies = nil
 
     adjacencies
@@ -60,7 +61,7 @@ class Graph
 
     nodes.each do |node|
       @adjacencies[node].each do |other, edge|
-        adj[node.id][other.id] = 1
+        adj[@spots[node]][@spots[other]] = 1
       end
     end
 
@@ -131,6 +132,66 @@ class Graph
     end
 
     visited
+  end
+
+  # Removes excess nodes (where load == 0) and produces new edges
+  def simplify(keep: [])
+    # Save loads and junctions
+    set          = Set.new(nodes.filter {|n| n.load > 0 || n.edges.size > 2 } +
+                           keep)
+    loads_n_jxns = set.to_a # remove possible duplicates from `keep`
+
+    # Take each node we want to keep in our Brave New World
+    #   Follow their edges until we get to a saveable node
+    #   Create an edge from our node to the next saveable node
+    new_edges = loads_n_jxns.map do |node|
+      node.edges.map do |edge|
+        [node, follow(edge.not_node(node), :from => node, :within => set)]
+      end
+    end
+
+    # New nodes for the new world
+    new_nodes = loads_n_jxns.map(&:dup)
+    new_nodes.each {|n| n.edges = [] }
+    lookup = new_nodes.map {|n| [n.id, n] }.to_h
+    
+    # Now we need to convert the edges to the new edges
+    #   flatten it all to be [[from, to], ...]
+    new_edges = new_edges.flatten(1).filter {|_, n_2| n_2 }
+
+    #   remove duplicates (in case of two dumb paths between two loads)
+    new_edges = new_edges.map {|pair| pair.sort_by(&:id) }.uniq
+
+    #   look up the nodes to be their new clones
+    #   create the edges
+    new_edges = new_edges.map.with_index do |(from, to), i|
+      p_1  = lookup[from.id]
+      p_2  = lookup[to.id]
+      dist = p_1.euclidean_distance p_2
+
+      Edge.new p_1, p_2, dist, :id => i
+    end
+
+    # Okay, now we have the edges that will exist in our new world
+    new_edges.each {|e| e.mark_nodes! }
+
+    new_nodes
+  end
+
+  # Assumes no junctions, so each node will only have 2 edges
+  def follow(node, from: nil, within: [])
+    return node if node.edges.size > 2
+
+    nxt = (node.edges.map(&:nodes).flatten - [from, node])[0]
+
+    if within.include? nxt
+      nxt
+    elsif nxt.nil?
+      # TODO throw a print in here to make sure it's right
+      nil
+    else
+      follow nxt, :from => node, :within => within
+    end
   end
 
   def load

@@ -162,12 +162,17 @@ class Graph
     #   remove duplicates (in case of two dumb paths between two loads)
     new_edges = new_edges.map {|pair| pair.sort_by(&:id) }.uniq
 
+    #   remove edges where p_1 == p_2 because a useless loop was removed
+    new_edges = new_edges.filter {|p_1, p_2| p_1 != p_2 }
+
     #   look up the nodes to be their new clones
     #   create the edges
     new_edges = new_edges.map.with_index do |(from, to), i|
       p_1  = lookup[from.id]
       p_2  = lookup[to.id]
       dist = p_1.euclidean_distance p_2
+
+      raise if p_1 == p_2
 
       Edge.new p_1, p_2, dist, :id => i
     end

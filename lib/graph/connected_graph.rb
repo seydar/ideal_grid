@@ -15,9 +15,15 @@ class ConnectedGraph < Graph
 
     steps.times do
       border_nodes = handful.map do |node|
-        node.edges.map {|e| e.not_node node }
+        ns = node.edges.map {|e| e.not_node node }
+        if ns.any?(&:nil?)
+          require 'pry'
+          binding.pry
+        end
+        ns
       end.flatten
       new_nodes = border_nodes - handful
+
       handful += new_nodes
     end
 

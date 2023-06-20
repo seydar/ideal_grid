@@ -70,7 +70,6 @@ module Flow
     # => {edge => flow}
     @flows    = Hash.new {|h, k| h[k] = 0 }
   
-    # TODO FIXME actually fill out these values
     # => {edge => transmission losses}, so we only recalculate the ones we need
     @losses   = Hash.new {|h, k| h[k] = 0 }
 
@@ -265,7 +264,11 @@ module Flow
 
       tgt, e, new_dist = new_edges.min_by {|_, _, d| d }
       [src, tgt, e, new_dist]
-    end
+    end.filter {|_, _, e, d| e && d }
+
+    # Potentially, there might be *no* new edges to build, so `new_edges`
+    # would have an entry where the third and fourth elements are `nil`
+    # (from the call to `#min_by` above), hence the `#filter` call above.
 
     convert_from_parallel new_edges
 

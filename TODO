@@ -2,34 +2,28 @@ TODO
 -----------------------------
 * move filter_kruskal.rb into graph.rb
 * also integrate k_means_pp.rb et al into graph.rb
-* **ADD PARALLELIZATION SERIALIZATION METHOD TO EASE PARALLELIZATION**
-  * for when dealing with the serialization of objects (mapping the copies
-    to their originals based on IDs/returning IDs instead of modifying
-    objects) across parallelization boundaries
 
 * How do we decide whether to enlarge a generator or build a new one?
   * there is currently no method to this madness
 
 * Physarum polycephalum is the bacteria that can develop optimal transportation networks
-* Randić index could be useful?
-  * https://www.sciencedirect.com/science/article/pii/S0972860017301408
 
 * Add DB caching via memcache
 * Plot a choropleth of the US as a background
 * `Grid` only works with a ConnectedGraph. Is there a way to make it work with
   a DisjointGraph?
-* reduce_congestion - wow this bad boy uses a lot of RAM
-  * gonna have to parallelize #reduce_congestion as well
 * producing DG connected subgraphs is slow
 * No longer have the algorithm to build new generators. Where do we build new sources if
   there are already generators on the map?
 * How do we decide which generators to grow?
-* estrada index is standard for graph resilience
-* randic index? maybe? somehow?
+
+* Grid#simplify seems to fundamentally change the graph when it simplifies them
+  * peak congestion is different
+  * thus can't trust any congestion reduction
+* introduce non-load nodes to theoretical grid
 
 TASKS
 -------------------------
-* verify #reduce_congestion works on NEW_ENGLAND
 * import "miso_north_tx_lines.geosjon"
 
 DONE
@@ -83,6 +77,18 @@ DONE
   * a true real-world sim would have some fraction of the voltage travel along
     ALL possible paths to each generator, but this is close enough
 * get rid of the concept of reach
+* estrada index is standard for graph resilience
+* randic index? maybe? somehow?
+* Randić index could be useful?
+  * https://www.sciencedirect.com/science/article/pii/S0972860017301408
+* reduce_congestion - wow this bad boy uses a lot of RAM
+  * gonna have to parallelize #reduce_congestion as well
+* verify #reduce_congestion works on NEW_ENGLAND
+  * well... it works on a simplified version
+* **ADD PARALLELIZATION SERIALIZATION METHOD TO EASE PARALLELIZATION**
+  * for when dealing with the serialization of objects (mapping the copies
+    to their originals based on IDs/returning IDs instead of modifying
+    objects) across parallelization boundaries
 
 BUGGY RUNS
 ---------------------------------

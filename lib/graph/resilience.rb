@@ -59,6 +59,8 @@ module Resilience
 
   # P_v[1] * P_v[2] + P_v[3]
   #
+  # Which says: (paths of length 1) * (paths of length 2) + (paths of length 3)
+  #
   # I think? I kinda made that up based on reading a stack overflow answer
   # Man I wish I knew if any of this was right
   def count_paths_thru(v, length: P_0)

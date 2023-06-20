@@ -146,9 +146,11 @@ time "Reduce congestion" do
 end
 
 # Estrada takes too long
-time "Drakos resiliency", :run => false do
-  drak = grid.resiliency :drakos, 0.4
-  puts "\tDrakos: #{drak}"
+time "Drakos resiliency" do
+  #profile do
+    drak = grid.resiliency :drakos, 0.4
+    puts "\tDrakos: #{drak}"
+  #end
 end
 
 ############################

@@ -89,6 +89,9 @@ class ConnectedGraph < Graph
   # This used to be like 8s on 500 nodes and 10 clusters, and now
   # it's 0.2s
   #
+  # Given a `from`, it computes the paths along ALL other edges
+  # So if we have a `from` entry, then we also have a `to` entry
+  #
   # Note: this only returns the minimum # of edges to a node. Dijkstra's
   # algorithm is what is required in order to account for edge weight
   # 
@@ -98,14 +101,26 @@ class ConnectedGraph < Graph
     @paths ||= {}
 
     return [] if from == to
-    return @paths[from][to] if @paths[from]
+    return @paths[from][to][:path] if @paths[from]
 
-    @paths[from] = {from => []}
-    traverse_edges from do |edge, sta, iin|
-      @paths[from][iin] = @paths[from][sta] + [edge]
+    src = from # just to make the below code easier to read
+    @paths[src] = {src => {:weight => 0, :path => []}}
+
+    # `sta` has been seen and thus always has an entry
+    traverse_edges src do |edge, sta, iin|
+      route = @paths[src][iin] || {:weight => Float::INFINITY,
+                                   :path   => []}
+
+      # If we have a shorter path, use the new one
+      if route[:weight] > @paths[src][sta][:weight] + edge.length
+        route[:weight] = @paths[src][sta][:weight] + edge.length
+        route[:path]   = @paths[src][sta][:path] + [edge]
+      end
+
+      @paths[src][iin] = route
     end
 
-    @paths[from][to]
+    @paths[from][to][:path]
   end
 
   # Spoil the cache

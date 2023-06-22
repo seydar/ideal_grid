@@ -21,6 +21,7 @@ TODO
   * peak congestion is different
   * thus can't trust any congestion reduction
 * introduce non-load nodes to theoretical grid
+* change ConnectedGraph#path_to to be about edge weight instead of # of edges
 
 TASKS
 -------------------------

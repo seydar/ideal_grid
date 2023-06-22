@@ -91,6 +91,9 @@ class ConnectedGraph < Graph
   #
   # Note: this only returns the minimum # of edges to a node. Dijkstra's
   # algorithm is what is required in order to account for edge weight
+  # 
+  # FIXME need to make this use edge weight/length so that grid
+  # simplification will reasonably work
   def path(from: nil, to: nil)
     @paths ||= {}
 

@@ -4,6 +4,7 @@ require 'matrix_boost'
 module Enumerable
   def parallel_map(cores: $parallel, &block)
     return map(&block) unless $parallel
+    return [] if size == 0
 
     n = (size.to_f / cores).ceil
 

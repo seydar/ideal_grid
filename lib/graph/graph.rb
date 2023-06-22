@@ -60,7 +60,7 @@ class Graph
     adj = nodes.size.times.map { [0] * nodes.size }
 
     nodes.each do |node|
-      @adjacencies[node].each do |other, edge|
+      adjacencies[node].each do |other, edge|
         adj[@spots[node]][@spots[other]] = 1
       end
     end

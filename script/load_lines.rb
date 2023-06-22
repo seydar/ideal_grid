@@ -9,16 +9,7 @@ require_relative "../scratch/polygon.rb"
 #
 # Ugh. Maybe I ultimately have to run the data on the entire country at
 # once. Not fun.
-#
-# Maybe a lil bit of parallelization in the `join_points` method would make
-# this palatable.
 #####################################
-
-def centroid(nodes)
-  x = nodes.map {|n| n.x }.avg
-  y = nodes.map {|n| n.y }.avg
-  [x, y]
-end
 
 points = nil
 lines = nil

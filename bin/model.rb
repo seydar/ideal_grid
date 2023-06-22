@@ -86,7 +86,7 @@ end
 added = []
 
 grid = ng
-time "Reducing congestion", :run => false do
+time "Reducing congestion" do
 
   added = []
   opts[:reduce].times do |i|

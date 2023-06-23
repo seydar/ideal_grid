@@ -107,51 +107,54 @@ time "Calculate flow" do
   show_plot unless opts[:quiet]
 end
 
-time "Drakos resiliency on the base grid" do
+time "Drakos resiliency on the base grid", :run => false do
   drak = grid.resiliency :drakos, 0.4
   puts "\tDrakos: #{drak}"
 end
 
 time "Reduce congestion" do
 
-  added = []
-  opts[:reduce].times do |i|
+  new_edges = grid.reduce_congestion
 
-    new_edges = grid.reduce_congestion
+  sorting_info = new_edges.map do |src, tgt, edge, dist|
+    if edge.length < 0.5
+      edge.attach!
+      grid.reset!
+      edge.detach!
 
-    # TODO Are certain edges more effective than others? How do we know?
-    added << []
-    new_edges.each do |src, tgt, edge, dist|
-      if edge.length < 0.5
-        added[-1] << edge
-        edge.attach!
-      end
+      [edge, grid.flows[edge], grid.transmission_loss[1]]
     end
+  end.compact
 
-    grid.reset!
+  puts "\tEdge info:"
+  # maximize flow, minimize distance
+  ranked = sorting_info.sort_by {|e, f| f / e.length }
+  added  = ranked[(0.75 * ranked.size).to_i..-1].reverse.map do |e, f, l|
+    puts "\t\tRank: #{(f / e.length).round(2)}, Length: #{e.length.round(2)}, Flow: #{f.round(2)}, Tx loss: #{l.round(2)}"
 
-    puts grid.flow_info
-    puts grid.info
-
-    added[-1].each do |edge|
-      edge.detach! if grid.flows[edge] == 0
-    end
-
-    qual    = added[-1].size
-    no_flow = added[-1].count {|e| grid.flows[e] == 0 }
-
-    puts "\tQualifying edges: #{qual}"
-    puts "\tNo-flow edges: #{no_flow}"
-    puts "\tNew edges: #{qual - no_flow}"
+    e.attach!
+    e
   end
 
+  grid.reset!
+
+  puts grid.flow_info
+  puts grid.info
+
+  qual = new_edges.size
+  t_l  = added.sum(&:length)
+
+  puts "\tQualifying edges: #{qual}"
+  puts "\tLow-flow edges: #{qual - added.size}"
+  puts "\tNew edges: #{added.size} (total length: #{t_l}) "
+
   plot_flows grid, :n => 10
-  plot_edges added.flatten, :color => "green", :width => 3
+  plot_edges added, :color => "green", :width => 3
   show_plot unless opts[:quiet]
 end
 
 # Estrada takes too long
-time "Drakos resiliency on the new grid" do
+time "Drakos resiliency on the new grid", :run => false do
   #profile do
     drak = grid.resiliency :drakos, 0.4
     puts "\tDrakos: #{drak}"

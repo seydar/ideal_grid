@@ -170,6 +170,14 @@ class Grid
     graph.manhattan_distance :from => cg1.median_node, :to => cg2.median_node
   end
 
+  def transmission_loss
+    node_load = @loads.sum(&:load)
+    tx_loss = losses.values.sum
+    total_load = node_load + tx_loss
+
+    [tx_loss, (100 * tx_loss / total_load.to_f).round(2)]
+  end
+
   def info
     str = ""
     node_load = @loads.sum(&:load)

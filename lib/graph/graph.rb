@@ -150,8 +150,8 @@ class Graph
 
   # Removes excess nodes (where load == 0) and produces new edges
   def simplify(keep: [])
-    # Save loads and junctions
-    set          = Set.new(nodes.filter {|n| n.load > 0 || n.edges.size > 2 } +
+    # Save loads and junctions and dead-ends (to preserve # of paths)
+    set          = Set.new(nodes.filter {|n| n.load > 0 || n.edges.size != 2 } +
                            keep)
     loads_n_jxns = set.to_a # remove possible duplicates from `keep`
 
@@ -160,7 +160,8 @@ class Graph
     #   Create an edge from our node to the next saveable node
     new_edges = loads_n_jxns.map do |node|
       node.edges.map do |edge|
-        [node, follow(edge.not_node(node), :from => node, :within => set)]
+        nxt, dist = follow(edge.not_node(node), :from => node, :within => set)
+        [node, nxt, dist + edge.length]
       end
     end
 
@@ -171,20 +172,20 @@ class Graph
     
     # Now we need to convert the edges to the new edges
     #   flatten it all to be [[from, to], ...]
-    new_edges = new_edges.flatten(1).filter {|_, n_2| n_2 }
+    new_edges = new_edges.flatten(1).filter {|_, n_2, _| n_2 }
 
     #   remove duplicates (in case of two dumb paths between two loads)
-    new_edges = new_edges.map {|pair| pair.sort_by(&:id) }.uniq
+    new_edges = new_edges.uniq {|n_1, n_2, _| [n_1.id, n_2.id].sort }
 
     #   remove edges where p_1 == p_2 because a useless loop was removed
-    new_edges = new_edges.filter {|p_1, p_2| p_1 != p_2 }
+    new_edges = new_edges.filter {|p_1, p_2, _| p_1 != p_2 }
 
     #   look up the nodes to be their new clones
     #   create the edges
-    new_edges = new_edges.map.with_index do |(from, to), i|
+    new_edges = new_edges.map.with_index do |(from, to, dist), i|
       p_1  = lookup[from.id]
       p_2  = lookup[to.id]
-      dist = p_1.euclidean_distance p_2
+      #dist = p_1.euclidean_distance p_2
 
       raise if p_1 == p_2
 
@@ -199,17 +200,19 @@ class Graph
 
   # Assumes no junctions, so each node will only have 2 edges
   def follow(node, from: nil, within: [])
-    return node if node.edges.size > 2
+    return [node, 0] if node.edges.size > 2
 
-    nxt = (node.edges.map(&:nodes).flatten - [from, node])[0]
+    nxt  = (node.edges.map(&:nodes).flatten - [from, node])[0]
+    edge = node.edges.find {|e| e.nodes.include? nxt }
 
     if within.include? nxt
-      nxt
+      [nxt, edge.length]
     elsif nxt.nil?
       # TODO throw a print in here to make sure it's right
-      nil
+      [nil, 0]
     else
-      follow nxt, :from => node, :within => within
+      n, d = follow nxt, :from => node, :within => within
+      [n, d + edge.length]
     end
   end
 

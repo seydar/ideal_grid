@@ -53,7 +53,6 @@ module Resilience
 
     if n == 1
       if sources
-        puts "trying the new thing"
         # we start at the generators, but can then go anywhere
         @walks[n] ||= source_adjacency_matrix sources
       else
@@ -107,10 +106,13 @@ module Resilience
     return @mat_paths if @mat_paths
 
     rows = adjacency_matrix.row_size
-    i = Matrix.identity rows
-    a_3 = walk_matrix 3
-    a_2 = walk_matrix 2
-    a   = walk_matrix 1, :sources => sources
+    i    = Matrix.identity rows
+
+    # This one needs to be first
+    # probs a code smell
+    a    = walk_matrix 1, :sources => sources
+    a_3  = walk_matrix 3
+    a_2  = walk_matrix 2
 
     @mat_paths = a_3 - i.hadamard_product(a_2) * a -
                    i.hadamard_product(a_3) -

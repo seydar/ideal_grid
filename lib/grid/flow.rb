@@ -157,7 +157,7 @@ module Flow
      closest[1]]
   end
 
-  def reduce_congestion
+  def reduce_congestion(percentiles=(5..8))
     grouped_flows   = flows.group_by {|e, f| f }
     group_keys      = grouped_flows.keys.sort
 
@@ -200,8 +200,9 @@ module Flow
       end
     end
 
-    range = percentile[10][6..8]
-    selected_flows  = group_keys[range].map {|k| grouped_flows[k] }.flatten 1
+    # traditionally percentiles = 5..8
+    range = percentile[10][percentiles]
+    selected_flows = group_keys[range].map {|k| grouped_flows[k] }.flatten 1
 
     s_es = selected_flows.map {|e, f| e }
 

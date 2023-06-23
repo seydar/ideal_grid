@@ -20,11 +20,14 @@ EOS
   opt :reduce, "How many times should we try to reduce congestion", :type => :integer, :default => 1
   opt :quiet, "Don't show the graphs", :type => :boolean
   opt :parallel, "How many cores to use", :type => :integer, :default => 4
+  opt :edges, "Max number of edges to build", :type => :integer, :default => 4
+  opt :percentiles, "Which percentiles to pull from (low..high)", :type => :string, :default => "5..8"
 end
 
 grid, nodes, edges = nil
 $elapsed  = 0
 $parallel = opts[:parallel] <= 1 ? false : opts[:parallel]
+opts[:percentiles] = Range.new(*opts[:percentiles].split("..").map(&:to_i))
 
 time "Edge production" do
 
@@ -114,14 +117,18 @@ end
 
 time "Reduce congestion" do
 
-  new_edges = grid.reduce_congestion
+  puts "\tPercentiles: #{opts[:percentiles]}"
+  new_edges = grid.reduce_congestion opts[:percentiles]
 
   # Hard ceiling on the edge length
   candidates = new_edges.map {|_, _, e, _| e.length < 0.5 ? e : nil }.compact
 
   # potentially thousands of trials to run
-  trials = (1..candidates.size).map {|i| candidates.combination(i).to_a }.flatten(1)
+  # We're only interested in building up to 4 edges here, since we're trying
+  # to show bang for buck
+  trials = (1..opts[:edges]).map {|i| candidates.combination(i).to_a }.flatten(1)
 
+  puts "\tMax # of edges to build: #{opts[:edges]}"
   puts "\t#{candidates.size} candidates, #{trials.size} trials"
 
   # Test out each combination.

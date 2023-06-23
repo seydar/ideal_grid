@@ -75,7 +75,7 @@ class Grid
                :id => line.id,
                :voltage => line.voltage
     end
-    edges.each {|e| e.mark_nodes! }
+    edges.each {|e| e.attach! }
 
     # The nodes are likely disjoint, and we can only operate on a connected
     # graph, so we're going to use our tooling to find the largest connected

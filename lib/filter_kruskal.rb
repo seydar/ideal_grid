@@ -18,7 +18,7 @@ def kruskal(edges, uf, mst=[])
       # This is part of the "join the partitions" step
       # Not sure what everyone else does for this part, but I need
       # to keep track of which nodes are connected to which other ones
-      edge.mark_nodes!
+      edge.attach!
     end
   end
 

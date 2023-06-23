@@ -192,7 +192,7 @@ class Graph
     end
 
     # Okay, now we have the edges that will exist in our new world
-    new_edges.each {|e| e.mark_nodes! }
+    new_edges.each {|e| e.attach! }
 
     new_nodes
   end

@@ -65,6 +65,7 @@ class Edge
   def mark_nodes!
     nodes.each {|n| n.edges << self unless n.edges.include?(self) }
   end
+  alias_method :attach!, :mark_nodes!
 
   def detach!
     nodes.each do |node|

@@ -124,7 +124,7 @@ time "Reduce congestion" do
     new_edges.each do |src, tgt, edge, dist|
       if edge.length < 0.5
         added[-1] << edge
-        edge.mark_nodes!
+        edge.attach!
       end
     end
 

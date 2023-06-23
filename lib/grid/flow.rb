@@ -61,9 +61,6 @@ module Flow
     # Since now we're going to track the flow through EVERY node-gen path,
     # we don't need to do any checks.
     # 
-    # Since we're visiting all of the loads, we *don't* need to subtract the
-    # generator's self-load from their power -- it'll happen.
-    # 
     # When a generator doesn't have power... that's too bad, it still supplies it,
     # but the overall frequency of the system will drop
   
@@ -76,6 +73,16 @@ module Flow
     # Load remainder
     l_remainder = @loads.map {|l| [l, l.load] }.to_h
 
+    # Now that a generator knows how much demand is being placed on it, it
+    # can grow or shrink how much power is supplied to meet those.
+    #
+    # This answers the question of "if a 5V battery is placed on the electric
+    # grid, how much power does that battery supply to the 2 refrigerators it
+    # has to supply?"
+    #
+    # TODO I wonder if it can only shrink. It's never going to GROW, right? It
+    # can't supply TOO much power because the load's circuitry can't DRAW that
+    # much power, right?
     groups.each do |gen, demands|
       total_demand = demands.sum {|n, l, p| l }
 
@@ -104,6 +111,7 @@ module Flow
     # rated power (of the generators)
     p_r = generators.sum {|g| g.power }
 
+    # been writing a lot of python at work, and you can see my accent coming through
     @freq = freq_drop(p_l, p_r)
   end
 

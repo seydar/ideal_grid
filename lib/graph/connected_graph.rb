@@ -124,9 +124,15 @@ class ConnectedGraph < Graph
   end
 
   # Spoil the cache
+  # This is referring to variables ALL over the map. Really need a better way
+  # to handle this
   def invalidate_cache!
     @paths = nil
     @adjacencies = nil
+    @adj = nil
+    @g_adj = nil
+    @walks = nil
+    @mat_paths = nil
   end
 
   def manhattan_distance(from: nil, to: nil)

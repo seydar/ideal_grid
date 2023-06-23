@@ -107,6 +107,11 @@ time "Calculate flow" do
   show_plot unless opts[:quiet]
 end
 
+time "Drakos resiliency on the base grid" do
+  drak = grid.resiliency :drakos, 0.4
+  puts "\tDrakos: #{drak}"
+end
+
 time "Reduce congestion" do
 
   added = []
@@ -146,7 +151,7 @@ time "Reduce congestion" do
 end
 
 # Estrada takes too long
-time "Drakos resiliency" do
+time "Drakos resiliency on the new grid" do
   #profile do
     drak = grid.resiliency :drakos, 0.4
     puts "\tDrakos: #{drak}"

@@ -10,9 +10,9 @@ module Resilience
   #
   # J(mu) | min(sigma(s, mu)) == 0 = 0
   #       | otherwise              = max(sigma(s, mu)) / min(sigma(s, mu))
-  def j(mu)
+  def j(mu, srcs=nil)
     # Prepping this calculation in advance of the parallelization
-    paths
+    paths :sources => srcs
 
     # Now we can actually do the parallelization and have `@paths` be copied
     # to the child processes
@@ -48,10 +48,17 @@ module Resilience
   # Walks are not paths! Walks can revisit nodes, whereas paths cannot
   #
   # Recursion and memoization because I'm a beast who knows no bounds
-  def walk_matrix(n)
+  def walk_matrix(n, sources: nil)
     @walks    ||= []
+
     if n == 1
-      @walks[n] ||= adjacency_matrix
+      if sources
+        puts "trying the new thing"
+        # we start at the generators, but can then go anywhere
+        @walks[n] ||= source_adjacency_matrix sources
+      else
+        @walks[n] ||= adjacency_matrix
+      end
     else
       @walks[n] ||= adjacency_matrix * walk_matrix(n - 1)
     end
@@ -59,7 +66,8 @@ module Resilience
 
   # P_v[1] * P_v[2] + P_v[3]
   #
-  # Which says: (paths of length 1) * (paths of length 2) + (paths of length 3)
+  # Which says: (paths of length 1) TIMES (paths of length 2) PLUS (paths of length 3)
+  # Because it's all combinations of 2 and 1
   #
   # I think? I kinda made that up based on reading a stack overflow answer
   # Man I wish I knew if any of this was right
@@ -80,7 +88,7 @@ module Resilience
   # because it's duplicated (paths from i -> j is same as j -> i)
   def count_paths(length: P_0)
     total = 0
-    mat   = paths(:length => length)
+    mat   = paths :length => length
     mat.row_count.times do |i|
       (i..mat.row_count - 1).each do |j|
         total += mat[i, j]
@@ -95,14 +103,14 @@ module Resilience
   #
   # Unfortunately, this isn't generalized yet, so we can only do length 3.
   # Dunno how to read the math in the paper. Too smoothbrained.
-  def paths(length: P_0)
+  def paths(length: P_0, sources: nil)
     return @mat_paths if @mat_paths
 
     rows = adjacency_matrix.row_size
     i = Matrix.identity rows
     a_3 = walk_matrix 3
     a_2 = walk_matrix 2
-    a   = walk_matrix 1
+    a   = walk_matrix 1, :sources => sources
 
     @mat_paths = a_3 - i.hadamard_product(a_2) * a -
                    i.hadamard_product(a_3) -

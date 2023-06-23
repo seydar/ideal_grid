@@ -143,7 +143,8 @@ class Grid
 
   def resiliency(type=:drakos, *vars)
     if type == :drakos
-      graph.j *vars
+      graph.j *[*vars, generators.map(&:node)]
+      #graph.j *vars
     elsif type == :estrada
       graph.estrada *vars
     end
@@ -158,6 +159,7 @@ class Grid
     "#<Grid: @nodes=[#{nodes.size} nodes, #{loads.size} loads] @generators=[#{generators.size} generators]>"
   end
 
+  # Two hardest problems in computer science
   def reset!
     graph.invalidate_cache!
     calculate_flows!

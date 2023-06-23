@@ -19,6 +19,16 @@ TODO
 
 * introduce non-load nodes to theoretical grid
 
+* add caching to calculate_flows and drakos number
+  * calculate_flows
+    * super easy: @loads, @flows, and @losses will all have superseding parameters
+      in the method definition
+  * drakos
+    * hm. would be nice, but I don't think it's doable
+* change drakos to do A_gen * A^2 instead of A^3
+  * we don't care about ALL walks/paths, only those walks/paths originating
+    from a generator
+
 TASKS
 -------------------------
 * import "miso_north_tx_lines.geosjon"

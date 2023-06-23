@@ -68,6 +68,20 @@ class Graph
     @adj = Matrix[*adj]
   end
 
+  def source_adjacency_matrix(sources)
+    return @g_adj if @g_adj
+
+    adj = nodes.size.times.map { [0] * nodes.size }
+
+    sources.each do |node|
+      adjacencies[node].each do |other, edge|
+        adj[@spots[node]][@spots[other]] = 1
+      end
+    end
+
+    @g_adj = Matrix[*adj]
+  end
+
   # BFS
   # Gets all edges. Some nodes will be reached twice in a cyclic graph.
   # Args to the block: edge, from, to

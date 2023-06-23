@@ -126,7 +126,7 @@ end
 
 time "Resiliency metrics" do
   #profile do
-    puts "\tDrakos: #{ng.graph.j 0.4}"
+    puts "\tDrakos: #{ng.resiliency :drakos,  0.4}"
   #end
 end
 

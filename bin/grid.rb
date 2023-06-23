@@ -116,37 +116,50 @@ time "Reduce congestion" do
 
   new_edges = grid.reduce_congestion
 
-  sorting_info = new_edges.map do |src, tgt, edge, dist|
-    if edge.length < 0.5
-      edge.attach!
-      grid.reset!
-      edge.detach!
+  # Hard ceiling on the edge length
+  candidates = new_edges.map {|_, _, e, _| e.length < 0.5 ? e : nil }.compact
 
-      [edge, grid.flows[edge], grid.transmission_loss[1]]
-    end
-  end.compact
+  # potentially thousands of trials to run
+  trials = (1..candidates.size).map {|i| candidates.combination(i).to_a }.flatten(1)
 
-  puts "\tEdge info:"
-  # maximize flow, minimize distance
-  ranked = sorting_info.sort_by {|e, f| f / e.length }
-  added  = ranked[(0.75 * ranked.size).to_i..-1].reverse.map do |e, f, l|
-    puts "\t\tRank: #{(f / e.length).round(2)}, Length: #{e.length.round(2)}, Flow: #{f.round(2)}, Tx loss: #{l.round(2)}"
+  puts "\t#{candidates.size} candidates, #{trials.size} trials"
 
-    e.attach!
-    e
+  # Test out each combination.
+  # Detaching the edges in another process is unnecessary since the grid object
+  # is copied (and thus the main processes's grid is unaffected), but the code is
+  # included because it's cheap and is required for single-threaded ops
+  results = trials.parallel_map do |cands|
+    cands.each {|e, _, _| e.attach! }
+    grid.reset!
+    cands.each {|e, _, _| e.detach! }
+
+    grid.transmission_loss[1]
   end
+  results = trials.zip results
+
+  # minimize tx loss, minimize total edge length
+  ranked = results.sort_by do |cs, l|
+    l ** 1.35 + l * cs.sum(&:length)
+  end
+
+  puts "\tTop 10 trials:"
+  ranked[0..10].map do |cs, l|
+    puts "\t\t# of Edges: #{cs.size}, " +
+         "Length: #{cs.sum(&:length).round(2)}, " +
+         "Tx loss: #{l.round(2)}%"
+  end
+
+  added = ranked[0][0]
+  added.each {|e| e.attach! }
 
   grid.reset!
 
   puts grid.flow_info
   puts grid.info
 
-  qual = new_edges.size
-  t_l  = added.sum(&:length)
-
-  puts "\tQualifying edges: #{qual}"
-  puts "\tLow-flow edges: #{qual - added.size}"
-  puts "\tNew edges: #{added.size} (total length: #{t_l}) "
+  puts "\tQualifying edges: #{candidates.size}"
+  puts "\tNew edges: #{added.size}"
+  puts "\tTotal length: #{added.sum(&:length).round 2}"
 
   plot_flows grid, :n => 10
   plot_edges added, :color => "green", :width => 3

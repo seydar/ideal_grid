@@ -19,15 +19,13 @@ TODO
 
 * introduce non-load nodes to theoretical grid
 
-* add caching to calculate_flows and drakos number
-  * calculate_flows
-    * super easy: @loads, @flows, and @losses will all have superseding parameters
-      in the method definition
-  * drakos
-    * hm. would be nice, but I don't think it's doable
-* change drakos to do A_gen * A^2 instead of A^3
+* Should I change drakos to do A_gen * A^2 instead of A^3?
   * we don't care about ALL walks/paths, only those walks/paths originating
     from a generator
+  * but we DO call about all paths, since that is how electricity flows
+  * but there should be a bonus for simply adding a generator to a spot
+* weird bug. checking percentiles 4..8 should include everything that's in
+  5..8, but that doesn't appear to be happening
 
 TASKS
 -------------------------

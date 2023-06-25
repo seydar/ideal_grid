@@ -17,7 +17,6 @@ EOS
 
   opt :nodes, "Number of nodes in the grid", :type => :integer, :default => 100
   opt :clusters, "How many nodes per generator", :type => :integer, :default => 10
-  opt :reduce, "How many times should we try to reduce congestion", :type => :integer, :default => 1
   opt :quiet, "Don't show the graphs", :type => :boolean
   opt :parallel, "How many cores to use", :type => :integer, :default => 4
   opt :edges, "Max number of edges to build", :type => :integer, :default => 4
@@ -110,7 +109,7 @@ time "Calculate flow" do
   show_plot unless opts[:quiet]
 end
 
-time "Drakos resiliency on the base grid" do
+time "Drakos resiliency on the base grid", :run => false do
   drak = grid.resiliency :drakos, 0.4
   puts "\tDrakos: #{drak}"
 end
@@ -174,7 +173,7 @@ time "Reduce congestion" do
 end
 
 # Estrada takes too long
-time "Drakos resiliency on the new grid" do
+time "Drakos resiliency on the new grid", :run => false do
   #profile do
     drak = grid.resiliency :drakos, 0.4
     puts "\tDrakos: #{drak}"

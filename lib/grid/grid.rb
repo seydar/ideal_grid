@@ -143,8 +143,7 @@ class Grid
 
   def resiliency(type=:drakos, *vars)
     if type == :drakos
-      graph.j *[*vars, generators.map(&:node)]
-      #graph.j *vars
+      graph.j *vars
     elsif type == :estrada
       graph.estrada *vars
     end

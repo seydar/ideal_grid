@@ -10,9 +10,11 @@ module Resilience
   #
   # J(mu) | min(sigma(s, mu)) == 0 = 0
   #       | otherwise              = max(sigma(s, mu)) / min(sigma(s, mu))
-  def j(mu, srcs=nil)
+  #
+  # Roughly inversely proportional to the structural resilience of a graph
+  def j(mu)
     # Prepping this calculation in advance of the parallelization
-    paths :sources => srcs
+    paths
 
     # Now we can actually do the parallelization and have `@paths` be copied
     # to the child processes
@@ -48,16 +50,11 @@ module Resilience
   # Walks are not paths! Walks can revisit nodes, whereas paths cannot
   #
   # Recursion and memoization because I'm a beast who knows no bounds
-  def walk_matrix(n, sources: nil)
+  def walk_matrix(n)
     @walks    ||= []
 
     if n == 1
-      if sources
-        # we start at the generators, but can then go anywhere
-        @walks[n] ||= source_adjacency_matrix sources
-      else
-        @walks[n] ||= adjacency_matrix
-      end
+      @walks[n] ||= adjacency_matrix
     else
       @walks[n] ||= adjacency_matrix * walk_matrix(n - 1)
     end
@@ -102,17 +99,15 @@ module Resilience
   #
   # Unfortunately, this isn't generalized yet, so we can only do length 3.
   # Dunno how to read the math in the paper. Too smoothbrained.
-  def paths(length: P_0, sources: nil)
+  def paths(length: P_0)
     return @mat_paths if @mat_paths
 
     rows = adjacency_matrix.row_size
     i    = Matrix.identity rows
 
-    # This one needs to be first
-    # probs a code smell
-    a    = walk_matrix 1, :sources => sources
     a_3  = walk_matrix 3
     a_2  = walk_matrix 2
+    a    = walk_matrix 1
 
     @mat_paths = a_3 - i.hadamard_product(a_2) * a -
                    i.hadamard_product(a_3) -

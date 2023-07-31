@@ -20,6 +20,13 @@ class Node
     @point = point
   end
 
+  def within?(bounds)
+    x > bounds[:w] &&
+      x < bounds[:e] &&
+      y < bounds[:n] &&
+      y > bounds[:s]
+  end
+
   def inspect
     "#<Node:#{object_id} @x=#{x.round 3}, @y=#{y.round 3}, # of edges=#{edges.size}>"
   end

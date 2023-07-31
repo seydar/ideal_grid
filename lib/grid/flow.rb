@@ -1,11 +1,16 @@
 module Flow
   BASE_FREQ = 60 # Hz
 
+  def all_paths(gens, node)
+    gens.map {|g| g.path_to node }
+    #gens.map {|g| @all_ways[node][g.node] }
+  end
+
   # The `node` we're connecting to (we need to know the paths)
   # The `gens` that still have available capacity
   def fractional_share(node, gens)
     raise if node.edges.size == 0
-    options   = gens.map {|g| g.path_to node }
+    options   = all_paths gens, node
   
     # This is to get the proper ratios
     # derived from the formula for parallel resistors
@@ -30,6 +35,21 @@ module Flow
     end
   end
 
+  # Group them by generator
+  def all_paths_by_frac(starts=@loads)
+    groups = Hash.new {|h, k| h[k] = [] }
+
+    starts.each do |node|
+      # {gen => [path, frac]}
+      fracs = fractional_share node, generators
+      fracs.each do |gen, (path, frac)|
+        groups[gen] << [node, node.load * frac, path]
+      end
+    end
+
+    groups
+  end
+
   # Okay, take 3 or 4 or whatever.
   #
   # Each laod makes a demand for power from each generator based on the
@@ -47,16 +67,8 @@ module Flow
   # calculate the frequency drop on the system (https://electronics.stackexchange.com/a/546988)
   def calculate_flows!
     # Grouping the generator info.
-    # {gen => [node, demand, path]}
-    groups = Hash.new {|h, k| h[k] = [] }
-
-    @loads.each do |node|
-      # {gen => [path, frac]}
-      fracs = fractional_share node, generators
-      fracs.each do |gen, (path, frac)|
-        groups[gen] << [node, node.load * frac, path]
-      end
-    end
+    # {gen => [[node, demand, path]]}
+    groups = all_paths_by_frac @loads
   
     # Since now we're going to track the flow through EVERY node-gen path,
     # we don't need to do any checks.
@@ -82,13 +94,15 @@ module Flow
     #
     # TODO I wonder if it can only shrink. It's never going to GROW, right? It
     # can't supply TOO much power because the load's circuitry can't DRAW that
-    # much power, right?
+    # much power, right? specifically, this has to do with AC power not DC,
+    # because I think a DC circuit *can* draw too much power, but an AC circuit
+    # cannot
     groups.each do |gen, demands|
       total_demand = demands.sum {|n, l, p| l }
 
-      # grow or shrink factor (if the load is insufficient, then the frequency
-      # will increase)
-      ratio = gen.power / total_demand
+      # Shrink factor
+      # (Cap it to ensure we don't somehow *grow* the load)
+      ratio = [gen.power / total_demand, 1.0].min
 
       demands.each do |node, demand, path|
         l_remainder[node] -= demand * ratio
@@ -157,7 +171,46 @@ module Flow
      closest[1]]
   end
 
-  def reduce_congestion(percentiles=(5..8))
+  def connect_graphs_along_line(src, tgt, distance: 0.75)
+
+    # Find the ideal edge to connect these graphs
+    e, _, _ = connect_graphs src, tgt
+    return unless e.possible?
+
+    # Somewhere in here, I need to add all of the nodes that are within a
+    # certain distance of the line.
+    ns = nodes_near :edge => e, :distance => distance
+    #p "#{ns.size} nodes found near this edge"
+
+    # Then, add all of those nodes and the nodes of the two base CGs into
+    #   a DisjointGraph.
+    dj = DisjointGraph.new(ns + src.nodes + tgt.nodes)
+
+    # Then, get the two subgraphs that contact our targets
+    subgraphs = dj.connected_subgraphs.filter do |cg|
+      cg.nodes & src.nodes != [] or
+        cg.nodes & tgt.nodes != []
+    end
+
+    return if subgraphs.size == 1
+    # Then, connect that subgraphs
+    e2, z, q = connect_graphs *subgraphs
+
+    #if e2.length < 0.5
+    #  plot_grid self
+    #  plot_points src.nodes, :color => "red"
+    #  plot_points tgt.nodes, :color => "blue"
+    #  plot_points ns, :color => "yellow"
+    #  plot_edge e, :color => "orange"
+    #  plot_edge e2, :color => "red"
+    #  show_plot
+    #  sleep 0.3
+    #end
+
+    [e2, z, q]
+  end
+
+  def reduce_congestion(percentiles=(5..8), distance: 0.75)
     grouped_flows   = flows.group_by {|e, f| f }
     group_keys      = grouped_flows.keys.sort
 
@@ -209,11 +262,13 @@ module Flow
     nodes = s_es.map {|e| e.nodes }.flatten.uniq
     disjoint = DisjointGraph.new nodes
 
-    selected_cgs = disjoint.connected_subgraphs.map do |cg|
-      [cg, cg.edges.sum {|e| flows[e] }]
-    end
-
-    bounds = selected_cgs.map do |cg, sum|
+    # FIXME this algo is built around the old way of routing power, where each node
+    # belongs to a single generator.
+    #
+    # But since that's not the case anymore, what we want to do is decrease the
+    # friction -- anywhere -- to make it easier to get power along a different
+    # path.
+    bounds = disjoint.connected_subgraphs.map do |cg|
       gen = nearest_generator cg.median_node
       dist = graph.path(:from => cg.median_node, :to => gen.node).size
       [cg, dist]
@@ -221,6 +276,9 @@ module Flow
 
     # For each CG, find another CG from another generator (outwardly expanding)
     # that can beat the current distance to a generator
+    #
+    # As a more abstract function, this takes two CGs and finds an edge that
+    # connects them better
     new_edges = bounds.parallel_map do |src, dist|
     #new_edges = bounds.map do |src, dist|
       new_edges = generators.map do |gen|
@@ -229,41 +287,8 @@ module Flow
         # in our attempts to connect to it?
         tgt = ConnectedGraph.new([gen.node]).expand :steps => (dist - 3)
 
-        # Find the ideal edge to connect these graphs
-        e, _, _ = connect_graphs src, tgt
-        next unless e.possible?
-
-        # Somewhere in here, I need to add all of the nodes that are within a
-        # certain distance of the line.
-        ns = nodes_near :edge => e, :distance => 0.75
-        #p "#{ns.size} nodes found near this edge"
-
-        # Then, add all of those nodes and the nodes of the two base CGs into
-        #   a DisjointGraph.
-        dj = DisjointGraph.new(ns + src.nodes + tgt.nodes)
-
-        # Then, get the two largest connected subgraphs.
-        #subgraphs = dj.connected_subgraphs.sort_by {|cg| -cg.size }[0..1]
-
-        # Then, get the two subgraphs that contact our targets
-        subgraphs = dj.connected_subgraphs.filter do |cg|
-          cg.nodes & src.nodes != [] or
-            cg.nodes & tgt.nodes != []
-        end
-
-        next if subgraphs.size == 1
-        # Then, connect that subgraphs
-        e2, _, dst_n = connect_graphs *subgraphs
-
-        #if e2.length < 0.5
-        #  plot_grid self
-        #  plot_points src.nodes, :color => "red"
-        #  plot_points tgt.nodes, :color => "blue"
-        #  plot_points ns, :color => "yellow"
-        #  plot_edge e, :color => "orange"
-        #  plot_edge e2, :color => "orange"
-        #  show_plot
-        #end
+        e2, _, dst_n = connect_graphs_along_line src, tgt, :distance => distance
+        next unless e2
 
         # Find the distance from the destination node to the generator
         new_d = graph.manhattan_distance :from => dst_n, :to => gen.node

@@ -112,7 +112,7 @@ def plot_graph(graph, color: "blue", edge_color: "black", point_type: 6)
   plot_points ns, :color => color, :point_type => 6
 end
 
-def plot_grid(grid)
+def plot_grid(grid, restrict: nil)
   plot_graph grid.graph, :color => "gray"
 
   grid.generators.each {|g| plot_generator g }

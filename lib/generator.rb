@@ -9,6 +9,10 @@ class Generator
     @power = power
   end
 
+  def within?(bounds)
+    node.within? bounds
+  end
+
   # This will make more sense once there are different types of generators
   # (solar, nuclear, wind, etc)
   def enlargeable?

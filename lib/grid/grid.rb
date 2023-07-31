@@ -127,6 +127,18 @@ class Grid
     @map   = @nodes.map {|n| [n.id, n] }.to_h # for use after parallelization
   end
 
+  def restrict(bounds)
+    # Dup required because generators get modified in Grid#new
+    r_gens  = generators.filter {|n| n.within? bounds }.map(&:dup)
+    r_nodes = nodes.filter {|n| n.within? bounds }
+
+    ng = self.class.new r_nodes, r_gens
+    ng.flows  = @flows.dup
+    ng.losses = @losses.dup
+
+    ng
+  end
+
   def simplify
     new_nodes = graph.simplify :keep => generators.map(&:node)
 

@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env ruby --yjit
 require 'optimist'
 require_relative '../electric_avenue.rb'
 
@@ -114,6 +114,7 @@ time "Drakos resiliency on the base grid", :run => false do
   puts "\tDrakos: #{drak}"
 end
 
+added = nil
 time "Reduce congestion" do
 
   puts "\tPercentiles: #{opts[:percentiles]}"
@@ -178,13 +179,13 @@ time "Drakos resiliency on the new grid", :run => false do
     drak = grid.resiliency :drakos, 0.4
     puts "\tDrakos: #{drak}"
   #end
-  
-  require 'pry'
-  binding.pry
 end
 
 ############################
 
 #require 'irb'
 #IRB.start
+
+require 'pry'
+binding.pry
 

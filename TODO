@@ -26,6 +26,29 @@ TODO
   * but there should be a bonus for simply adding a generator to a spot
 * weird bug. checking percentiles 4..8 should include everything that's in
   5..8, but that doesn't appear to be happening
+* improve resilience
+  * increase connectivity of lowest-degree nodes
+    * hard
+  * reduce # of paths that go through node with highest sigma
+    * easier but still hard
+  * increase # of overall paths without affecting node with highest sigma
+    * now we're talking
+* add the ability to load a graph and data from a marshal file
+  * kinda done
+* congestion reduction for scale-free graphs
+  * find long stretch of high-flow
+  * find a way to shorten it
+    * pick two nodes on either end
+    * remove the subgraph of top-sigma node + 3 steps outward
+    * connect subgraphs
+* uhoh. Only 5% transmission loss
+  * https://www.eia.gov/totalenergy/data/flow-graphs/electricity.php
+  * need to find a new raison d'etre
+  * Maybe this is the end of the project
+  * gotta pivot to resilience
+* memory profiling
+  * https://www.toptal.com/ruby/hunting-ruby-memory-issues
+* maybe try `jemalloc`
 
 TASKS
 -------------------------

@@ -14,10 +14,12 @@ module Resilience
   # Roughly inversely proportional to the structural resilience of a graph
   def j(mu)
     # Prepping this calculation in advance of the parallelization
+    # 30% of the time of this method is taken up here
     paths
 
     # Now we can actually do the parallelization and have `@paths` be copied
     # to the child processes
+    # This is the remaining 60% of the runtime
     sigmas = nodes.parallel_map {|v| sigma(v, mu) }
 
     if sigmas.min == 0
@@ -67,6 +69,9 @@ module Resilience
   #
   # I think? I kinda made that up based on reading a stack overflow answer
   # Man I wish I knew if any of this was right
+  #
+  # FIXME oh wow, because `paths` doesn't actually take different lengths, this
+  # is wrong. well, this isn't wrong, but `paths` is wrong
   def count_paths_thru(v, length: P_0)
     pairs = (0..length).zip(length.downto(0)).map(&:sort).uniq
     pairs.sum do |left, right|

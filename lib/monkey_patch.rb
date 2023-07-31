@@ -1,5 +1,5 @@
 require 'parallel'
-require 'matrix_boost'
+#require 'matrix_boost'
 
 module Enumerable
   def parallel_map(cores: $parallel, &block)
@@ -7,6 +7,10 @@ module Enumerable
     return [] if size == 0
 
     n = (size.to_f / cores).ceil
+
+    #puts "Before compaction: %.1fMB used" % [`ps -o rss= -p #{$$}`.to_f/1024]
+    GC.compact
+    #puts "After compaction: %.1fMB used" % [`ps -o rss= -p #{$$}`.to_f/1024]
 
     Parallel.map each_slice(n).to_a, :in_processes => cores do |group|
       group.map(&block)

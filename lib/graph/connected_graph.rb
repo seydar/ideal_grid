@@ -5,7 +5,7 @@ class ConnectedGraph < Graph
   include Siting
 
   def initialize(nodes)
-    raise "nodes cannot be empty" if nodes.empty?
+    #raise "nodes cannot be empty" if nodes.empty?
     super(nodes)
   end
 
@@ -63,7 +63,6 @@ class ConnectedGraph < Graph
   # `k` is how many clusters we want
   # `power` should also prolly be a function as well
   def generators_for_clusters(grid, power=10, &k)
-    puts "\tCreating #{k[nodes.size]} clusters"
     cluster(k[nodes.size]).clusters.map do |cluster|
       pts = cluster.points.map {|p| p.label }
       cg = ConnectedGraph.new pts

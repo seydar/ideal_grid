@@ -80,6 +80,7 @@ time "Add initial generators [#{opts[:clusters]} nodes/generator]" do
   # calculations
   KMeansClusterer::Distance.graph = graph
   
+  puts "\tCreating #{(grid.nodes.size / opts[:clusters]).ceil} clusters"
   grid.build_generators_for_unreached opts[:clusters]
 
   puts grid.info

@@ -1,5 +1,7 @@
 class Node
-  @@distances = Hash.new {|h, k| h[k] = {} }
+  # This... unfortunately prevents you from handling multiple grids at the
+  # same time
+  #@@distances = Hash.new {|h, k| h[k] = {} }
 
   attr_accessor :x
   attr_accessor :y
@@ -58,44 +60,14 @@ class Node
 
   # I hate that I had to optimize this weirdly, but I'm trying to make these
   # things faster, and I managed to get a 20% speedup by doing this.
+  # 
+  # FIXME this doesn't even use the memoization?????
+  # The memoization hash should be bound to the host grid
   def euclidean_distance(p_2)
     dist = Math.sqrt((self.x - p_2.x) ** 2 + (self.y - p_2.y) ** 2)
 
-    @@distances[self.id][p_2.id] ||= dist
-    @@distances[p_2.id][self.id] ||= dist
-  end
-
-  # No guarantee that path is shortest
-  # Actually, we *are* guaranteed that because we're using a MST
-  #
-  # I wonder how much of a drag this method is. Could using the adjacency
-  # matrix in `Graph` be faster? Yes. Is it worth it? TBD.
-  # 
-  # Edit: turns out it's not that much slower than an adjacency matrix
-  def path_to(p_2, history=[])
-    raise "wow didn't realize this method was still used"
-    return [] if p_2 == self
-
-    p edges.size
-    edges.each do |edge|
-      # Don't go back the way we came
-      next if history.include? edge
-      print "\t"; p edge
-
-      # this will be shared across all calls with this initialization
-      # but I think that'll be okay
-      history << edge
-
-      if edge.not_node(self) == p_2
-        return [edge]
-      else
-        #puts "#{to_a} => #{edge.not_node(self).to_a} (#{p_2.to_a})"
-        path = edge.not_node(self).path_to p_2, history
-        return (path << edge) unless path.empty?
-      end
-    end
-
-    []
+    #@@distances[self.id][p_2.id] ||= dist
+    #@@distances[p_2.id][self.id] ||= dist
   end
 
   def edge?(other)

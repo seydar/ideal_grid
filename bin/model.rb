@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby --yjit
+#!/usr/bin/env ruby --yjit -W0
 require 'optimist'
 require_relative '../electric_avenue.rb'
 

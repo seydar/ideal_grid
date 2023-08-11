@@ -1,0 +1,7 @@
+optimist
+parallel
+sequel
+sqlite3/jdbc-sqlite3
+narray
+gnuplot
+

@@ -161,6 +161,10 @@ class Grid
     end
   end
 
+  def edges
+    nodes.map(&:edges).flatten.uniq
+  end
+
   def power
     generators.map {|g| g.power }.sum
   end

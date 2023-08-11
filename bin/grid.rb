@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby --yjit
+#!/usr/bin/env ruby --yjit -W0
 require 'optimist'
 require_relative '../electric_avenue.rb'
 
@@ -132,46 +132,49 @@ time "Reduce congestion" do
   puts "\tMax # of edges to build: #{opts[:edges]}"
   puts "\t#{candidates.size} candidates, #{trials.size} trials"
 
-  # Test out each combination.
-  # Detaching the edges in another process is unnecessary since the grid object
-  # is copied (and thus the main processes's grid is unaffected), but the code is
-  # included because it's cheap and is required for single-threaded ops
-  results = trials.parallel_map do |cands|
-    cands.each {|e, _, _| e.attach! }
+  unless trials.empty?
+
+    # Test out each combination.
+    # Detaching the edges in another process is unnecessary since the grid object
+    # is copied (and thus the main processes's grid is unaffected), but the code is
+    # included because it's cheap and is required for single-threaded ops
+    results = trials.parallel_map do |cands|
+      cands.each {|e, _, _| e.attach! }
+      grid.reset!
+      cands.each {|e, _, _| e.detach! }
+
+      grid.transmission_loss[1]
+    end
+    results = trials.zip results
+
+    # minimize tx loss, minimize total edge length
+    ranked = results.sort_by do |cs, l|
+      l ** 1.35 + l * cs.sum(&:length)
+    end
+
+    puts "\tTop 10 trials:"
+    ranked[0..10].map do |cs, l|
+      puts "\t\t# of Edges: #{cs.size}, " +
+           "Length: #{cs.sum(&:length).round(2)}, " +
+           "Tx loss: #{l.round(2)}%"
+    end
+
+    added = ranked[0][0]
+    added.each {|e| e.attach! }
+
     grid.reset!
-    cands.each {|e, _, _| e.detach! }
 
-    grid.transmission_loss[1]
+    puts grid.flow_info
+    puts grid.info
+
+    puts "\tQualifying edges: #{candidates.size}"
+    puts "\tNew edges: #{added.size}"
+    puts "\tTotal length: #{added.sum(&:length).round 2}"
+
+    plot_flows grid, :n => 10
+    plot_edges added, :color => "green", :width => 3
+    show_plot unless opts[:quiet]
   end
-  results = trials.zip results
-
-  # minimize tx loss, minimize total edge length
-  ranked = results.sort_by do |cs, l|
-    l ** 1.35 + l * cs.sum(&:length)
-  end
-
-  puts "\tTop 10 trials:"
-  ranked[0..10].map do |cs, l|
-    puts "\t\t# of Edges: #{cs.size}, " +
-         "Length: #{cs.sum(&:length).round(2)}, " +
-         "Tx loss: #{l.round(2)}%"
-  end
-
-  added = ranked[0][0]
-  added.each {|e| e.attach! }
-
-  grid.reset!
-
-  puts grid.flow_info
-  puts grid.info
-
-  puts "\tQualifying edges: #{candidates.size}"
-  puts "\tNew edges: #{added.size}"
-  puts "\tTotal length: #{added.sum(&:length).round 2}"
-
-  plot_flows grid, :n => 10
-  plot_edges added, :color => "green", :width => 3
-  show_plot unless opts[:quiet]
 end
 
 # Estrada takes too long

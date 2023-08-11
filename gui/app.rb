@@ -4,91 +4,64 @@ require_relative "../electric_avenue.rb"
 require 'glimmer-dsl-libui'
 Dir['./gui/plotters/**/*.rb'].each {|f| require f }
 
-
 class GridOperator
   include Glimmer
   include GUI::Grid
 
   MARGIN   = 20
-  CONTROLS = 150
+  CONTROLS = 310
   PLOT     = [800, 500]
-  LEFT     = 200
-  WIDTH    = LEFT + PLOT[0] + 3 * MARGIN
+  WIDTH    = PLOT[0] + 2 * MARGIN
   HEIGHT   = CONTROLS + PLOT[1] + 2 * MARGIN
 
   attr_accessor :nodes
   attr_accessor :clusters
-  attr_accessor :grid
-  attr_accessor :status
+  #attr_accessor :grid
+  attr_accessor :desc
 
   def initialize
     @nodes = 500
     @clusters = 30
     @grid = Grid.new [], []
-    @status = ""
+    @desc = grid_description
+    @margin = MARGIN / 2
   end
 
   def launch
-    window('Electric Avenue', WIDTH, HEIGHT) {
+    window("Electric Avenue", WIDTH, HEIGHT, true) {
       margined true
-    
-      horizontal_box {
-        vertical_box {
-          non_wrapping_multiline_entry {
-            read_only true
-            text <=> [self, :status]
-          }
 
-          form {
-            stretchy false
+      grid {
 
-            entry {
-              label 'Nodes'
-              text <=> [self, :nodes, on_write: :to_i, on_read: :to_s]
-            }
-    
-            entry {
-              label 'Clusters'
-              text <=> [self, :clusters, on_write: :to_i, on_read: :to_s]
-            }
-          }
-    
-          button('New Grid') {
-            stretchy false
-    
-            on_clicked {
-              @grid = mst_grid :number   => nodes,
-                               :grouping => clusters,
-                               :range    => PLOT
-              @grid.calculate_flows!
-              @plot.queue_redraw_all
-            }
-          } # button
-        } # vert
-    
-        vertical_box {
-          stretchy false
+        # xspan 3
+        # yspan 2
+        new_grid_buttons x: 0, y: 1
 
-          @plot = area {
+        basic_info x: 0, xs: 1,
+                   y: 4, ys: 1
 
-            @margin = MARGIN / 2 # internal margin within the plot
+        congestion_hist x: 2, xs: 1,
+                        y: 0, ys: 6
 
-            rectangle(0, 0, PLOT[0] + 2 * @margin, PLOT[1] + 2 * @margin) {
-              fill 0xffffff
-            }
-    
-            on_draw {
-              plot_flows
-            }
-    
-          } # area
+        label { left 0; xspan 2
+                top  3; yspan 1 }
 
-          non_wrapping_multiline_entry {
-            read_only true
-            text "asdf"
-          }
-        } # vert
+        label { left 0; xspan 2
+                top  5; yspan 1 }
+
+        label { left 0; xspan 2
+                top  5; yspan 1 }
+
+        #vertical_box {
+        #  left 0; xspan 3
+        #  top  4; yspan 2
+
+          plot_area  x: 0, xs: 3,
+                     y: 6, ys: 3
+        #}
+
       }
+
     }.show
   end
 end

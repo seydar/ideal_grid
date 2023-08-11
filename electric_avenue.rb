@@ -6,10 +6,10 @@ Dir['./lib/**/*.rb'].each {|f| require_relative f }
 # `number` is the number of nodes
 # `grouping` is the number of nodes per generator
 # `range` is how big the scene is: x and y are 0-`range`
-def mst_grid(number: nil, grouping: nil, range: [10, 10])
+def mst_grid(number: nil, grouping: nil, draw: nil, range: [10, 10])
   nodes = number.times.map do |i|
     n = Node.new(range[0] * PRNG.rand, range[1] * PRNG.rand, :id => i)
-    n.load = 1
+    n.load = draw
     n
   end
 

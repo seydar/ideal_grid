@@ -2,10 +2,10 @@ require 'histogram/array'
 
 module GUI
   module Grid
-    X_OFF_LEFT   = 20
+    X_OFF_LEFT   = 30
     Y_OFF_TOP    = 20
     X_OFF_RIGHT  = 20
-    Y_OFF_BOTTOM = 20
+    Y_OFF_BOTTOM = 40
     HIST_WIDTH   = 250
     HIST_HEIGHT  = 150
     POINT_RADIUS = 5
@@ -54,11 +54,20 @@ module GUI
       }
     end
 
+    # God this code is so bad
     def bar_graph(data, width, height, bar_width, &block)
 
       path {
-        data.each do |(x, y)|
+        bins, freqs = @grid.flows.values.histogram
+
+        data.zip(bins.zip(freqs)).each do |(x, y), (bin, freq)|
           rectangle(x, y, bar_width, height - y)
+
+          # X value labeling
+          text(x + bar_width / 4 - 1, height + 3) { string bin.round(1).to_s }
+
+          # Y value labeling
+          text(x + bar_width / 4 - 1, y - 20) { string freq.to_i.to_s }
         end
 
         transform {
@@ -96,6 +105,7 @@ module GUI
           }
 
 
+          # Bars
           if @grid.flows && !@grid.flows.empty?
             bins, freqs = @grid.flows.values.histogram
             bar_width = ((graph_width / bins.size) * 0.8).floor
@@ -108,16 +118,33 @@ module GUI
               fill COLOR_BLUE.merge(a: 0.5)
             }
           end
-        
-          ## now create the fill for the graph below the graph line
-          #graph_path(graph_width, graph_height, true) {
-          #  fill COLOR_BLUE.merge(a: 0.5)
-          #}
-          #
-          ## now draw the histogram line
-          #graph_path(graph_width, graph_height, false) {
-          #  stroke COLOR_BLUE.merge(thickness: 2, miter_limit: 10)
-          #}
+
+          # Title
+          text(HIST_WIDTH / 2,
+               Y_OFF_TOP / 2) {
+            string "Histogram of Line Congestion"
+          }
+
+          # Axes
+          # X axis
+          text(graph_width / 2 - 2 * X_OFF_LEFT,
+               graph_height + Y_OFF_TOP + 17) {
+            string "Congestion (MW through lines)"
+          }
+
+          # Y axis
+          path {
+            text(X_OFF_LEFT / 2,
+                 graph_height / 2 + Y_OFF_TOP) {
+              string "# of lines"
+            }
+
+            transform {
+              rotate(X_OFF_LEFT / 2 + 2,
+                     graph_height / 2 + Y_OFF_TOP + 10,
+                     -90)
+            }
+          }
         end
       }
     end

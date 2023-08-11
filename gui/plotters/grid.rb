@@ -4,11 +4,12 @@ module GUI
     def grid_description
       tx_loss, perc = @grid.transmission_loss
 
-      ["Nodes:\t#{@grid.nodes.size}",
-       "Edges:\t#{@grid.edges.size}",
+      ["Grid range:\t#{@dimensions[0]} x #{@dimensions[1]}",
+       "Nodes:\t\t#{@grid.nodes.size}",
+       "Edges:\t\t#{@grid.edges.size}",
        "Total load:\t#{(@grid.loads.sum(&:load) + tx_loss).round 2}",
-       "Tx loss:\t#{tx_loss.round 2} (#{perc}%)",
-       "Freq:\t#{(Flow::BASE_FREQ + @grid.freq).round(2)} Hz (#{@grid.freq.round 2} Hz)"
+       "Tx loss:\t\t#{tx_loss.round 2} (#{perc}%)",
+       "Freq:\t\t#{(Flow::BASE_FREQ + @grid.freq).round(2)} Hz (#{@grid.freq.round 2} Hz)"
       ].join "\n"
     end
 
@@ -90,11 +91,12 @@ module GUI
         if x && y
           left x; xspan xs
           top  y; yspan ys
-          #hexpand true
-          #vexpand true
         end
 
         on_draw {|area|
+          @dimensions = [area[:area_width], area[:area_height]]
+          self.desc = grid_description
+
           scale = [area[:area_width]  / GridOperator::PLOT[0],
                    area[:area_height] / GridOperator::PLOT[1]]
 

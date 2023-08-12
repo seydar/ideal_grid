@@ -33,8 +33,6 @@ TODO
     * easier but still hard
   * increase # of overall paths without affecting node with highest sigma
     * now we're talking
-* add the ability to load a graph and data from a marshal file
-  * kinda done
 * congestion reduction for scale-free graphs
   * find long stretch of high-flow
   * find a way to shorten it
@@ -48,7 +46,7 @@ TODO
   * gotta pivot to resilience
 * memory profiling
   * https://www.toptal.com/ruby/hunting-ruby-memory-issues
-* maybe try `jemalloc`
+* accept range as CLI input (as opposed to only using 10x10 grid)
 
 TASKS
 -------------------------
@@ -122,9 +120,13 @@ DONE
   * thus can't trust any congestion reduction
   * turns out it was because CG#path was doing # of edges instead of total path weight
 * change ConnectedGraph#path_to to be about edge weight instead of # of edges
+* add the ability to load a graph and data from a marshal file
+  * kinda done
+* maybe try `jemalloc`
 
 BUGGY RUNS
 ---------------------------------
+* freq calculation seems... off
 
 
 DATA

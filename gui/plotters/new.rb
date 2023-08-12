@@ -52,11 +52,18 @@ module GUI
                            :grouping => @clusters,
                            :draw     => @load,
                            :range    => range
-          self.desc = grid_description
-          @plot.queue_redraw_all if @plot
-          @hist.queue_redraw_all if @hist
+          refresh!
         }
       } # button
+
+      button("Reduce Congestion") {
+        left (x + 1); xspan 1
+        top  (y + 2); yspan 1
+
+        on_clicked {
+          self.potential_edges = reduce_congestion
+        }
+      }
     end
   end
 end

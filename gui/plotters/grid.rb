@@ -47,12 +47,14 @@ module GUI
       untread = edges - flows.keys
       plot_edges untread, :scale => scale, :color => 0x00ffff
 
+      plot_edges @new_edges, :scale => scale, :color => 0x18cf00, :width => 6.0
+
       plot_points scale: scale
       plot_generators scale: scale
     end
 
     def plot_edges(edges=nil, scale: [1, 1], color: 0x000000, width: 2, labels: [])
-      edges ||= @grid.nodes.map(&:edges).flatten
+      edges ||= @grid.edges
       edges.zip(labels).each do |edge, label|
         from, to = *edge.nodes
         line(@margin + from.x * scale[0], @margin + from.y * scale[1],

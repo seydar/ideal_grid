@@ -47,6 +47,7 @@ TODO
 * memory profiling
   * https://www.toptal.com/ruby/hunting-ruby-memory-issues
 * accept range as CLI input (as opposed to only using 10x10 grid)
+* duplicate edges appear in reduce_congestion
 
 TASKS
 -------------------------

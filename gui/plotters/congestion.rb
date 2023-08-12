@@ -11,10 +11,12 @@ module GUI
 
       # Hard ceiling on the edge length
       candidates = new_edges.map {|_, _, e, _| e.length < (0.5 * scale) ? e : nil }.compact
+      candidates = candidates.uniq {|e| e.nodes.map(&:id).sort }
+      pp candidates
 
       # potentially thousands of trials to run
-      # We're only interested in building up to 4 edges here, since we're trying
-      # to show bang for buck
+      # We're only interested in building up to `edge_limit` edges here, since
+      # we're trying to show bang for buck
       trials = (1..edge_limit).map {|i| candidates.combination(i).to_a }.flatten(1)
 
       puts "\tMax # of edges to build: #{edge_limit}"
@@ -64,16 +66,26 @@ module GUI
         cell_rows <=> [self, :potential_edges]
 
         on_selection_changed do |_, selection, _, _|
+          # Handle selecting
           if @current_selection
             cong = potential_edges[@current_selection]
             cong.candidates.each(&:detach!)
           end
 
+          # Handle deselecting
           @current_selection = selection
-          cong = potential_edges[@current_selection]
-          cong.candidates.each(&:attach!)
+          if selection
+            cong = potential_edges[@current_selection]
+            cong.candidates.each(&:attach!)
 
-          @new_edges = cong.candidates
+            @new_edges = cong.candidates
+          else
+            @new_edges = []
+          end
+
+          a = Time.now
+          @grid.reset!
+          puts "#{Time.now - a} to reset"
 
           refresh!
         end

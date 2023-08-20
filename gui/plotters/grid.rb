@@ -55,29 +55,39 @@ module GUI
 
     def plot_edges(edges=nil, scale: [1, 1], color: 0x000000, width: 2, labels: [])
       edges ||= @grid.edges
-      edges.zip(labels).each do |edge, label|
-        from, to = *edge.nodes
-        line(@margin + from.x * scale[0], @margin + from.y * scale[1],
-             @margin + to.x * scale[0],   @margin + to.y * scale[1]) {
-          stroke color, thickness: width
-        }
-
-        if label
-          # TODO
-        end
+      @edges = edges.zip(labels).map do |edge, label|
+        plot_edge edge, scale: scale, color: color, width: width, label: label
       end
     end
 
+    def plot_edge(edge, scale: [1, 1], color: 0x000000, width: 2, label: nil)
+      from, to = *edge.nodes
+      from = [@margin + from.x * scale[0], @margin + from.y * scale[1]]
+      to   = [@margin + to.x * scale[0],   @margin + to.y * scale[1]]
+      l = line(*from, *to) {
+        stroke color, thickness: width
+      }
+
+      if label
+        # TODO
+      end
+
+      {:edge => edge, :line => l, :from => from, :to => to, :type => :edge}
+    end
+
     def plot_point(node, scale: [1, 1], color: {r: 202, g: 102, b: 205, a: 0.5})
-      circle(@margin + node.x * scale[0], @margin + node.y * scale[1], 3) {
+      x = @margin + node.x * scale[0]
+      y = @margin + node.y * scale[1]
+      circ = circle(@margin + node.x * scale[0], @margin + node.y * scale[1], 3) {
         color.is_a?(Hash) ? fill(**color) : fill(color)
         stroke 0x000000, thickness: 2
       }
+      {:node => node, :x => x, :y => y, :circle => circ, :type => :node}
     end
 
     def plot_points(points=nil, scale: [1, 1])
       points ||= @grid.nodes
-      points.each do |node|
+      @circles = points.map do |node|
         plot_point node, scale: scale, color: 0xaaaaaa
       end
     end
@@ -96,6 +106,7 @@ module GUI
         end
 
         on_draw {|area|
+
           @dimensions = [area[:area_width], area[:area_height]]
           self.desc = grid_description
 
@@ -108,8 +119,62 @@ module GUI
           }
 
           plot_flows scale: scale
+
+          if @info
+            case @info[:type]
+            when :node; plot_node_info
+            when :edge; plot_edge_info
+            end
+          end
         }
+
+        on_mouse_up do |area_event|
+          select_info_box(area_event[:x], area_event[:y])
+        end
       }
+    end
+
+    def select_info_box(x, y)
+      @info   = @circles.find {|c| c[:circle].contain?(x, y) }
+      @info ||= @edges.find {|e| e[:line].include?(x,
+                                                   y,
+                                                   outline: true, 
+                                                   distance_tolerance: 25) }
+      @plot.queue_redraw_all
+    end
+
+    def plot_edge_info
+      midpoint = [(@info[:from][0] + @info[:to][0]) / 2.0,
+                  (@info[:from][1] + @info[:to][1]) / 2.0]
+      rectangle(*midpoint, 200, 50) {
+        stroke 0xff0000
+        fill 0xd6d6d6
+      }
+      text(midpoint[0] + 5, midpoint[1] + 5) { string edge_info }
+    end
+
+    def plot_node_info
+      rectangle(@info[:x], @info[:y], 160, 70) {
+        stroke 0xff0000
+        fill 0xd6d6d6
+      }
+      text(@info[:x] + 5, @info[:y] + 5) { string node_info }
+    end
+
+    def node_info
+      ["Node Info",
+       "ID: #{@info[:node].id}",
+       "Load: #{@info[:node].load} MW",
+       "Location: #{[(@info[:x] - @margin).round(2), (@info[:y] - @margin).round(2)]}"
+       ].join "\n"
+    end
+
+    def edge_info
+      ["Edge Info",
+       "ID: #{@info[:edge].id}",
+       @info[:edge].nodes.map(&:id).join(" <=> "),
+       "Flow: #{@grid.flows[@info[:edge]].round 2}"
+      ].join "\n"
     end
   end
 end

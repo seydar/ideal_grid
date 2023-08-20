@@ -25,7 +25,7 @@ class GridOperator
 
 
   def initialize
-    @nodes = 800
+    @num_nodes = 800
     @clusters = 80
     @load = 10
     @grid = Grid.new [], []
@@ -56,16 +56,11 @@ class GridOperator
         label { left 0; xspan 2
                 top  5; yspan 1 }
 
-        #horizontal_box {
-        #  left 0; xspan 3
-        #  top  6; yspan 3
-
         cong_reduc_table x: 0, xs: 1,
                          y: 6, ys: 3
 
         plot_area  x: 1, xs: 3,
                    y: 6, ys: 3
-        #}
       }
 
     }.show

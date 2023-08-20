@@ -1,7 +1,7 @@
 module GUI
   module Grid
 
-    attr_accessor :nodes
+    attr_accessor :num_nodes
     attr_accessor :clusters
     attr_accessor :load
 
@@ -12,7 +12,7 @@ module GUI
 
         entry {
           label 'Nodes'
-          text <=> [self, :nodes, on_write: :to_i, on_read: :to_s]
+          text <=> [self, :num_nodes, on_write: :to_i, on_read: :to_s]
         }
       }
 
@@ -48,7 +48,7 @@ module GUI
         on_clicked {
           plot = GridOperator::PLOT
           range = [plot[0] - 2 * @margin, plot[1] - 2 * @margin]
-          @grid = mst_grid :number   => @nodes,
+          @grid = mst_grid :number   => @num_nodes,
                            :grouping => @clusters,
                            :draw     => @load,
                            :range    => range

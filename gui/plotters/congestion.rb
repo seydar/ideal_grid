@@ -7,6 +7,7 @@ module GUI
 
     def reduce_congestion(edge_limit=4)
       scale = @dimensions.avg / 12
+      pp [@dimensions, scale]
       new_edges = @grid.reduce_congestion :distance => 0.75 * scale
 
       # Hard ceiling on the edge length
@@ -83,6 +84,8 @@ module GUI
             @new_edges = []
           end
 
+          # FIXME this code gets called when the table is sorted
+          # since the selection (the index) has changed
           a = Time.now
           @grid.reset!
           puts "#{Time.now - a} to reset"

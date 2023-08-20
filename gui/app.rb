@@ -2,7 +2,7 @@
 
 require_relative "../electric_avenue.rb"
 require 'glimmer-dsl-libui'
-Dir['./gui2/presenters/*.rb'].each {|f| require f }
+Dir['./gui/presenters/*.rb'].each {|f| require f }
 
 class GridApp
   include Glimmer

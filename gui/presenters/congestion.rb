@@ -41,26 +41,34 @@ module GUI
       self.potential_edges = []
     end
 
+    # Also gets called when the table sort changes (since
+    # `selection` is the index, and if the sort changes, then the
+    # index changes, so this method is called)
     def select_reduction_option(selection)
-      # Handle selecting
-      if @current_selection
-        cong = potential_edges[@current_selection]
-        cong.candidates.each(&:detach!)
-      end
+      # Return early if no state change
+      #   both nil
+      #   selection isn't nil but refers to the same object
+      return unless @current_selection || selection
+      return if selection && @current_selection == potential_edges[selection]
 
       # Handle deselecting
-      @current_selection = selection
-      if selection
-        cong = potential_edges[@current_selection]
-        cong.candidates.each(&:attach!)
+      if @current_selection
+        @current_selection.candidates.each(&:detach!)
+      end
 
-        @added_edges = cong.candidates
+      # to cover base case of nothing selected
+      @current_selection = selection
+
+      # Handle selecting
+      if selection
+        @current_selection = potential_edges[selection]
+        @current_selection.candidates.each(&:attach!)
+
+        @added_edges = @current_selection.candidates
       else
         @added_edges = []
       end
 
-      # FIXME this code gets called when the table is sorted
-      # since the selection (the index) has changed
       a = Time.now
       @app.elec.reset!
       puts "#{Time.now - a} to reset"

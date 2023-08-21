@@ -164,7 +164,7 @@ class GridApp
       top  (y + 2); yspan 1
 
       on_clicked {
-        @congestion.reduce_congestion
+        LibUI::queue_main { @congestion.reduce_congestion }
       }
     }
   end

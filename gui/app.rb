@@ -19,6 +19,7 @@ class GridApp
   attr_accessor :elec
   attr_accessor :congestion
   attr_accessor :plotter
+  attr_accessor :histogram
 
   def initialize
     # buttons
@@ -31,8 +32,11 @@ class GridApp
     # plot
     @plotter = Plotter.new self, MARGIN
 
-    # histogram, congestion reduction table
+    # congestion reduction table
     @congestion = Congestion.new self
+
+    # congestion histogram
+    @histogram = Histogram.new self
   end
 
   def refresh!
@@ -95,7 +99,7 @@ class GridApp
           fill 0xFFFFFF
         }
 
-        @congestion.plot_histogram area
+        @histogram.plot area
       end
     }
   end

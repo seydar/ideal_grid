@@ -158,6 +158,8 @@ class GridApp
         plot = PLOT
         range = [plot[0] - 2 * MARGIN, plot[1] - 2 * MARGIN]
         @elec = @overall.mst_grid :range => range
+
+        @plotter.refresh!
         @congestion.refresh!
         refresh!
       }

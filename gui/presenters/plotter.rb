@@ -14,6 +14,10 @@ module GUI
       @margin = margin
     end
 
+    def refresh!
+      @info = nil
+    end
+
     def plot_info_box
       if @info
         case @info[:type]
@@ -34,13 +38,13 @@ module GUI
       @info ||= @edges.find {|e| e[:line].contain?(x,
                                                    y,
                                                    outline: true, 
-                                                   distance_tolerance: 25) }
+                                                   distance_tolerance: 5) }
     end
 
     def plot_edge_info
       midpoint = [(@info[:from][0] + @info[:to][0]) / 2.0,
                   (@info[:from][1] + @info[:to][1]) / 2.0]
-      rectangle(*midpoint, 200, 50) {
+      rectangle(*midpoint, 160, 70) {
         stroke 0xff0000
         fill 0xd6d6d6
       }
@@ -73,6 +77,7 @@ module GUI
 
     def plot_flows(n: 10, scale: @scale, labels: nil)
       flows = @app.elec.flows || {}
+      @edges = []
 
       unless flows.empty?
         max, min = flows.values.max || 0, flows.values.min || 0
@@ -87,19 +92,19 @@ module GUI
         colors = BLUES.reverse + REDS
         percentiles.each.with_index do |pc, i|
           rhea = labels ? pc.map {|e| flows[e].round(2) } : []
-          plot_edges pc, :color  => colors[((i + 1) * colors.size) / (n + 1)],
-                         :width  => (i + 1 * 8.0 / n),
-                         :labels => rhea,
-                         :scale  => scale
+          @edges += plot_edges pc, :color  => colors[((i + 1) * colors.size) / (n + 1)],
+                                   :width  => (i + 1 * 8.0 / n),
+                                   :labels => rhea,
+                                   :scale  => scale
         end
       end
 
       # Plot the untread edges to see if there are any even breaks in the grid
       edges = @app.elec.graph.nodes.map {|n| n.edges }.flatten.uniq
       untread = edges - flows.keys
-      plot_edges untread, :scale => scale, :color => 0x00ffff
+      @edges += plot_edges untread, :scale => scale, :color => 0x00ffff
 
-      plot_edges @app.congestion.added_edges, :scale => scale, :color => 0x18cf00, :width => 6.0
+      @edges += plot_edges @app.congestion.added_edges, :scale => scale, :color => 0x18cf00, :width => 6.0
 
       plot_points scale: scale
       plot_generators scale: scale
@@ -107,7 +112,7 @@ module GUI
 
     def plot_edges(edges=nil, scale: @scale, color: 0x000000, width: 2, labels: [])
       edges ||= @app.elec.edges
-      @edges = edges.zip(labels).map do |edge, label|
+      edges.zip(labels).map do |edge, label|
         plot_edge edge, scale: scale, color: color, width: width, label: label
       end
     end

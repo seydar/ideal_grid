@@ -148,6 +148,9 @@ time "Reduce congestion" do
     results = trials.zip results
 
     # minimize tx loss, minimize total edge length
+    # more magic numbers because i'm a mathemagician
+    # I'm just trying to find some happy medium that values edge length
+    # and tx loss the way I do
     ranked = results.sort_by do |cs, l|
       l ** 1.35 + l * cs.sum(&:length)
     end

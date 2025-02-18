@@ -66,7 +66,7 @@ end
 
 time "Grid simplification" do
 
-  if File.exists? "ng.bin"
+  if File.exist? "ng.bin"
     puts "\tFound cached version"
     ng = Marshal.load File.read("ng.bin")
   else

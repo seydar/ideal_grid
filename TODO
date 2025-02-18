@@ -49,6 +49,25 @@ TODO
 * accept range as CLI input (as opposed to only using 10x10 grid)
 * duplicate edges appear in reduce_congestion
 
+* UNH EOC (earth ocean space)
+  * use GIC (geophysically induced currents) to predict coupling to grid
+* research to operations work
+  * space weather predictions
+* barbara and allen (in the running club)
+  * driving forces behind getting solar power to hanover
+* NOAA space weather prediction center (SWPC)
+  * collect all of the data from all of the satellites and put it into publically available datasets
+  * used to make predictions of GIC
+* DOE has listing of people using CEII with grant money
+* ryan mcgranaghan
+  * ask him for advice
+  * o'ryan space solutions
+
+* reading PSLF files
+  * https://github.com/GMLC-TDC/PSLF-wrapper
+  * https://docs.helics.org/en/helics2/introduction/python.html
+
+
 TASKS
 -------------------------
 * import "miso_north_tx_lines.geosjon"
